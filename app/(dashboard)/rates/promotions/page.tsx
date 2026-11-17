@@ -1,4 +1,4 @@
-import React from 'react'
+﻿import React from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Plus, Tag, Copy, Percent } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -33,7 +33,7 @@ export default function PromotionsPage() {
             </p>
           </div>
         </div>
-        <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs h-9 font-semibold">
+        <Button size="sm" className="bg-[#5e2b9d] hover:bg-[#4d2282] text-white text-xs h-9 font-semibold">
           <Plus className="h-4 w-4 mr-1.5" />
           Create Promo Code
         </Button>
@@ -44,7 +44,7 @@ export default function PromotionsPage() {
           <div key={p.id} className="bg-white border border-gray-200 rounded-lg p-5 shadow-2xs hover:border-gray-300 transition-all flex flex-col justify-between">
             <div>
               <div className="flex items-start justify-between">
-                <span className="font-mono text-xs font-bold bg-indigo-50 text-indigo-700 px-2 py-1 rounded border border-indigo-100">
+                <span className="font-mono text-xs font-bold bg-[#f7f2fd] text-[#4d2282] px-2 py-1 rounded border border-[#eee4fa]">
                   {p.code}
                 </span>
                 <span className="text-sm font-bold text-emerald-600">{p.discount}</span>

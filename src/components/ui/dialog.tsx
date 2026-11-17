@@ -34,13 +34,13 @@ const DialogContent = React.forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-gray-200 bg-white p-6 shadow-lg duration-200 rounded-xl",
+        "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-gray-200 bg-white p-6 shadow-lg duration-200 rounded-md",
         className
       )}
       {...props}
     >
       {children}
-      <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-indigo-600 disabled:pointer-events-none">
+      <DialogPrimitive.Close className="absolute right-4 top-4 rounded-md opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-[#5e2b9d] disabled:pointer-events-none cursor-pointer">
         <X className="h-4 w-4 text-gray-500" />
         <span className="sr-only">Close</span>
       </DialogPrimitive.Close>
@@ -84,7 +84,7 @@ const DialogTitle = React.forwardRef<
   <DialogPrimitive.Title
     ref={ref}
     className={cn(
-      "text-lg font-semibold leading-none tracking-tight text-gray-900",
+      "text-lg font-medium leading-none tracking-tight text-gray-900",
       className
     )}
     {...props}
@@ -108,12 +108,11 @@ export {
   Dialog,
   DialogPortal,
   DialogOverlay,
-  DialogTrigger,
   DialogClose,
+  DialogTrigger,
   DialogContent,
   DialogHeader,
   DialogFooter,
   DialogTitle,
   DialogDescription,
 }
-

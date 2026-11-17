@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import React, { useState } from 'react'
 import Link from 'next/link'
@@ -41,17 +41,17 @@ const daysList = [
 
 // Stay allocations: roomId, startDayIndex, durationDays, guestName, color
 const allocations = [
-  { roomId: '201', start: 0, duration: 6, guest: 'Sophia Montgomery (VIP)', color: 'bg-indigo-600 text-white' },
-  { roomId: '102', start: 1, duration: 3, guest: 'Liam Gallagher', color: 'bg-indigo-600 text-white' },
+  { roomId: '201', start: 0, duration: 6, guest: 'Sophia Montgomery (VIP)', color: 'bg-[#5e2b9d] text-white' },
+  { roomId: '102', start: 1, duration: 3, guest: 'Liam Gallagher', color: 'bg-[#5e2b9d] text-white' },
   { roomId: '202', start: 1, duration: 4, guest: 'Elena Rostova', color: 'bg-purple-600 text-white' },
   { roomId: '103', start: 2, duration: 3, guest: 'Lucas Meyer', color: 'bg-amber-600 text-white' },
-  { roomId: '301', start: 4, duration: 3, guest: 'Victoria Sterling', color: 'bg-indigo-600 text-white' },
+  { roomId: '301', start: 4, duration: 3, guest: 'Victoria Sterling', color: 'bg-[#5e2b9d] text-white' },
   { roomId: '204', start: 0, duration: 7, guest: 'MAINTENANCE BLOCK', color: 'bg-rose-600 text-white font-mono' },
   { roomId: '302', start: 0, duration: 7, guest: 'OUT OF ORDER', color: 'bg-gray-600 text-white font-mono' },
 ]
 
 export default function ReservationCalendarPage() {
-  const [currentWeek, setCurrentWeek] = useState('Nov 10 – Nov 16, 2026')
+  const [currentWeek, setCurrentWeek] = useState('Nov 10 â€“ Nov 16, 2026')
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
@@ -92,7 +92,7 @@ export default function ReservationCalendarPage() {
           </div>
 
           <Link href="/reservations/new">
-            <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs h-9 font-semibold">
+            <Button size="sm" className="bg-[#5e2b9d] hover:bg-[#4d2282] text-white text-xs h-9 font-semibold">
               <Plus className="h-4 w-4 mr-1.5" />
               New Booking
             </Button>
@@ -104,7 +104,7 @@ export default function ReservationCalendarPage() {
       <div className="flex flex-wrap items-center gap-4 text-xs bg-white p-3 rounded-lg border border-gray-200 shadow-2xs">
         <span className="font-semibold text-gray-500 text-[11px] uppercase tracking-wider">Legend:</span>
         <div className="flex items-center gap-1.5">
-          <span className="h-3 w-3 rounded bg-indigo-600" />
+          <span className="h-3 w-3 rounded bg-[#5e2b9d]" />
           <span className="text-gray-700">Checked In</span>
         </div>
         <div className="flex items-center gap-1.5">
@@ -131,12 +131,12 @@ export default function ReservationCalendarPage() {
               <div
                 key={d.fullDate}
                 className={`p-3 text-center border-r border-gray-200 ${
-                  d.isToday ? 'bg-indigo-50/70 text-indigo-700 font-bold' : ''
+                  d.isToday ? 'bg-[#f7f2fd]/70 text-[#4d2282] font-bold' : ''
                 }`}
               >
                 <div>{d.dayName}</div>
                 <div className="text-sm font-mono mt-0.5">{d.dateNum}</div>
-                {d.isToday && <span className="text-[9px] uppercase tracking-wider block text-indigo-600">Today</span>}
+                {d.isToday && <span className="text-[9px] uppercase tracking-wider block text-[#5e2b9d]">Today</span>}
               </div>
             ))}
           </div>
@@ -160,7 +160,7 @@ export default function ReservationCalendarPage() {
                       <div
                         key={d.fullDate}
                         className={`border-r border-gray-100 h-full ${
-                          d.isToday ? 'bg-indigo-50/20' : ''
+                          d.isToday ? 'bg-[#f7f2fd]/20' : ''
                         }`}
                       />
                     ))}

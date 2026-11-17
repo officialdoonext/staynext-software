@@ -1,4 +1,4 @@
-import React from 'react'
+﻿import React from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Plus, Globe, Percent, Building2, Phone, Mail } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -34,7 +34,7 @@ export default function TravelAgentsPage() {
             </p>
           </div>
         </div>
-        <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs h-9 font-semibold">
+        <Button size="sm" className="bg-[#5e2b9d] hover:bg-[#4d2282] text-white text-xs h-9 font-semibold">
           <Plus className="h-4 w-4 mr-1.5" />
           Add Agency Partner
         </Button>
@@ -53,7 +53,7 @@ export default function TravelAgentsPage() {
                 </div>
                 <div className="text-right">
                   <span className="text-xs text-gray-400">Commission</span>
-                  <div className="text-base font-bold text-indigo-600">{a.commission}</div>
+                  <div className="text-base font-bold text-[#5e2b9d]">{a.commission}</div>
                 </div>
               </div>
 
@@ -73,7 +73,7 @@ export default function TravelAgentsPage() {
               <Badge variant="success" className="text-[10px]">
                 Direct Channel Synced
               </Badge>
-              <Button variant="ghost" size="sm" className="h-8 text-xs text-indigo-600 font-semibold px-2">
+              <Button variant="ghost" size="sm" className="h-8 text-xs text-[#5e2b9d] font-semibold px-2">
                 Reconcile Payout &rarr;
               </Button>
             </div>

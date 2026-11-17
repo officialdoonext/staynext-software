@@ -1,4 +1,4 @@
-import React from 'react'
+﻿import React from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Plus, Globe, RefreshCw, CheckCircle2, AlertTriangle, ShieldCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -39,7 +39,7 @@ export default function ChannelManagerPage() {
             <RefreshCw className="h-4 w-4 mr-1.5" />
             Force Full Sync
           </Button>
-          <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs h-9 font-semibold">
+          <Button size="sm" className="bg-[#5e2b9d] hover:bg-[#4d2282] text-white text-xs h-9 font-semibold">
             <Plus className="h-4 w-4 mr-1.5" />
             Connect New OTA
           </Button>
@@ -82,7 +82,7 @@ export default function ChannelManagerPage() {
               <span className="text-emerald-600 font-medium flex items-center gap-1">
                 <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" /> 0 Sync Conflicts
               </span>
-              <Button variant="ghost" size="sm" className="h-8 text-xs text-indigo-600 font-semibold px-2">
+              <Button variant="ghost" size="sm" className="h-8 text-xs text-[#5e2b9d] font-semibold px-2">
                 Mapping &rarr;
               </Button>
             </div>

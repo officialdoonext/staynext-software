@@ -1,4 +1,4 @@
-import React from 'react'
+﻿import React from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Receipt, Save, Upload } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -32,7 +32,7 @@ export default function NewExpensePage() {
         <Card className="border-gray-200 shadow-2xs">
           <CardHeader className="pb-3 border-b border-gray-100">
             <CardTitle className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-              <Receipt className="h-4 w-4 text-indigo-600" />
+              <Receipt className="h-4 w-4 text-[#5e2b9d]" />
               Expense Details
             </CardTitle>
           </CardHeader>
@@ -43,7 +43,7 @@ export default function NewExpensePage() {
                 <input
                   type="text"
                   placeholder="e.g. Monthly Commercial Laundry Detergent &amp; Fabric Softener"
-                  className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-600"
+                  className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
                   defaultValue="Commercial Linen Supply &amp; Bedding Restock"
                   required
                 />
@@ -51,7 +51,7 @@ export default function NewExpensePage() {
 
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Expense Category *</label>
-                <select className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-600">
+                <select className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]">
                   <option value="housekeeping">Housekeeping &amp; Laundry</option>
                   <option value="fb">Food &amp; Beverage Inventory</option>
                   <option value="utilities">Utilities (Water, Power, Gas)</option>
@@ -68,7 +68,7 @@ export default function NewExpensePage() {
                   placeholder="0.00"
                   step="0.01"
                   defaultValue="450.00"
-                  className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-600"
+                  className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
                   required
                 />
               </div>
@@ -79,13 +79,13 @@ export default function NewExpensePage() {
                   type="text"
                   placeholder="e.g. Pacific Linen Supply Co."
                   defaultValue="Apex Hospitality Wholesale"
-                  className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-600"
+                  className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Payment Method</label>
-                <select className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-600">
+                <select className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]">
                   <option value="card">Company Corporate Credit Card</option>
                   <option value="wire">Bank Wire / ACH</option>
                   <option value="petty_cash">Front Desk Petty Cash</option>
@@ -98,7 +98,7 @@ export default function NewExpensePage() {
                 <input
                   type="date"
                   defaultValue="2026-11-11"
-                  className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-600"
+                  className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
                 />
               </div>
 
@@ -108,13 +108,13 @@ export default function NewExpensePage() {
                   type="text"
                   placeholder="INV-99238"
                   defaultValue="INV-APEX-7781"
-                  className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-600"
+                  className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
                 />
               </div>
 
               <div className="sm:col-span-2">
                 <label className="block text-xs font-medium text-gray-700 mb-1">Attach Receipt / Invoice PDF</label>
-                <div className="border border-dashed border-gray-200 rounded-lg p-4 text-center hover:border-indigo-300 transition-colors cursor-pointer bg-gray-50/50">
+                <div className="border border-dashed border-gray-200 rounded-lg p-4 text-center hover:border-[#dfcef6] transition-colors cursor-pointer bg-gray-50/50">
                   <Upload className="h-6 w-6 text-gray-400 mx-auto mb-1" />
                   <p className="text-xs text-gray-600 font-medium">Click or drag file here to attach document</p>
                   <p className="text-[10px] text-gray-400 mt-0.5">PDF, PNG, JPG up to 10MB</p>
@@ -130,7 +130,7 @@ export default function NewExpensePage() {
               Cancel
             </Button>
           </Link>
-          <Button type="button" className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs h-9">
+          <Button type="button" className="bg-[#5e2b9d] hover:bg-[#4d2282] text-white font-semibold text-xs h-9">
             <Save className="h-4 w-4 mr-1.5" />
             Record Expense
           </Button>

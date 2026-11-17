@@ -1,4 +1,4 @@
-import React from 'react'
+﻿import React from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Download, Wrench, AlertTriangle, CheckCircle2, DollarSign } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -94,7 +94,7 @@ export default function MaintenanceReportsPage() {
           <TableBody>
             {historyItems.map((item) => (
               <TableRow key={item.id}>
-                <TableCell className="font-mono text-xs font-bold text-indigo-600">{item.id}</TableCell>
+                <TableCell className="font-mono text-xs font-bold text-[#5e2b9d]">{item.id}</TableCell>
                 <TableCell className="font-mono text-xs">{item.date}</TableCell>
                 <TableCell className="font-semibold text-gray-900 text-xs">{item.room}</TableCell>
                 <TableCell className="text-xs text-gray-700">{item.category}</TableCell>

@@ -31,7 +31,7 @@ export default function ForgotPasswordForm() {
 
   if (sent) {
     return (
-      <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-sm text-green-700 text-center">
+      <div className="bg-green-50 border border-green-200 rounded-md p-4 text-sm text-green-700 text-center font-normal">
         <p className="font-medium">Check your email!</p>
         <p className="mt-1">We&apos;ve sent a password reset link to {email}</p>
       </div>
@@ -41,7 +41,7 @@ export default function ForgotPasswordForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">
+        <div className="bg-red-50 border border-red-200 rounded-md p-3 text-sm text-red-700">
           {error}
         </div>
       )}
@@ -56,14 +56,14 @@ export default function ForgotPasswordForm() {
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] focus:border-[#5e2b9d]"
           placeholder="you@example.com"
         />
       </div>
       <button
         type="submit"
         disabled={loading}
-        className="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors"
+        className="w-full py-2.5 px-4 bg-[#5e2b9d] hover:bg-[#4d2282] disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-md transition-colors cursor-pointer"
       >
         {loading ? 'Sending...' : 'Send reset link'}
       </button>

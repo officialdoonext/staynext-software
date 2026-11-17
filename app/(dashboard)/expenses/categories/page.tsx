@@ -1,4 +1,4 @@
-import React from 'react'
+﻿import React from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Plus, FolderTree, Tag, DollarSign } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -36,7 +36,7 @@ export default function ExpenseCategoriesPage() {
             </p>
           </div>
         </div>
-        <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs h-9 font-semibold">
+        <Button size="sm" className="bg-[#5e2b9d] hover:bg-[#4d2282] text-white text-xs h-9 font-semibold">
           <Plus className="h-4 w-4 mr-1.5" />
           Add Category
         </Button>
@@ -69,7 +69,7 @@ export default function ExpenseCategoriesPage() {
                   </div>
                   <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
                     <div
-                      className={`h-2 rounded-full ${percentSpent > 90 ? 'bg-rose-500' : 'bg-indigo-600'}`}
+                      className={`h-2 rounded-full ${percentSpent > 90 ? 'bg-rose-500' : 'bg-[#5e2b9d]'}`}
                       style={{ width: `${Math.min(percentSpent, 100)}%` }}
                     />
                   </div>

@@ -1,4 +1,4 @@
-import React from 'react'
+﻿import React from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Download, CreditCard, DollarSign, ArrowUpRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -62,7 +62,7 @@ export default async function PaymentsPage() {
 
       {payments.length === 0 ? (
         <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center max-w-lg mx-auto my-12 shadow-sm">
-          <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+          <div className="w-12 h-12 bg-[#f7f2fd] text-[#5e2b9d] rounded-xl flex items-center justify-center mx-auto mb-4">
             <CreditCard className="h-6 w-6" />
           </div>
           <h3 className="text-base font-bold text-gray-900">No Payment Records Found</h3>
@@ -86,7 +86,7 @@ export default async function PaymentsPage() {
             <TableBody>
               {payments.map((pay) => (
                 <TableRow key={pay.id}>
-                  <TableCell className="font-mono text-xs font-bold text-indigo-600">
+                  <TableCell className="font-mono text-xs font-bold text-[#5e2b9d]">
                     {pay.reference}
                   </TableCell>
                   <TableCell className="text-xs text-gray-500">{formatDate(pay.date)}</TableCell>

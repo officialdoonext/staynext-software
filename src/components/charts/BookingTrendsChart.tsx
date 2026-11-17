@@ -65,7 +65,7 @@ export default function BookingTrendsChart({ data }: BookingTrendsChartProps) {
             boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
           }}
         />
-        <Bar dataKey="count" fill="#4f46e5" radius={[3, 3, 0, 0]} maxBarSize={32} />
+        <Bar dataKey="count" fill="#5e2b9d" radius={[3, 3, 0, 0]} maxBarSize={32} />
       </BarChart>
     </ResponsiveContainer>
   )

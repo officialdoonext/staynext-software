@@ -1,4 +1,4 @@
-import React from 'react'
+﻿import React from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Bell, Mail, MessageSquare, Save } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -32,7 +32,7 @@ export default function NotificationsSettingsPage() {
         <Card className="border-gray-200 shadow-2xs">
           <CardHeader className="pb-3 border-b border-gray-100">
             <CardTitle className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-              <Mail className="h-4 w-4 text-indigo-600" />
+              <Mail className="h-4 w-4 text-[#5e2b9d]" />
               Automated Guest Communications (Email &amp; SMS)
             </CardTitle>
           </CardHeader>
@@ -42,7 +42,7 @@ export default function NotificationsSettingsPage() {
                 <p className="text-xs font-semibold text-gray-900">Instant Booking Confirmation</p>
                 <p className="text-[11px] text-gray-500">Send guest an email with reservation details and calendar invite immediately upon booking.</p>
               </div>
-              <input type="checkbox" defaultChecked className="h-4 w-4 rounded text-indigo-600 focus:ring-indigo-600" />
+              <input type="checkbox" defaultChecked className="h-4 w-4 rounded text-[#5e2b9d] focus:ring-[#5e2b9d]" />
             </div>
 
             <div className="py-3 flex items-center justify-between">
@@ -50,7 +50,7 @@ export default function NotificationsSettingsPage() {
                 <p className="text-xs font-semibold text-gray-900">Pre-Arrival Welcome &amp; Digital Registration</p>
                 <p className="text-[11px] text-gray-500">Dispatch digital check-in registration link 24 hours prior to guest arrival.</p>
               </div>
-              <input type="checkbox" defaultChecked className="h-4 w-4 rounded text-indigo-600 focus:ring-indigo-600" />
+              <input type="checkbox" defaultChecked className="h-4 w-4 rounded text-[#5e2b9d] focus:ring-[#5e2b9d]" />
             </div>
 
             <div className="py-3 flex items-center justify-between">
@@ -58,7 +58,7 @@ export default function NotificationsSettingsPage() {
                 <p className="text-xs font-semibold text-gray-900">Digital Folio &amp; Tax Receipt on Checkout</p>
                 <p className="text-[11px] text-gray-500">Automatically attach itemized PDF invoice to departure thank-you email.</p>
               </div>
-              <input type="checkbox" defaultChecked className="h-4 w-4 rounded text-indigo-600 focus:ring-indigo-600" />
+              <input type="checkbox" defaultChecked className="h-4 w-4 rounded text-[#5e2b9d] focus:ring-[#5e2b9d]" />
             </div>
 
             <div className="py-3 flex items-center justify-between">
@@ -66,7 +66,7 @@ export default function NotificationsSettingsPage() {
                 <p className="text-xs font-semibold text-gray-900">Post-Stay CSAT Review Request</p>
                 <p className="text-[11px] text-gray-500">Send Google Review or TripAdvisor feedback request 2 hours after checkout.</p>
               </div>
-              <input type="checkbox" defaultChecked className="h-4 w-4 rounded text-indigo-600 focus:ring-indigo-600" />
+              <input type="checkbox" defaultChecked className="h-4 w-4 rounded text-[#5e2b9d] focus:ring-[#5e2b9d]" />
             </div>
           </CardContent>
         </Card>
@@ -74,7 +74,7 @@ export default function NotificationsSettingsPage() {
         <Card className="border-gray-200 shadow-2xs">
           <CardHeader className="pb-3 border-b border-gray-100">
             <CardTitle className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-              <Bell className="h-4 w-4 text-indigo-600" />
+              <Bell className="h-4 w-4 text-[#5e2b9d]" />
               Internal Operational &amp; Management Alerts
             </CardTitle>
           </CardHeader>
@@ -84,7 +84,7 @@ export default function NotificationsSettingsPage() {
                 <p className="text-xs font-semibold text-gray-900">Urgent Maintenance Request Dispatch</p>
                 <p className="text-[11px] text-gray-500">Alert on-duty chief engineer immediately when a room AC, plumbing, or lock failure is logged.</p>
               </div>
-              <input type="checkbox" defaultChecked className="h-4 w-4 rounded text-indigo-600 focus:ring-indigo-600" />
+              <input type="checkbox" defaultChecked className="h-4 w-4 rounded text-[#5e2b9d] focus:ring-[#5e2b9d]" />
             </div>
 
             <div className="py-3 flex items-center justify-between">
@@ -92,7 +92,7 @@ export default function NotificationsSettingsPage() {
                 <p className="text-xs font-semibold text-gray-900">VIP Guest Arrival Notice</p>
                 <p className="text-[11px] text-gray-500">Notify General Manager and Concierge when a VIP profile checks in at front desk.</p>
               </div>
-              <input type="checkbox" defaultChecked className="h-4 w-4 rounded text-indigo-600 focus:ring-indigo-600" />
+              <input type="checkbox" defaultChecked className="h-4 w-4 rounded text-[#5e2b9d] focus:ring-[#5e2b9d]" />
             </div>
 
             <div className="py-3 flex items-center justify-between">
@@ -100,13 +100,13 @@ export default function NotificationsSettingsPage() {
                 <p className="text-xs font-semibold text-gray-900">Low Inventory Threshold Warning</p>
                 <p className="text-[11px] text-gray-500">Notify procurement manager when linens or guest toiletries fall below safety stock.</p>
               </div>
-              <input type="checkbox" defaultChecked className="h-4 w-4 rounded text-indigo-600 focus:ring-indigo-600" />
+              <input type="checkbox" defaultChecked className="h-4 w-4 rounded text-[#5e2b9d] focus:ring-[#5e2b9d]" />
             </div>
           </CardContent>
         </Card>
 
         <div className="flex items-center justify-end gap-3">
-          <Button type="button" className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs h-9">
+          <Button type="button" className="bg-[#5e2b9d] hover:bg-[#4d2282] text-white font-semibold text-xs h-9">
             <Save className="h-4 w-4 mr-1.5" />
             Save Notification Preferences
           </Button>

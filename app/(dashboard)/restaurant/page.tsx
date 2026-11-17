@@ -1,4 +1,4 @@
-import React from 'react'
+﻿import React from 'react'
 import { UtensilsCrossed, Plus, Coffee, Wine, Clock, CheckCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -27,7 +27,7 @@ export default function RestaurantPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs h-9 font-semibold">
+          <Button size="sm" className="bg-[#5e2b9d] hover:bg-[#4d2282] text-white text-xs h-9 font-semibold">
             <Plus className="h-4 w-4 mr-1.5" />
             New POS Order
           </Button>
@@ -43,7 +43,7 @@ export default function RestaurantPage() {
         </div>
         <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-2xs">
           <span className="text-xs text-gray-500 font-medium">Table Occupancy</span>
-          <p className="text-2xl font-bold text-indigo-600 mt-2">75% (9/12)</p>
+          <p className="text-2xl font-bold text-[#5e2b9d] mt-2">75% (9/12)</p>
           <p className="text-[11px] text-gray-500 mt-0.5">Main Dining Room &amp; Patio</p>
         </div>
         <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-2xs">
@@ -69,7 +69,7 @@ export default function RestaurantPage() {
           {activeOrders.map((ord) => (
             <div key={ord.id} className="p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 hover:bg-gray-50/60 transition-colors">
               <div className="flex items-start gap-3">
-                <span className="font-mono text-xs font-bold bg-indigo-50 text-indigo-700 px-2 py-1 rounded">
+                <span className="font-mono text-xs font-bold bg-[#f7f2fd] text-[#4d2282] px-2 py-1 rounded">
                   {ord.table}
                 </span>
                 <div>

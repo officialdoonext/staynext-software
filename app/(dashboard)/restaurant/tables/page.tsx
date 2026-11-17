@@ -1,4 +1,4 @@
-import React from 'react'
+﻿import React from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Plus, Users, UtensilsCrossed } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -37,7 +37,7 @@ export default function RestaurantTablesPage() {
             </p>
           </div>
         </div>
-        <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs h-9 font-semibold">
+        <Button size="sm" className="bg-[#5e2b9d] hover:bg-[#4d2282] text-white text-xs h-9 font-semibold">
           <Plus className="h-4 w-4 mr-1.5" />
           Seat Walk-in Party
         </Button>
@@ -48,7 +48,7 @@ export default function RestaurantTablesPage() {
           <div
             key={tbl.number}
             className={`bg-white border rounded-lg p-5 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between ${
-              tbl.status === 'occupied' ? 'border-indigo-200' : tbl.status === 'reserved' ? 'border-purple-200' : 'border-gray-200'
+              tbl.status === 'occupied' ? 'border-[#dfcef6]' : tbl.status === 'reserved' ? 'border-purple-200' : 'border-gray-200'
             }`}
           >
             <div>
@@ -83,7 +83,7 @@ export default function RestaurantTablesPage() {
 
             <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between text-xs">
               <span className="text-gray-400 font-medium">Running Total:</span>
-              <span className="font-mono font-bold text-gray-900">{tbl.orderTotal || '—'}</span>
+              <span className="font-mono font-bold text-gray-900">{tbl.orderTotal || 'â€”'}</span>
             </div>
           </div>
         ))}

@@ -111,7 +111,7 @@ export default async function ReservationsPage() {
             </Button>
           </Link>
           <Link href="/reservations/new">
-            <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs h-9 font-semibold">
+            <Button size="sm" className="bg-[#5e2b9d] hover:bg-[#4d2282] text-white text-xs h-9 font-medium rounded-md cursor-pointer">
               <Plus className="h-4 w-4 mr-1.5" />
               New Booking
             </Button>
@@ -120,17 +120,17 @@ export default async function ReservationsPage() {
       </div>
 
       {reservations.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center max-w-lg mx-auto my-12 shadow-sm">
-          <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+        <div className="bg-white rounded-md border border-gray-200 p-12 text-center max-w-lg mx-auto my-12 shadow-sm">
+          <div className="w-12 h-12 bg-[#f7f2fd] text-[#5e2b9d] rounded-md flex items-center justify-center mx-auto mb-4">
             <CalendarX className="h-6 w-6" />
           </div>
-          <h3 className="text-base font-bold text-gray-900">No Reservations Yet</h3>
-          <p className="text-xs text-gray-500 mt-1 max-w-sm mx-auto">
+          <h3 className="text-base font-medium text-gray-900">No Reservations Yet</h3>
+          <p className="text-xs text-gray-500 mt-1 max-w-sm mx-auto font-normal">
             Your property does not have any active or past reservations recorded in the database yet.
           </p>
           <div className="mt-6">
             <Link href="/reservations/new">
-              <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium">
+              <Button size="sm" className="bg-[#5e2b9d] hover:bg-[#4d2282] text-white font-medium rounded-md cursor-pointer">
                 <Plus className="h-4 w-4 mr-1.5" />
                 Create First Reservation
               </Button>
@@ -140,10 +140,10 @@ export default async function ReservationsPage() {
       ) : (
         <>
           {/* Filter and Search Bar */}
-          <div className="bg-white p-3 rounded-lg border border-gray-200 shadow-2xs space-y-3">
+          <div className="bg-white p-3 rounded-md border border-gray-200 shadow-2xs space-y-3">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
               <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 text-xs font-medium">
-                <button className="px-3 py-1.5 rounded-md bg-indigo-600 text-white font-semibold">
+                <button className="px-3 py-1.5 rounded-md bg-[#5e2b9d] text-white font-medium cursor-pointer">
                   All Bookings ({reservations.length})
                 </button>
               </div>
@@ -154,7 +154,7 @@ export default async function ReservationsPage() {
                   <input
                     type="text"
                     placeholder="Search guest, ID, phone..."
-                    className="w-full pl-8 pr-3 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-600"
+                    className="w-full pl-8 pr-3 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
                   />
                 </div>
               </div>
@@ -162,7 +162,7 @@ export default async function ReservationsPage() {
           </div>
 
           {/* Reservations Table */}
-          <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+          <div className="bg-white border border-gray-200 rounded-md shadow-sm overflow-hidden">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -179,7 +179,7 @@ export default async function ReservationsPage() {
               <TableBody>
                 {reservations.map((res) => (
                   <TableRow key={res.id}>
-                    <TableCell className="font-mono text-xs font-bold text-indigo-600">
+                    <TableCell className="font-mono text-xs font-medium text-[#5e2b9d]">
                       {res.resNumber}
                     </TableCell>
                     <TableCell>

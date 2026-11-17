@@ -47,7 +47,7 @@ export default async function FrontDeskPage() {
         </div>
         <div className="flex items-center gap-2">
           <Link href="/reservations/new">
-            <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs h-9 font-semibold">
+            <Button size="sm" className="bg-[#5e2b9d] hover:bg-[#4d2282] text-white text-xs h-9 font-medium rounded-md cursor-pointer">
               <UserPlus className="h-4 w-4 mr-1.5" />
               Express Check-in
             </Button>
@@ -57,32 +57,32 @@ export default async function FrontDeskPage() {
 
       {/* Front Desk Metric Highlights */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-2xs">
+        <div className="bg-white p-4 rounded-md border border-gray-200 shadow-2xs">
           <div className="flex items-center gap-2 text-emerald-600">
             <DoorOpen className="h-5 w-5" />
-            <span className="text-xs font-semibold">Today&apos;s Arrivals</span>
+            <span className="text-xs font-medium">Today&apos;s Arrivals</span>
           </div>
-          <p className="text-2xl font-bold text-gray-900 mt-2">{todayArrivals}</p>
+          <p className="text-2xl font-medium text-gray-900 mt-2">{todayArrivals}</p>
           <p className="text-[11px] text-gray-400 mt-0.5">Scheduled for check-in today</p>
         </div>
 
-        <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-2xs">
-          <div className="flex items-center gap-2 text-blue-600">
+        <div className="bg-white p-4 rounded-md border border-gray-200 shadow-2xs">
+          <div className="flex items-center gap-2 text-[#5e2b9d]">
             <DoorClosed className="h-5 w-5" />
-            <span className="text-xs font-semibold">Today&apos;s Departures</span>
+            <span className="text-xs font-medium">Today&apos;s Departures</span>
           </div>
-          <p className="text-2xl font-bold text-gray-900 mt-2">{todayDepartures}</p>
+          <p className="text-2xl font-medium text-gray-900 mt-2">{todayDepartures}</p>
           <p className="text-[11px] text-gray-400 mt-0.5">Scheduled for checkout today</p>
         </div>
       </div>
 
       {/* Quick Search & Front Desk Actions */}
-      <div className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm space-y-4">
+      <div className="bg-white border border-gray-200 rounded-md p-5 shadow-sm space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide">
+          <h2 className="text-sm font-medium text-gray-900 uppercase tracking-wide">
             Instant Guest Check-in Lookup
           </h2>
-          <span className="text-xs text-gray-400">Search by booking number</span>
+          <span className="text-xs text-gray-400 font-normal">Search by booking number</span>
         </div>
 
         <div className="flex flex-col sm:flex-row gap-3">
@@ -91,10 +91,10 @@ export default async function FrontDeskPage() {
             <input
               type="text"
               placeholder="Enter Booking confirmation number, guest surname, or phone..."
-              className="w-full pl-10 pr-4 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-600"
+              className="w-full pl-10 pr-4 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
             />
           </div>
-          <Button className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs px-6">
+          <Button className="bg-[#5e2b9d] hover:bg-[#4d2282] text-white font-medium text-xs px-6 rounded-md cursor-pointer">
             Find Reservation
           </Button>
         </div>

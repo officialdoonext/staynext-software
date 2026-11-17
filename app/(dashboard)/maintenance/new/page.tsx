@@ -1,4 +1,4 @@
-import React from 'react'
+﻿import React from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Wrench, Save } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -32,7 +32,7 @@ export default function NewMaintenanceRequestPage() {
         <Card className="border-gray-200 shadow-2xs">
           <CardHeader className="pb-3 border-b border-gray-100">
             <CardTitle className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-              <Wrench className="h-4 w-4 text-indigo-600" />
+              <Wrench className="h-4 w-4 text-[#5e2b9d]" />
               Ticket Information
             </CardTitle>
           </CardHeader>
@@ -40,7 +40,7 @@ export default function NewMaintenanceRequestPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Target Location / Room *</label>
-                <select className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-600">
+                <select className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]">
                   <option value="101">Room 101 (Deluxe King)</option>
                   <option value="103">Room 103 (Executive Double)</option>
                   <option value="204">Room 204 (Deluxe Twin)</option>
@@ -54,7 +54,7 @@ export default function NewMaintenanceRequestPage() {
 
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Issue Category *</label>
-                <select className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-600">
+                <select className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]">
                   <option value="hvac">HVAC &amp; Air Conditioning</option>
                   <option value="plumbing">Plumbing &amp; Water Heater</option>
                   <option value="electrical">Electrical &amp; Lighting</option>
@@ -66,7 +66,7 @@ export default function NewMaintenanceRequestPage() {
 
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Priority Level</label>
-                <select className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-600">
+                <select className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]">
                   <option value="urgent">Urgent - Affects Guest Stay</option>
                   <option value="high">High - Same Day Resolution</option>
                   <option value="medium">Medium - Within 48 Hours</option>
@@ -76,7 +76,7 @@ export default function NewMaintenanceRequestPage() {
 
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Assign Technician</label>
-                <select className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-600">
+                <select className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]">
                   <option value="tech-1">Dave Miller (Chief Engineer)</option>
                   <option value="tech-2">Sam Thorne (HVAC Technician)</option>
                   <option value="tech-3">Ali Hassan (Electrician)</option>
@@ -89,7 +89,7 @@ export default function NewMaintenanceRequestPage() {
                 <textarea
                   rows={3}
                   placeholder="Describe the failure, error codes, leaking components, or guest complaint..."
-                  className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-600"
+                  className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
                   defaultValue="Air conditioning unit rattling loudly on high fan setting and cooling intermittently."
                   required
                 />
@@ -101,7 +101,7 @@ export default function NewMaintenanceRequestPage() {
                   type="number"
                   placeholder="0.00"
                   defaultValue="150"
-                  className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-600"
+                  className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
                 />
               </div>
 
@@ -110,7 +110,7 @@ export default function NewMaintenanceRequestPage() {
                   type="checkbox"
                   id="blockRoom"
                   defaultChecked
-                  className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
+                  className="h-4 w-4 rounded border-gray-300 text-[#5e2b9d] focus:ring-[#5e2b9d]"
                 />
                 <label htmlFor="blockRoom" className="text-xs font-medium text-gray-700">
                   Place room into Out of Order status automatically
@@ -126,7 +126,7 @@ export default function NewMaintenanceRequestPage() {
               Cancel
             </Button>
           </Link>
-          <Button type="button" className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs h-9">
+          <Button type="button" className="bg-[#5e2b9d] hover:bg-[#4d2282] text-white font-semibold text-xs h-9">
             <Save className="h-4 w-4 mr-1.5" />
             Dispatch Work Order
           </Button>

@@ -1,4 +1,4 @@
-import React from 'react'
+﻿import React from 'react'
 import { Settings, ShieldCheck, Hotel, Receipt, Bell, Key, Database, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -24,10 +24,10 @@ export default function SettingsPage() {
 
       {/* Settings Sections Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <Card className="border-gray-200 shadow-sm hover:border-indigo-200 transition-all">
+        <Card className="border-gray-200 shadow-sm hover:border-[#dfcef6] transition-all">
           <CardHeader className="pb-3">
             <div className="flex items-center gap-2.5">
-              <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
+              <div className="p-2 bg-[#f7f2fd] text-[#5e2b9d] rounded-lg">
                 <Hotel className="h-5 w-5" />
               </div>
               <CardTitle className="text-base font-semibold">Property Profile</CardTitle>
@@ -42,10 +42,10 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-gray-200 shadow-sm hover:border-indigo-200 transition-all">
+        <Card className="border-gray-200 shadow-sm hover:border-[#dfcef6] transition-all">
           <CardHeader className="pb-3">
             <div className="flex items-center gap-2.5">
-              <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
+              <div className="p-2 bg-[#f7f2fd] text-[#5e2b9d] rounded-lg">
                 <Receipt className="h-5 w-5" />
               </div>
               <CardTitle className="text-base font-semibold">Taxes &amp; Invoicing</CardTitle>
@@ -60,10 +60,10 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-gray-200 shadow-sm hover:border-indigo-200 transition-all">
+        <Card className="border-gray-200 shadow-sm hover:border-[#dfcef6] transition-all">
           <CardHeader className="pb-3">
             <div className="flex items-center gap-2.5">
-              <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
+              <div className="p-2 bg-[#f7f2fd] text-[#5e2b9d] rounded-lg">
                 <ShieldCheck className="h-5 w-5" />
               </div>
               <CardTitle className="text-base font-semibold">Roles &amp; Permissions</CardTitle>
@@ -78,10 +78,10 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-gray-200 shadow-sm hover:border-indigo-200 transition-all">
+        <Card className="border-gray-200 shadow-sm hover:border-[#dfcef6] transition-all">
           <CardHeader className="pb-3">
             <div className="flex items-center gap-2.5">
-              <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
+              <div className="p-2 bg-[#f7f2fd] text-[#5e2b9d] rounded-lg">
                 <Database className="h-5 w-5" />
               </div>
               <CardTitle className="text-base font-semibold">Supabase PostgreSQL</CardTitle>
@@ -96,10 +96,10 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-gray-200 shadow-sm hover:border-indigo-200 transition-all">
+        <Card className="border-gray-200 shadow-sm hover:border-[#dfcef6] transition-all">
           <CardHeader className="pb-3">
             <div className="flex items-center gap-2.5">
-              <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
+              <div className="p-2 bg-[#f7f2fd] text-[#5e2b9d] rounded-lg">
                 <Bell className="h-5 w-5" />
               </div>
               <CardTitle className="text-base font-semibold">Notifications &amp; Alerts</CardTitle>
@@ -114,10 +114,10 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-gray-200 shadow-sm hover:border-indigo-200 transition-all">
+        <Card className="border-gray-200 shadow-sm hover:border-[#dfcef6] transition-all">
           <CardHeader className="pb-3">
             <div className="flex items-center gap-2.5">
-              <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
+              <div className="p-2 bg-[#f7f2fd] text-[#5e2b9d] rounded-lg">
                 <Key className="h-5 w-5" />
               </div>
               <CardTitle className="text-base font-semibold">Audit Logs &amp; Security</CardTitle>

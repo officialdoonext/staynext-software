@@ -1,4 +1,4 @@
-import React from 'react'
+﻿import React from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Plus, Globe, Tag, Percent } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -33,7 +33,7 @@ export default function BookingEnginePromotionsPage() {
             </p>
           </div>
         </div>
-        <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs h-9 font-semibold">
+        <Button size="sm" className="bg-[#5e2b9d] hover:bg-[#4d2282] text-white text-xs h-9 font-semibold">
           <Plus className="h-4 w-4 mr-1.5" />
           Add Direct Perk
         </Button>
@@ -54,14 +54,14 @@ export default function BookingEnginePromotionsPage() {
               </div>
 
               <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between text-xs text-gray-600">
-                <span>Direct Promo Code: <strong className="font-mono text-indigo-600">{p.code}</strong></span>
+                <span>Direct Promo Code: <strong className="font-mono text-[#5e2b9d]">{p.code}</strong></span>
                 <span className="bg-gray-100 px-2 py-0.5 rounded text-[11px] font-medium text-gray-700">{p.displayPill}</span>
               </div>
             </div>
 
             <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
               <span className="text-xs text-gray-400">Shown in direct booking engine widget</span>
-              <Button variant="ghost" size="sm" className="h-8 text-xs text-indigo-600 font-semibold px-2">
+              <Button variant="ghost" size="sm" className="h-8 text-xs text-[#5e2b9d] font-semibold px-2">
                 Configure Banner
               </Button>
             </div>

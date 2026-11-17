@@ -1,4 +1,4 @@
-import React from 'react'
+﻿import React from 'react'
 import { Briefcase, Plus, Building, Percent, FileText } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -27,7 +27,7 @@ export default function CorporatePage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs h-9 font-semibold">
+          <Button size="sm" className="bg-[#5e2b9d] hover:bg-[#4d2282] text-white text-xs h-9 font-semibold">
             <Plus className="h-4 w-4 mr-1.5" />
             Add Corporate Account
           </Button>
@@ -37,11 +37,11 @@ export default function CorporatePage() {
       {/* Corporate List */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {corporateClients.map((client) => (
-          <div key={client.id} className="bg-white border border-gray-200 rounded-lg p-5 shadow-2xs hover:border-indigo-200 transition-all flex flex-col justify-between">
+          <div key={client.id} className="bg-white border border-gray-200 rounded-lg p-5 shadow-2xs hover:border-[#dfcef6] transition-all flex flex-col justify-between">
             <div>
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
+                  <div className="p-2 bg-[#f7f2fd] text-[#5e2b9d] rounded-lg">
                     <Briefcase className="h-5 w-5" />
                   </div>
                   <div>
@@ -61,7 +61,7 @@ export default function CorporatePage() {
                 </div>
                 <div className="p-2 bg-gray-50 rounded">
                   <p className="text-[10px] text-gray-400">Commission</p>
-                  <p className="text-xs font-bold text-indigo-600 mt-0.5">{client.commission}</p>
+                  <p className="text-xs font-bold text-[#5e2b9d] mt-0.5">{client.commission}</p>
                 </div>
                 <div className="p-2 bg-gray-50 rounded">
                   <p className="text-[10px] text-gray-400">Current Balance</p>

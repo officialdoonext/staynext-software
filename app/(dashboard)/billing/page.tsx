@@ -123,7 +123,7 @@ export default async function BillingPage() {
 
       {folios.length === 0 ? (
         <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center max-w-lg mx-auto my-12 shadow-sm">
-          <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+          <div className="w-12 h-12 bg-[#f7f2fd] text-[#5e2b9d] rounded-md flex items-center justify-center mx-auto mb-4">
             <Receipt className="h-6 w-6" />
           </div>
           <h3 className="text-base font-bold text-gray-900">No Billing Folios Recorded</h3>
@@ -149,7 +149,7 @@ export default async function BillingPage() {
             <TableBody>
               {folios.map((folio) => (
                 <TableRow key={folio.id}>
-                  <TableCell className="font-mono text-xs font-bold text-indigo-600">
+                  <TableCell className="font-mono text-xs font-medium text-[#5e2b9d]">
                     {folio.folioNumber}
                   </TableCell>
                   <TableCell className="text-sm font-semibold text-gray-900">

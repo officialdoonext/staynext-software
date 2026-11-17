@@ -83,7 +83,7 @@ export default function RoomBlockingPage() {
         <Button
           onClick={() => setShowAddForm(!showAddForm)}
           size="sm"
-          className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs h-9 font-semibold"
+          className="bg-[#5e2b9d] hover:bg-[#4d2282] text-white text-xs h-9 font-semibold"
         >
           <Plus className="h-4 w-4 mr-1.5" />
           {showAddForm ? 'Close Form' : 'Block a Room'}
@@ -92,10 +92,10 @@ export default function RoomBlockingPage() {
 
       {/* Block Room Form Modal/Panel */}
       {showAddForm && (
-        <Card className="border-indigo-200 bg-indigo-50/20 shadow-sm">
-          <CardHeader className="pb-3 border-b border-indigo-100">
-            <CardTitle className="text-sm font-semibold flex items-center gap-2 text-indigo-900">
-              <Ban className="h-4 w-4 text-indigo-600" />
+        <Card className="border-[#dfcef6] bg-[#f7f2fd]/20 shadow-sm">
+          <CardHeader className="pb-3 border-b border-[#eee4fa]">
+            <CardTitle className="text-sm font-medium flex items-center gap-2 text-[#5e2b9d]">
+              <Ban className="h-4 w-4 text-[#5e2b9d]" />
               Apply Room Inventory Block
             </CardTitle>
           </CardHeader>
@@ -107,7 +107,7 @@ export default function RoomBlockingPage() {
                   id="roomNumber"
                   value={formData.roomNumber}
                   onChange={(e) => setFormData({ ...formData, roomNumber: e.target.value })}
-                  className="w-full h-9 px-3 border border-gray-300 rounded-md text-xs bg-white text-gray-800 focus:outline-none focus:ring-1 focus:ring-indigo-600 font-mono"
+                  className="w-full h-9 px-3 border border-gray-300 rounded-md text-xs bg-white text-gray-800 focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] font-mono"
                 >
                   <option value="101">Room 101 (Deluxe King)</option>
                   <option value="103">Room 103 (Executive Double)</option>
@@ -153,7 +153,7 @@ export default function RoomBlockingPage() {
               </div>
 
               <div className="flex items-end">
-                <Button type="submit" className="w-full h-9 text-xs bg-indigo-600 hover:bg-indigo-700 text-white font-semibold">
+                <Button type="submit" className="w-full h-9 text-xs bg-[#5e2b9d] hover:bg-[#4d2282] text-white font-semibold">
                   Confirm Inventory Block
                 </Button>
               </div>

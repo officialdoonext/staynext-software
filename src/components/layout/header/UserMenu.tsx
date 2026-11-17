@@ -55,12 +55,15 @@ export default function UserMenu({ user }: UserMenuProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="flex items-center gap-2.5 p-1 rounded-lg hover:bg-gray-100 transition-colors focus:outline-none">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-600 text-white font-semibold text-xs shadow-sm">
+        <button
+          type="button"
+          className="flex items-center gap-2.5 p-1 rounded-md hover:bg-gray-100 transition-colors focus:outline-none cursor-pointer"
+        >
+          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-[#5e2b9d] text-white font-medium text-xs shadow-xs">
             {initials}
           </div>
           <div className="hidden sm:flex flex-col text-left">
-            <span className="text-xs font-semibold text-gray-900 leading-none">
+            <span className="text-xs font-medium text-gray-900 leading-none">
               {fullName}
             </span>
             <span className="text-[10px] text-gray-500 font-medium mt-0.5">
@@ -69,7 +72,7 @@ export default function UserMenu({ user }: UserMenuProps) {
           </div>
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
+      <DropdownMenuContent align="end" className="w-56 rounded-md">
         <DropdownMenuLabel>
           <div className="flex flex-col space-y-1">
             <p className="text-xs font-medium text-gray-900">{fullName}</p>
@@ -80,25 +83,25 @@ export default function UserMenu({ user }: UserMenuProps) {
         <DropdownMenuItem asChild>
           <Link href="/settings" className="flex items-center gap-2 cursor-pointer">
             <User className="h-4 w-4 text-gray-500" />
-            <span className="text-xs">Profile &amp; Account</span>
+            <span className="text-xs font-medium">Profile &amp; Account</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link href="/properties" className="flex items-center gap-2 cursor-pointer">
             <Hotel className="h-4 w-4 text-gray-500" />
-            <span className="text-xs">Property Settings</span>
+            <span className="text-xs font-medium">Property Settings</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link href="/settings/roles" className="flex items-center gap-2 cursor-pointer">
             <ShieldCheck className="h-4 w-4 text-gray-500" />
-            <span className="text-xs">Roles &amp; Permissions</span>
+            <span className="text-xs font-medium">Roles &amp; Permissions</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link href="/settings" className="flex items-center gap-2 cursor-pointer">
             <Settings className="h-4 w-4 text-gray-500" />
-            <span className="text-xs">System Settings</span>
+            <span className="text-xs font-medium">System Settings</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
@@ -113,4 +116,3 @@ export default function UserMenu({ user }: UserMenuProps) {
     </DropdownMenu>
   )
 }
-

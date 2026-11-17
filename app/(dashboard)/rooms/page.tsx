@@ -96,7 +96,7 @@ export default async function RoomsPage() {
 
       {rooms.length === 0 ? (
         <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center max-w-lg mx-auto my-12 shadow-sm">
-          <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+          <div className="w-12 h-12 bg-[#f7f2fd] text-[#5e2b9d] rounded-md flex items-center justify-center mx-auto mb-4">
             <BedDouble className="h-6 w-6" />
           </div>
           <h3 className="text-base font-bold text-gray-900">No Rooms Added Yet</h3>
@@ -117,7 +117,7 @@ export default async function RoomsPage() {
           {rooms.map((room) => (
             <Card
               key={room.id}
-              className="border-gray-200 hover:border-indigo-400 transition-all cursor-pointer shadow-2xs hover:shadow-sm"
+              className="border-gray-200 hover:border-[#5e2b9d] transition-all cursor-pointer shadow-2xs hover:shadow-sm rounded-md"
             >
               <CardHeader className="p-3 pb-2">
                 <div className="flex items-center justify-between">

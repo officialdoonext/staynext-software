@@ -1,4 +1,4 @@
-import React from 'react'
+﻿import React from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Download, DollarSign, TrendingUp, Calendar, CreditCard } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -53,7 +53,7 @@ export default function RevenueReportsPage() {
         <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-2xs">
           <span className="text-xs font-semibold text-gray-500">Month-to-Date Revenue</span>
           <p className="text-2xl font-bold text-gray-900 mt-1">{formatCurrency(68420)}</p>
-          <p className="text-[11px] text-emerald-600 mt-0.5">↑ 12.4% vs same period last month</p>
+          <p className="text-[11px] text-emerald-600 mt-0.5">â†‘ 12.4% vs same period last month</p>
         </div>
         <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-2xs">
           <span className="text-xs font-semibold text-gray-500">Gross Operating Profit (GOP)</span>
@@ -63,7 +63,7 @@ export default function RevenueReportsPage() {
         <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-2xs">
           <span className="text-xs font-semibold text-gray-500">Ancillary RevPAR</span>
           <p className="text-2xl font-bold text-gray-900 mt-1">{formatCurrency(54.20)}</p>
-          <p className="text-[11px] text-indigo-600 mt-0.5">Non-room spend / guest</p>
+          <p className="text-[11px] text-[#5e2b9d] mt-0.5">Non-room spend / guest</p>
         </div>
         <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-2xs">
           <span className="text-xs font-semibold text-gray-500">OTA Commission Expense</span>
@@ -92,7 +92,7 @@ export default function RevenueReportsPage() {
                 <TableCell className="font-semibold text-gray-900 text-xs">{item.stream}</TableCell>
                 <TableCell className="font-mono text-xs font-bold text-gray-900">{formatCurrency(item.mtd)}</TableCell>
                 <TableCell className="font-mono text-xs text-gray-600">{formatCurrency(item.ytd)}</TableCell>
-                <TableCell className="font-mono text-xs text-indigo-600 font-bold">{item.share}</TableCell>
+                <TableCell className="font-mono text-xs text-[#5e2b9d] font-bold">{item.share}</TableCell>
                 <TableCell className="text-right font-mono text-xs font-bold text-emerald-600">{item.growth}</TableCell>
               </TableRow>
             ))}

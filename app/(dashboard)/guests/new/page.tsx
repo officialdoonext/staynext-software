@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -72,7 +72,7 @@ export default function AddGuestPage() {
         <Card className="border-gray-200 shadow-sm">
           <CardHeader className="pb-3 border-b border-gray-100">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
-              <User className="h-4 w-4 text-indigo-600" />
+              <User className="h-4 w-4 text-[#5e2b9d]" />
               Personal &amp; Contact Information
             </CardTitle>
           </CardHeader>
@@ -144,7 +144,7 @@ export default function AddGuestPage() {
                 name="idType"
                 value={formData.idType}
                 onChange={handleChange}
-                className="w-full h-9 px-3 border border-gray-300 rounded-md text-xs bg-white text-gray-800 focus:outline-none focus:ring-1 focus:ring-indigo-600"
+                className="w-full h-9 px-3 border border-gray-300 rounded-md text-xs bg-white text-gray-800 focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
               >
                 <option value="Passport">Passport</option>
                 <option value="Drivers License">Driver&apos;s License</option>
@@ -169,7 +169,7 @@ export default function AddGuestPage() {
                 name="vipTier"
                 value={formData.vipTier}
                 onChange={handleChange}
-                className="w-full h-9 px-3 border border-gray-300 rounded-md text-xs bg-white text-gray-800 focus:outline-none focus:ring-1 focus:ring-indigo-600"
+                className="w-full h-9 px-3 border border-gray-300 rounded-md text-xs bg-white text-gray-800 focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
               >
                 <option value="Standard">Standard Guest</option>
                 <option value="Gold">Gold VIP</option>
@@ -186,7 +186,7 @@ export default function AddGuestPage() {
                 value={formData.preferences}
                 onChange={handleChange}
                 placeholder="High floor, extra hypoallergenic pillows, late checkout preference..."
-                className="w-full p-2.5 border border-gray-300 rounded-md text-xs bg-white text-gray-800 focus:outline-none focus:ring-1 focus:ring-indigo-600"
+                className="w-full p-2.5 border border-gray-300 rounded-md text-xs bg-white text-gray-800 focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
               />
             </div>
           </CardContent>
@@ -201,7 +201,7 @@ export default function AddGuestPage() {
           <Button
             type="submit"
             disabled={loading}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs h-9 px-6 font-semibold shadow-sm"
+            className="bg-[#5e2b9d] hover:bg-[#4d2282] text-white text-xs h-9 px-6 font-semibold shadow-sm"
           >
             {loading ? 'Saving...' : 'Save Guest Profile'}
           </Button>

@@ -58,7 +58,10 @@ export default function AuthForm({ initialTab = 'signin' }: AuthFormProps) {
   const handleSignupChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
-    setSignupData((prev) => ({ ...prev, [e.target.name]: e.target.value }))
+    setSignupData({
+      ...signupData,
+      [e.target.name]: e.target.value,
+    })
   }
 
   // Handle Sign In Submission
@@ -68,10 +71,13 @@ export default function AuthForm({ initialTab = 'signin' }: AuthFormProps) {
     setLoginLoading(true)
 
     try {
-      const res = await signInTenantAction(loginIdentifier, loginPassword)
+      const res = await signInTenantAction(
+        loginIdentifier.trim(),
+        loginPassword
+      )
 
       if (!res.success) {
-        setLoginError(res.error || 'Invalid credentials. Please verify and try again.')
+        setLoginError(res.error || 'Failed to sign in. Please verify credentials.')
         setLoginLoading(false)
         return
       }
@@ -83,7 +89,7 @@ export default function AuthForm({ initialTab = 'signin' }: AuthFormProps) {
         toast.warning(
           'Account is inactive or subscription expired. Redirecting to onboarding...'
         )
-        router.push('/onboarding')
+        router.push(res.redirectTo || '/onboarding')
       }
       router.refresh()
     } catch (err: any) {
@@ -138,14 +144,14 @@ export default function AuthForm({ initialTab = 'signin' }: AuthFormProps) {
   return (
     <div className="w-full">
       {/* Tab Switcher */}
-      <div className="grid grid-cols-2 p-1 bg-gray-100 rounded-xl mb-6">
+      <div className="grid grid-cols-2 p-1 bg-gray-100 rounded-md mb-6">
         <button
           type="button"
           onClick={() => {
             setActiveTab('signin')
             setLoginError(null)
           }}
-          className={`py-2 text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+          className={`py-2 text-xs font-medium rounded-md transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
             activeTab === 'signin'
               ? 'bg-white text-gray-900 shadow-sm'
               : 'text-gray-500 hover:text-gray-800'
@@ -160,7 +166,7 @@ export default function AuthForm({ initialTab = 'signin' }: AuthFormProps) {
             setActiveTab('signup')
             setSignupError(null)
           }}
-          className={`py-2 text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+          className={`py-2 text-xs font-medium rounded-md transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
             activeTab === 'signup'
               ? 'bg-white text-gray-900 shadow-sm'
               : 'text-gray-500 hover:text-gray-800'
@@ -177,7 +183,7 @@ export default function AuthForm({ initialTab = 'signin' }: AuthFormProps) {
       {activeTab === 'signin' && (
         <form onSubmit={handleSignIn} className="space-y-4">
           {loginError && (
-            <div className="bg-rose-50 border border-rose-200 rounded-lg p-3 text-xs text-rose-700 flex items-start gap-2">
+            <div className="bg-rose-50 border border-rose-200 rounded-md p-3 text-xs text-rose-700 flex items-start gap-2">
               <AlertCircle className="h-4 w-4 shrink-0 text-rose-600 mt-0.5" />
               <span>{loginError}</span>
             </div>
@@ -193,7 +199,7 @@ export default function AuthForm({ initialTab = 'signin' }: AuthFormProps) {
                 required
                 value={loginIdentifier}
                 onChange={(e) => setLoginIdentifier(e.target.value)}
-                className="pl-9 h-10 text-sm"
+                className="pl-9 h-10 text-sm rounded-md"
                 placeholder="manager@hotel.com or username"
               />
             </div>
@@ -204,7 +210,7 @@ export default function AuthForm({ initialTab = 'signin' }: AuthFormProps) {
               <Label htmlFor="loginPassword">Password</Label>
               <Link
                 href="/forgot-password"
-                className="text-xs text-indigo-600 hover:text-indigo-700 font-medium"
+                className="text-xs text-[#5e2b9d] hover:text-[#4d2282] font-medium cursor-pointer"
               >
                 Forgot password?
               </Link>
@@ -217,13 +223,13 @@ export default function AuthForm({ initialTab = 'signin' }: AuthFormProps) {
                 required
                 value={loginPassword}
                 onChange={(e) => setLoginPassword(e.target.value)}
-                className="pl-9 pr-10 h-10 text-sm"
+                className="pl-9 pr-10 h-10 text-sm rounded-md"
                 placeholder="••••••••"
               />
               <button
                 type="button"
                 onClick={() => setShowLoginPassword(!showLoginPassword)}
-                className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600 focus:outline-none"
+                className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600 focus:outline-none cursor-pointer"
               >
                 {showLoginPassword ? (
                   <EyeOff className="h-4 w-4" />
@@ -237,7 +243,7 @@ export default function AuthForm({ initialTab = 'signin' }: AuthFormProps) {
           <Button
             type="submit"
             disabled={loginLoading}
-            className="w-full h-10 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm shadow-sm transition-all"
+            className="w-full h-10 bg-[#5e2b9d] hover:bg-[#4d2282] text-white font-medium text-sm shadow-sm transition-all rounded-md cursor-pointer"
           >
             {loginLoading ? (
               <span className="flex items-center gap-2">
@@ -257,7 +263,7 @@ export default function AuthForm({ initialTab = 'signin' }: AuthFormProps) {
             <button
               type="button"
               onClick={() => setActiveTab('signup')}
-              className="text-indigo-600 hover:underline font-semibold"
+              className="text-[#5e2b9d] hover:underline font-medium cursor-pointer"
             >
               Sign up here
             </button>
@@ -271,7 +277,7 @@ export default function AuthForm({ initialTab = 'signin' }: AuthFormProps) {
       {activeTab === 'signup' && (
         <form onSubmit={handleSignUp} className="space-y-3.5">
           {signupError && (
-            <div className="bg-rose-50 border border-rose-200 rounded-lg p-3 text-xs text-rose-700 flex items-start gap-2">
+            <div className="bg-rose-50 border border-rose-200 rounded-md p-3 text-xs text-rose-700 flex items-start gap-2">
               <AlertCircle className="h-4 w-4 shrink-0 text-rose-600 mt-0.5" />
               <span>{signupError}</span>
             </div>
@@ -289,7 +295,7 @@ export default function AuthForm({ initialTab = 'signin' }: AuthFormProps) {
                 required
                 value={signupData.propertyName}
                 onChange={handleSignupChange}
-                className="pl-9 h-9 text-sm"
+                className="pl-9 h-9 text-sm rounded-md"
                 placeholder="Grand Horizon Hotel & Suites"
               />
             </div>
@@ -308,7 +314,7 @@ export default function AuthForm({ initialTab = 'signin' }: AuthFormProps) {
                   required
                   value={signupData.mobileNumber}
                   onChange={handleSignupChange}
-                  className="pl-9 h-9 text-sm"
+                  className="pl-9 h-9 text-sm rounded-md"
                   placeholder="+91 98765 43210"
                 />
               </div>
@@ -325,7 +331,7 @@ export default function AuthForm({ initialTab = 'signin' }: AuthFormProps) {
                   required
                   value={signupData.username}
                   onChange={handleSignupChange}
-                  className="pl-9 h-9 text-sm"
+                  className="pl-9 h-9 text-sm rounded-md"
                   placeholder="hotel_admin"
                 />
               </div>
@@ -344,7 +350,7 @@ export default function AuthForm({ initialTab = 'signin' }: AuthFormProps) {
                 required
                 value={signupData.email}
                 onChange={handleSignupChange}
-                className="pl-9 h-9 text-sm"
+                className="pl-9 h-9 text-sm rounded-md"
                 placeholder="manager@property.com"
               />
             </div>
@@ -363,13 +369,13 @@ export default function AuthForm({ initialTab = 'signin' }: AuthFormProps) {
                 minLength={6}
                 value={signupData.password}
                 onChange={handleSignupChange}
-                className="pl-9 pr-10 h-9 text-sm"
+                className="pl-9 pr-10 h-9 text-sm rounded-md"
                 placeholder="Minimum 6 characters"
               />
               <button
                 type="button"
                 onClick={() => setShowSignupPassword(!showSignupPassword)}
-                className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600 focus:outline-none"
+                className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600 focus:outline-none cursor-pointer"
               >
                 {showSignupPassword ? (
                   <EyeOff className="h-4 w-4" />
@@ -392,7 +398,7 @@ export default function AuthForm({ initialTab = 'signin' }: AuthFormProps) {
                 required
                 value={signupData.city}
                 onChange={handleSignupChange}
-                className="pl-9 h-9 text-sm"
+                className="pl-9 h-9 text-sm rounded-md"
                 placeholder="e.g. Mumbai, New Delhi, Bengaluru"
               />
             </div>
@@ -408,13 +414,13 @@ export default function AuthForm({ initialTab = 'signin' }: AuthFormProps) {
               required
               value={signupData.address}
               onChange={handleSignupChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] focus:border-[#5e2b9d] resize-none"
               placeholder="Full street address, area / landmark"
             />
           </div>
 
           {/* Policy notice */}
-          <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-lg text-[11px] text-amber-800 flex items-start gap-2">
+          <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-md text-[11px] text-amber-800 flex items-start gap-2">
             <AlertCircle className="h-3.5 w-3.5 text-amber-600 shrink-0 mt-0.5" />
             <span>
               New property accounts are registered with <strong>Inactive</strong> status and an expired trial. Administrator activation is required before software access is granted.
@@ -424,7 +430,7 @@ export default function AuthForm({ initialTab = 'signin' }: AuthFormProps) {
           <Button
             type="submit"
             disabled={signupLoading}
-            className="w-full h-10 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm shadow-sm transition-all"
+            className="w-full h-10 bg-[#5e2b9d] hover:bg-[#4d2282] text-white font-medium text-sm shadow-sm transition-all rounded-md cursor-pointer"
           >
             {signupLoading ? (
               <span className="flex items-center gap-2">
@@ -444,7 +450,7 @@ export default function AuthForm({ initialTab = 'signin' }: AuthFormProps) {
             <button
               type="button"
               onClick={() => setActiveTab('signin')}
-              className="text-indigo-600 hover:underline font-semibold"
+              className="text-[#5e2b9d] hover:underline font-medium cursor-pointer"
             >
               Sign in to your property
             </button>
@@ -454,4 +460,3 @@ export default function AuthForm({ initialTab = 'signin' }: AuthFormProps) {
     </div>
   )
 }
-

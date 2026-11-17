@@ -1,4 +1,4 @@
-import React from 'react'
+﻿import React from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Building2, Save } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -32,7 +32,7 @@ export default function NewPropertyPage() {
         <Card className="border-gray-200 shadow-2xs">
           <CardHeader className="pb-3 border-b border-gray-100">
             <CardTitle className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-              <Building2 className="h-4 w-4 text-indigo-600" />
+              <Building2 className="h-4 w-4 text-[#5e2b9d]" />
               General Property Information
             </CardTitle>
           </CardHeader>
@@ -43,7 +43,7 @@ export default function NewPropertyPage() {
                 <input
                   type="text"
                   placeholder="e.g. Grand Vista Resort &amp; Spa"
-                  className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-600"
+                  className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
                   defaultValue="Ocean Breeze Boutique Hotel"
                   required
                 />
@@ -51,7 +51,7 @@ export default function NewPropertyPage() {
 
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Property Type</label>
-                <select className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-600">
+                <select className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]">
                   <option value="hotel">Boutique / Luxury Hotel</option>
                   <option value="resort">Resort &amp; Spa</option>
                   <option value="lodge">Lodge / Guest House</option>
@@ -65,7 +65,7 @@ export default function NewPropertyPage() {
                 <input
                   type="email"
                   placeholder="frontdesk@property.com"
-                  className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-600"
+                  className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
                   defaultValue="contact@oceanbreeze.com"
                   required
                 />
@@ -76,7 +76,7 @@ export default function NewPropertyPage() {
                 <input
                   type="tel"
                   placeholder="+1 (555) 000-0000"
-                  className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-600"
+                  className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
                   defaultValue="+1 (555) 987-6543"
                   required
                 />
@@ -87,7 +87,7 @@ export default function NewPropertyPage() {
                 <input
                   type="text"
                   placeholder="1200 Coastal Highway, Suite 100"
-                  className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-600"
+                  className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
                   defaultValue="450 Pacific Coast Hwy"
                 />
               </div>
@@ -97,17 +97,17 @@ export default function NewPropertyPage() {
                 <input
                   type="text"
                   placeholder="Santa Monica, CA, United States"
-                  className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-600"
+                  className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
                   defaultValue="Santa Monica, USA"
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Currency</label>
-                <select className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-600">
+                <select className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]">
                   <option value="USD">USD ($) - US Dollar</option>
-                  <option value="EUR">EUR (€) - Euro</option>
-                  <option value="GBP">GBP (£) - British Pound</option>
+                  <option value="EUR">EUR (â‚¬) - Euro</option>
+                  <option value="GBP">GBP (Â£) - British Pound</option>
                   <option value="CAD">CAD ($) - Canadian Dollar</option>
                   <option value="AUD">AUD ($) - Australian Dollar</option>
                 </select>
@@ -130,7 +130,7 @@ export default function NewPropertyPage() {
                 <input
                   type="time"
                   defaultValue="15:00"
-                  className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-600"
+                  className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
                 />
               </div>
               <div>
@@ -138,7 +138,7 @@ export default function NewPropertyPage() {
                 <input
                   type="time"
                   defaultValue="11:00"
-                  className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-600"
+                  className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
                 />
               </div>
               <div>
@@ -146,7 +146,7 @@ export default function NewPropertyPage() {
                 <input
                   type="number"
                   defaultValue="40"
-                  className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-600"
+                  className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
                 />
               </div>
             </div>
@@ -159,7 +159,7 @@ export default function NewPropertyPage() {
               Cancel
             </Button>
           </Link>
-          <Button type="button" className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs h-9">
+          <Button type="button" className="bg-[#5e2b9d] hover:bg-[#4d2282] text-white font-semibold text-xs h-9">
             <Save className="h-4 w-4 mr-1.5" />
             Create Property
           </Button>

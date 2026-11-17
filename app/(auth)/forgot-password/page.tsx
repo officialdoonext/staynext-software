@@ -7,20 +7,20 @@ export const metadata: Metadata = { title: "Forgot Password" }
 
 export default function ForgotPasswordPage() {
   return (
-    <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-8">
+    <div className="bg-white border border-gray-200 rounded-md shadow-sm p-8">
       <div className="text-center mb-8">
         <div className="flex justify-center mb-4">
-          <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center">
+          <div className="w-10 h-10 bg-[#5e2b9d] rounded-md flex items-center justify-center">
             <Building2 className="h-6 w-6 text-white" />
           </div>
         </div>
-        <h1 className="text-2xl font-semibold text-gray-900">Reset your password</h1>
+        <h1 className="text-2xl font-medium text-gray-900">Reset your password</h1>
         <p className="text-gray-500 text-sm mt-1">We&apos;ll send you a reset link</p>
       </div>
       <ForgotPasswordForm />
       <div className="mt-6 text-center text-sm text-gray-500">
         Remember your password?{" "}
-        <Link href="/login" className="text-indigo-600 hover:text-indigo-700 font-medium">
+        <Link href="/login" className="text-[#5e2b9d] hover:text-[#4d2282] font-medium cursor-pointer">
           Sign in
         </Link>
       </div>

@@ -1,4 +1,4 @@
-import React from 'react'
+﻿import React from 'react'
 import Link from 'next/link'
 import { Plus, BedDouble, Users, Sparkles, Check, Edit2, Layers } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -49,7 +49,7 @@ export default async function RoomTypesPage() {
 
       {types.length === 0 ? (
         <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center max-w-lg mx-auto my-12 shadow-sm">
-          <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+          <div className="w-12 h-12 bg-[#f7f2fd] text-[#5e2b9d] rounded-xl flex items-center justify-center mx-auto mb-4">
             <Layers className="h-6 w-6" />
           </div>
           <h3 className="text-base font-bold text-gray-900">No Room Categories Created</h3>
@@ -63,7 +63,7 @@ export default async function RoomTypesPage() {
           {types.map((type) => (
             <div
               key={type.id}
-              className="bg-white border border-gray-200 rounded-xl p-5 shadow-2xs hover:border-indigo-300 transition-all flex flex-col justify-between"
+              className="bg-white border border-gray-200 rounded-xl p-5 shadow-2xs hover:border-[#dfcef6] transition-all flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-start justify-between gap-2 mb-3">

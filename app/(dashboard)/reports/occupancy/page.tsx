@@ -1,4 +1,4 @@
-import React from 'react'
+﻿import React from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Download, BedDouble, Calendar, TrendingUp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -59,7 +59,7 @@ export default function OccupancyReportsPage() {
         <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-2xs">
           <span className="text-xs font-semibold text-gray-500">Average Daily Rate (ADR)</span>
           <p className="text-2xl font-bold text-gray-900 mt-1">{formatCurrency(295)}</p>
-          <p className="text-[11px] text-emerald-600 mt-0.5">↑ 8.2% vs last month</p>
+          <p className="text-[11px] text-emerald-600 mt-0.5">â†‘ 8.2% vs last month</p>
         </div>
         <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-2xs">
           <span className="text-xs font-semibold text-gray-500">RevPAR</span>
@@ -69,7 +69,7 @@ export default function OccupancyReportsPage() {
         <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-2xs">
           <span className="text-xs font-semibold text-gray-500">Projected Weekend</span>
           <p className="text-2xl font-bold text-gray-900 mt-1">94.2%</p>
-          <p className="text-[11px] text-indigo-600 mt-0.5">Near full capacity</p>
+          <p className="text-[11px] text-[#5e2b9d] mt-0.5">Near full capacity</p>
         </div>
       </div>
 
@@ -91,11 +91,11 @@ export default function OccupancyReportsPage() {
               <TableRow key={row.date}>
                 <TableCell className="font-semibold text-gray-900 text-xs">{row.date}</TableCell>
                 <TableCell className="font-mono text-xs">{row.totalRooms} Rooms</TableCell>
-                <TableCell className="font-mono text-xs font-bold text-indigo-600">{row.occupied}</TableCell>
+                <TableCell className="font-mono text-xs font-bold text-[#5e2b9d]">{row.occupied}</TableCell>
                 <TableCell className="font-mono text-xs text-emerald-600">{row.available}</TableCell>
                 <TableCell className="font-mono text-xs font-bold text-gray-900">{row.occupancyRate}</TableCell>
                 <TableCell className="font-mono text-xs font-bold">{formatCurrency(row.adr)}</TableCell>
-                <TableCell className="text-right font-mono text-xs font-bold text-indigo-600">{formatCurrency(row.revpar)}</TableCell>
+                <TableCell className="text-right font-mono text-xs font-bold text-[#5e2b9d]">{formatCurrency(row.revpar)}</TableCell>
               </TableRow>
             ))}
           </TableBody>

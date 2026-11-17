@@ -1,4 +1,4 @@
-import React from 'react'
+﻿import React from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Plus, Shield, User, Key, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -42,7 +42,7 @@ export default function SettingsUsersPage() {
             </p>
           </div>
         </div>
-        <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs h-9 font-semibold">
+        <Button size="sm" className="bg-[#5e2b9d] hover:bg-[#4d2282] text-white text-xs h-9 font-semibold">
           <Plus className="h-4 w-4 mr-1.5" />
           Invite User
         </Button>
@@ -67,7 +67,7 @@ export default function SettingsUsersPage() {
                   <div>{u.name}</div>
                   <div className="text-[11px] text-gray-400 font-normal">{u.email}</div>
                 </TableCell>
-                <TableCell className="text-xs font-semibold text-indigo-600">{u.role}</TableCell>
+                <TableCell className="text-xs font-semibold text-[#5e2b9d]">{u.role}</TableCell>
                 <TableCell className="text-xs text-gray-600">{u.access}</TableCell>
                 <TableCell>
                   <Badge variant={u.twoFactor ? 'success' : 'outline'} className="text-[10px]">
@@ -76,7 +76,7 @@ export default function SettingsUsersPage() {
                 </TableCell>
                 <TableCell className="font-mono text-xs text-gray-500">{u.lastLogin}</TableCell>
                 <TableCell className="text-right">
-                  <Button variant="ghost" size="sm" className="h-8 text-xs text-indigo-600 font-semibold px-2">
+                  <Button variant="ghost" size="sm" className="h-8 text-xs text-[#5e2b9d] font-semibold px-2">
                     Edit Permissions
                   </Button>
                 </TableCell>

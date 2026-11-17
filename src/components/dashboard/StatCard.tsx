@@ -30,8 +30,8 @@ export default function StatCard({
   const content = (
     <div
       className={cn(
-        'bg-white border border-gray-200 rounded-lg p-3.5 sm:p-4 shadow-2xs hover:border-gray-300 transition-all flex flex-col justify-between group min-h-[96px]',
-        href && 'hover:border-indigo-300 hover:shadow-xs cursor-pointer',
+        'bg-white border border-gray-200 rounded-md p-3.5 sm:p-4 shadow-2xs hover:border-gray-300 transition-all flex flex-col justify-between group min-h-[96px]',
+        href && 'hover:border-[#dfcef6] hover:shadow-xs cursor-pointer',
         className
       )}
     >
@@ -46,16 +46,16 @@ export default function StatCard({
         <div
           className={cn(
             'w-7 h-7 sm:w-8 sm:h-8 rounded-md flex items-center justify-center shrink-0 border border-black/5 transition-transform group-hover:scale-105',
-            iconBg || 'bg-indigo-50'
+            iconBg || 'bg-[#f7f2fd]'
           )}
         >
-          <Icon className={cn('h-3.5 w-3.5 sm:h-4 sm:w-4', iconColor || 'text-indigo-600')} />
+          <Icon className={cn('h-3.5 w-3.5 sm:h-4 sm:w-4', iconColor || 'text-[#5e2b9d]')} />
         </div>
       </div>
 
       {/* Main Value Row: Full Width, never colliding with the icon badge */}
       <div className="mt-2.5 w-full">
-        <div className="text-xl sm:text-2xl font-bold tracking-tight text-gray-900 font-mono tabular-nums leading-none">
+        <div className="text-xl sm:text-2xl font-medium tracking-tight text-gray-900 font-mono tabular-nums leading-none">
           {value}
         </div>
 
@@ -71,7 +71,7 @@ export default function StatCard({
           </div>
         )}
         {subtitle && (
-          <p className="text-[11px] text-gray-400 mt-1 truncate">{subtitle}</p>
+          <p className="text-[11px] text-gray-400 mt-1 truncate font-normal">{subtitle}</p>
         )}
       </div>
     </div>
@@ -79,7 +79,7 @@ export default function StatCard({
 
   if (href) {
     return (
-      <Link href={href} className="block focus:outline-none focus:ring-2 focus:ring-indigo-500/20 rounded-lg">
+      <Link href={href} className="block focus:outline-none focus:ring-2 focus:ring-[#5e2b9d]/20 rounded-md cursor-pointer">
         {content}
       </Link>
     )

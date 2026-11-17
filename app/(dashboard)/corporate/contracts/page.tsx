@@ -1,4 +1,4 @@
-import React from 'react'
+﻿import React from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Plus, Download, Briefcase, FileText, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -42,7 +42,7 @@ export default function CorporateContractsPage() {
             </p>
           </div>
         </div>
-        <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs h-9 font-semibold">
+        <Button size="sm" className="bg-[#5e2b9d] hover:bg-[#4d2282] text-white text-xs h-9 font-semibold">
           <Plus className="h-4 w-4 mr-1.5" />
           Draft New Agreement
         </Button>
@@ -64,7 +64,7 @@ export default function CorporateContractsPage() {
           <TableBody>
             {contracts.map((c) => (
               <TableRow key={c.id}>
-                <TableCell className="font-mono text-xs font-bold text-indigo-600">{c.id}</TableCell>
+                <TableCell className="font-mono text-xs font-bold text-[#5e2b9d]">{c.id}</TableCell>
                 <TableCell className="font-semibold text-gray-900 text-xs">
                   <div>{c.company}</div>
                   <div className="text-[11px] text-gray-400 font-normal">{c.contact}</div>
@@ -78,7 +78,7 @@ export default function CorporateContractsPage() {
                   </div>
                   <div className="w-32 bg-gray-100 rounded-full h-1.5 overflow-hidden">
                     <div
-                      className="bg-indigo-600 h-1.5 rounded-full"
+                      className="bg-[#5e2b9d] h-1.5 rounded-full"
                       style={{ width: `${Math.min((c.nightsBooked / c.minNightsYear) * 100, 100)}%` }}
                     />
                   </div>

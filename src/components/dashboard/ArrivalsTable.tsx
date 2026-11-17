@@ -70,8 +70,8 @@ export default function ArrivalsTable({ arrivals }: ArrivalsTableProps) {
         <TableBody>
           {arrivals.map((row) => (
             <TableRow key={row.id}>
-              <TableCell className="font-mono text-xs font-semibold text-indigo-600">
-                <Link href={`/reservations?id=${row.id}`} className="hover:underline">
+              <TableCell className="font-mono text-xs font-medium text-[#5e2b9d]">
+                <Link href={`/reservations?id=${row.id}`} className="hover:underline cursor-pointer">
                   {row.reservation_number}
                 </Link>
               </TableCell>
@@ -149,7 +149,7 @@ export default function ArrivalsTable({ arrivals }: ArrivalsTableProps) {
                   </Button>
                   <Button
                     size="sm"
-                    className="h-8 px-2.5 text-xs bg-indigo-600 hover:bg-indigo-700 text-white"
+                    className="h-8 px-2.5 text-xs bg-[#5e2b9d] hover:bg-[#4d2282] text-white font-medium rounded-md cursor-pointer"
                     onClick={() => handleCheckIn(row.reservation_number)}
                   >
                     <CheckCircle2 className="h-3.5 w-3.5 mr-1" />

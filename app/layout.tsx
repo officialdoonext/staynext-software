@@ -1,6 +1,29 @@
 import type { Metadata } from "next"
+import localFont from "next/font/local"
 import "./globals.css"
 import { Toaster } from "sonner"
+
+const sora = localFont({
+  src: [
+    {
+      path: "../public/fonts/sora-300.ttf",
+      weight: "300",
+      style: "normal",
+    },
+    {
+      path: "../public/fonts/sora-400.ttf",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../public/fonts/sora-500.ttf",
+      weight: "500",
+      style: "normal",
+    },
+  ],
+  variable: "--font-sora",
+  display: "swap",
+})
 
 export const metadata: Metadata = {
   title: { default: "StayNext - Hotel Management", template: "%s | StayNext" },
@@ -9,12 +32,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="h-full">
-      <body className="h-full bg-gray-50 font-sans antialiased">
+    <html lang="en" className={`h-full ${sora.variable}`}>
+      <body className={`h-full bg-gray-50 font-sans antialiased ${sora.className}`}>
         {children}
         <Toaster position="top-right" richColors />
       </body>
     </html>
   )
 }
-

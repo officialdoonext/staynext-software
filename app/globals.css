@@ -1,13 +1,225 @@
+@font-face {
+  font-family: 'Sora';
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url('/fonts/sora-300.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Sora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/sora-400.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Sora';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/sora-500.ttf') format('truetype');
+}
+
 @import "tailwindcss";
 
+@theme {
+  --font-sans: 'Sora', var(--font-sora), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-serif: 'Sora', var(--font-sora), serif;
+
+  /* Primary Brand Color: #5e2b9d */
+  --color-primary: #5e2b9d;
+  --color-primary-hover: #4d2282;
+  --color-primary-active: #3d1a68;
+  --color-primary-light: #f7f2fd;
+  --color-brand: #5e2b9d;
+
+  /* Remap indigo palette to the user's primary #5e2b9d spectrum */
+  --color-indigo-50: #f7f2fd;
+  --color-indigo-100: #eee4fa;
+  --color-indigo-200: #dfcef6;
+  --color-indigo-300: #c6a8ef;
+  --color-indigo-400: #a779e4;
+  --color-indigo-500: #7e3ec2;
+  --color-indigo-600: #5e2b9d;
+  --color-indigo-700: #4d2282;
+  --color-indigo-800: #3d1a68;
+  --color-indigo-900: #2e134f;
+  --color-indigo-950: #1b0a30;
+
+  /* Border radius capped at max 6px */
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 6px;
+  --radius-xl: 6px;
+  --radius-2xl: 6px;
+  --radius-3xl: 6px;
+  --radius-4xl: 6px;
+  --radius-full: 6px;
+
+  /* Font weights capped at 500 */
+  --font-weight-semibold: 500;
+  --font-weight-bold: 500;
+  --font-weight-extrabold: 500;
+  --font-weight-black: 500;
+}
+
 :root {
-  --font-inter: 'Inter', system-ui, sans-serif;
+  --primary: #5e2b9d;
+  --primary-hover: #4d2282;
+  --primary-light: #f7f2fd;
+  --brand: #5e2b9d;
+  --font-sora: 'Sora', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
-* {
+/* 1. TYPOGRAPHY: Sora font family for each and every text */
+*, *::before, *::after {
   box-sizing: border-box;
+  font-family: 'Sora', var(--font-sora), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
 }
 
-body {
-  font-family: var(--font-inter);
+html, body {
+  font-family: 'Sora', var(--font-sora), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  font-weight: 400;
+}
+
+/* 2. MAXIMUM FONT WEIGHT: Max 500 only across all headings, bold classes and elements */
+b, strong, th, h1, h2, h3, h4, h5, h6,
+.font-semibold, .font-bold, .font-extrabold, .font-black,
+[class*="font-semibold"], [class*="font-bold"], [class*="font-extrabold"], [class*="font-black"],
+*[style*="font-weight: 600"], *[style*="font-weight:600"],
+*[style*="font-weight: 700"], *[style*="font-weight:700"],
+*[style*="font-weight: 800"], *[style*="font-weight:800"],
+*[style*="font-weight: 900"], *[style*="font-weight:900"],
+*[style*="font-weight: bold"], *[style*="font-weight:bold"] {
+  font-weight: 500 !important;
+}
+
+/* 3. INTERACTIVE CURSOR POINTER: Buttons, accordions, dropdowns, anchors & interactive elements */
+button,
+[role="button"],
+a,
+[role="link"],
+input[type="submit"],
+input[type="button"],
+input[type="reset"],
+input[type="checkbox"],
+input[type="radio"],
+select,
+summary,
+[role="tab"],
+[role="menuitem"],
+[role="menuitemcheckbox"],
+[role="menuitemradio"],
+[role="option"],
+[role="switch"],
+[data-state],
+[data-radix-collection-item],
+[data-slot="trigger"],
+[data-slot="item"],
+[data-radix-collapsible-trigger],
+[data-radix-accordion-trigger],
+.cursor-pointer {
+  cursor: pointer !important;
+}
+
+button:disabled,
+[role="button"]:disabled,
+input:disabled,
+select:disabled,
+[aria-disabled="true"] {
+  cursor: not-allowed !important;
+}
+
+/* 4. BORDER RADIUS: Maximum of 6px wherever it is there */
+.rounded,
+.rounded-md,
+.rounded-lg,
+.rounded-xl,
+.rounded-2xl,
+.rounded-3xl,
+.rounded-full,
+[class*="rounded-md"],
+[class*="rounded-lg"],
+[class*="rounded-xl"],
+[class*="rounded-2xl"],
+[class*="rounded-3xl"],
+[class*="rounded-full"] {
+  border-radius: 6px !important;
+}
+
+button,
+input,
+select,
+textarea,
+[role="dialog"],
+[role="menu"],
+[role="listbox"],
+[role="tooltip"],
+[role="alertdialog"],
+.card,
+[class*="card"] {
+  border-radius: 6px !important;
+}
+
+.rounded-none {
+  border-radius: 0px !important;
+}
+
+.rounded-xs {
+  border-radius: 2px !important;
+}
+
+.rounded-sm {
+  border-radius: 4px !important;
+}
+
+/* 5. PRIMARY COLOR ENFORCEMENT & UTILITIES (#5e2b9d) */
+.bg-primary,
+.bg-indigo-600, [class*="bg-indigo-600"],
+.bg-indigo-700, [class*="bg-indigo-700"] {
+  background-color: #5e2b9d !important;
+}
+.hover\:bg-primary-hover:hover,
+.hover\:bg-indigo-700:hover, [class*="hover:bg-indigo-700"]:hover,
+.hover\:bg-indigo-800:hover, [class*="hover:bg-indigo-800"]:hover {
+  background-color: #4d2282 !important;
+}
+.active\:bg-indigo-800:active, [class*="active:bg-indigo-800"]:active {
+  background-color: #3d1a68 !important;
+}
+.text-primary,
+.text-indigo-600, [class*="text-indigo-600"],
+.text-indigo-700, [class*="text-indigo-700"] {
+  color: #5e2b9d !important;
+}
+.hover\:text-indigo-600:hover, [class*="hover:text-indigo-600"]:hover,
+.hover\:text-indigo-700:hover, [class*="hover:text-indigo-700"]:hover,
+.hover\:text-indigo-800:hover, [class*="hover:text-indigo-800"]:hover {
+  color: #4d2282 !important;
+}
+.border-primary,
+.border-indigo-600, [class*="border-indigo-600"] {
+  border-color: #5e2b9d !important;
+}
+.border-indigo-200, [class*="border-indigo-200"],
+.border-indigo-100, [class*="border-indigo-100"],
+.hover\:border-indigo-200:hover,
+.hover\:border-indigo-300:hover {
+  border-color: #dfcef6 !important;
+}
+.bg-indigo-50, [class*="bg-indigo-50"],
+.bg-indigo-100, [class*="bg-indigo-100"],
+.hover\:bg-indigo-50:hover, [class*="hover:bg-indigo-50"]:hover {
+  background-color: #f7f2fd !important;
+}
+.ring-primary,
+.ring-indigo-600, [class*="ring-indigo-600"],
+.focus\:ring-indigo-600:focus,
+.focus-visible\:ring-indigo-600:focus-visible,
+.focus\:ring-indigo-500:focus,
+.focus-visible\:ring-indigo-500:focus-visible {
+  --tw-ring-color: #5e2b9d !important;
 }

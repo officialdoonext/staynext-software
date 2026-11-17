@@ -27,7 +27,7 @@ export default function QuickActions() {
     <div className="flex items-center gap-2">
       {/* Primary Action Button */}
       <Link href="/reservations/new">
-        <Button className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm h-9 text-xs font-semibold">
+        <Button className="bg-[#5e2b9d] hover:bg-[#4d2282] text-white shadow-sm h-9 text-xs font-medium cursor-pointer rounded-md">
           <CalendarPlus className="h-4 w-4 mr-1.5" />
           <span>New Reservation</span>
         </Button>
@@ -36,44 +36,43 @@ export default function QuickActions() {
       {/* Quick Actions Dropdown */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" className="h-9 text-xs font-medium border-gray-300">
+          <Button variant="outline" className="h-9 text-xs font-medium border-gray-300 rounded-md cursor-pointer">
             <span>Quick Actions</span>
             <ChevronDown className="h-3.5 w-3.5 ml-1 text-gray-500" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56">
-          <DropdownMenuLabel>Front Desk Operations</DropdownMenuLabel>
+        <DropdownMenuContent align="end" className="w-56 rounded-md">
+          <DropdownMenuLabel className="font-medium">Front Desk Operations</DropdownMenuLabel>
           <DropdownMenuItem asChild>
             <Link href="/front-desk" className="flex items-center gap-2 cursor-pointer">
               <DoorOpen className="h-4 w-4 text-emerald-600" />
-              <span className="text-xs">Walk-in Check-in</span>
+              <span className="text-xs font-medium">Walk-in Check-in</span>
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
             <Link href="/front-desk" className="flex items-center gap-2 cursor-pointer">
-              <DoorClosed className="h-4 w-4 text-blue-600" />
-              <span className="text-xs">Process Check-out</span>
+              <DoorClosed className="h-4 w-4 text-[#7e3ec2]" />
+              <span className="text-xs font-medium">Process Check-out</span>
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
             <Link href="/guests/new" className="flex items-center gap-2 cursor-pointer">
-              <UserPlus className="h-4 w-4 text-indigo-600" />
-              <span className="text-xs">Register New Guest</span>
+              <UserPlus className="h-4 w-4 text-[#5e2b9d]" />
+              <span className="text-xs font-medium">Register New Guest</span>
             </Link>
           </DropdownMenuItem>
-
           <DropdownMenuSeparator />
-          <DropdownMenuLabel>Hotel Operations</DropdownMenuLabel>
+          <DropdownMenuLabel className="font-medium">Billing &amp; Maintenance</DropdownMenuLabel>
           <DropdownMenuItem asChild>
-            <Link href="/expenses/new" className="flex items-center gap-2 cursor-pointer">
-              <Receipt className="h-4 w-4 text-amber-600" />
-              <span className="text-xs">Record Expense</span>
+            <Link href="/billing" className="flex items-center gap-2 cursor-pointer">
+              <Receipt className="h-4 w-4 text-[#5e2b9d]" />
+              <span className="text-xs font-medium">Generate Folio</span>
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
             <Link href="/maintenance/new" className="flex items-center gap-2 cursor-pointer">
-              <Wrench className="h-4 w-4 text-rose-600" />
-              <span className="text-xs">Log Maintenance Work Order</span>
+              <Wrench className="h-4 w-4 text-amber-600" />
+              <span className="text-xs font-medium">Log Work Order</span>
             </Link>
           </DropdownMenuItem>
         </DropdownMenuContent>
@@ -81,4 +80,3 @@ export default function QuickActions() {
     </div>
   )
 }
-

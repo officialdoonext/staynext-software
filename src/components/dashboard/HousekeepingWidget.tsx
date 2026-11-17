@@ -2,40 +2,33 @@
 
 import React from 'react'
 import Link from 'next/link'
-import { Sparkles, Clock, CheckCircle2, Search, ArrowRight, UserCheck } from 'lucide-react'
-
-interface HousekeepingData {
-  requiresCleaning: number
-  inProgress: number
-  completed: number
-  awaitingInspection: number
-  assignedStaffCount?: number
-}
+import { CheckCircle2, Clock, AlertTriangle, Search, UserCheck, ArrowRight } from 'lucide-react'
+import type { HousekeepingOverview } from '@/services/dashboard.service'
 
 interface HousekeepingWidgetProps {
-  data: HousekeepingData
+  data: HousekeepingOverview
 }
 
 export default function HousekeepingWidget({ data }: HousekeepingWidgetProps) {
   const items = [
     {
-      title: 'Requires Cleaning',
+      title: 'Dirty Rooms',
       value: data.requiresCleaning,
-      icon: Sparkles,
-      iconBg: 'bg-amber-50',
-      iconColor: 'text-amber-600',
+      icon: AlertTriangle,
+      iconBg: 'bg-rose-50',
+      iconColor: 'text-rose-600',
       href: '/housekeeping?status=pending',
     },
     {
-      title: 'Cleaning in Progress',
+      title: 'In Progress Cleaning',
       value: data.inProgress,
       icon: Clock,
-      iconBg: 'bg-cyan-50',
-      iconColor: 'text-cyan-600',
+      iconBg: 'bg-amber-50',
+      iconColor: 'text-amber-600',
       href: '/housekeeping?status=in_progress',
     },
     {
-      title: 'Cleaning Completed',
+      title: 'Clean & Inspected',
       value: data.completed,
       icon: CheckCircle2,
       iconBg: 'bg-emerald-50',
@@ -46,8 +39,8 @@ export default function HousekeepingWidget({ data }: HousekeepingWidgetProps) {
       title: 'Awaiting Inspection',
       value: data.awaitingInspection,
       icon: Search,
-      iconBg: 'bg-indigo-50',
-      iconColor: 'text-indigo-600',
+      iconBg: 'bg-[#f7f2fd]',
+      iconColor: 'text-[#5e2b9d]',
       href: '/housekeeping?status=inspected',
     },
   ]
@@ -61,14 +54,14 @@ export default function HousekeepingWidget({ data }: HousekeepingWidgetProps) {
             <Link
               key={item.title}
               href={item.href}
-              className="flex items-center gap-3 p-3 rounded-lg border border-gray-100 bg-gray-50/60 hover:bg-white hover:border-indigo-200 transition-all shadow-2xs group"
+              className="flex items-center gap-3 p-3 rounded-md border border-gray-100 bg-gray-50/60 hover:bg-white hover:border-[#dfcef6] transition-all shadow-2xs group cursor-pointer"
             >
               <div className={`p-2 rounded-md ${item.iconBg} shrink-0`}>
                 <Icon className={`h-4 w-4 ${item.iconColor}`} />
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-[11px] text-gray-500 font-medium truncate">{item.title}</p>
-                <p className="text-lg font-bold text-gray-900 group-hover:text-indigo-600 mt-0.5">
+                <p className="text-lg font-medium text-gray-900 group-hover:text-[#5e2b9d] mt-0.5">
                   {item.value}
                 </p>
               </div>
@@ -79,12 +72,12 @@ export default function HousekeepingWidget({ data }: HousekeepingWidgetProps) {
 
       <div className="flex items-center justify-between pt-2 border-t border-gray-100 text-xs">
         <div className="flex items-center gap-1.5 text-gray-500 font-medium">
-          <UserCheck className="h-4 w-4 text-indigo-600" />
+          <UserCheck className="h-4 w-4 text-[#5e2b9d]" />
           <span>Active Housekeepers on Duty: <strong className="text-gray-900">{data.assignedStaffCount ?? 4}</strong></span>
         </div>
         <Link
           href="/housekeeping"
-          className="flex items-center gap-1 text-indigo-600 font-semibold hover:text-indigo-800"
+          className="flex items-center gap-1 text-[#5e2b9d] font-medium hover:text-[#4d2282] cursor-pointer"
         >
           <span>Housekeeping Board</span>
           <ArrowRight className="h-3 w-3" />
@@ -93,4 +86,3 @@ export default function HousekeepingWidget({ data }: HousekeepingWidgetProps) {
     </div>
   )
 }
-

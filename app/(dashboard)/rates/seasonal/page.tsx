@@ -1,4 +1,4 @@
-import React from 'react'
+﻿import React from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Plus, Calendar, Tag, Percent } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -7,10 +7,10 @@ import { Badge } from '@/components/ui/badge'
 export const metadata = { title: 'Seasonal & Holiday Pricing | StayNext' }
 
 const seasons = [
-  { id: 'sea-1', name: 'Winter Holiday Peak', dateRange: 'Dec 20, 2026 – Jan 05, 2027', adjustment: '+45%', minStay: '3 Nights', appliesTo: 'All Room Types', status: 'upcoming' },
-  { id: 'sea-2', name: 'Valentine Romantic Weekend', dateRange: 'Feb 12, 2027 – Feb 15, 2027', adjustment: '+25%', minStay: '2 Nights', appliesTo: 'Suites & Villas Only', status: 'upcoming' },
-  { id: 'sea-3', name: 'Spring Low Season Promo', dateRange: 'Mar 01, 2027 – Apr 15, 2027', adjustment: '-15%', minStay: '1 Night', appliesTo: 'Standard & Deluxe', status: 'active' },
-  { id: 'sea-4', name: 'Summer High Season', dateRange: 'Jun 15, 2027 – Aug 31, 2027', adjustment: '+35%', minStay: '2 Nights', appliesTo: 'All Room Types', status: 'upcoming' },
+  { id: 'sea-1', name: 'Winter Holiday Peak', dateRange: 'Dec 20, 2026 â€“ Jan 05, 2027', adjustment: '+45%', minStay: '3 Nights', appliesTo: 'All Room Types', status: 'upcoming' },
+  { id: 'sea-2', name: 'Valentine Romantic Weekend', dateRange: 'Feb 12, 2027 â€“ Feb 15, 2027', adjustment: '+25%', minStay: '2 Nights', appliesTo: 'Suites & Villas Only', status: 'upcoming' },
+  { id: 'sea-3', name: 'Spring Low Season Promo', dateRange: 'Mar 01, 2027 â€“ Apr 15, 2027', adjustment: '-15%', minStay: '1 Night', appliesTo: 'Standard & Deluxe', status: 'active' },
+  { id: 'sea-4', name: 'Summer High Season', dateRange: 'Jun 15, 2027 â€“ Aug 31, 2027', adjustment: '+35%', minStay: '2 Nights', appliesTo: 'All Room Types', status: 'upcoming' },
 ]
 
 export default function SeasonalRatesPage() {
@@ -33,7 +33,7 @@ export default function SeasonalRatesPage() {
             </p>
           </div>
         </div>
-        <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs h-9 font-semibold">
+        <Button size="sm" className="bg-[#5e2b9d] hover:bg-[#4d2282] text-white text-xs h-9 font-semibold">
           <Plus className="h-4 w-4 mr-1.5" />
           Add Seasonal Rule
         </Button>
@@ -51,7 +51,7 @@ export default function SeasonalRatesPage() {
                     <span>{rule.dateRange}</span>
                   </div>
                 </div>
-                <span className={`text-lg font-mono font-bold ${rule.adjustment.startsWith('+') ? 'text-indigo-600' : 'text-emerald-600'}`}>
+                <span className={`text-lg font-mono font-bold ${rule.adjustment.startsWith('+') ? 'text-[#5e2b9d]' : 'text-emerald-600'}`}>
                   {rule.adjustment}
                 </span>
               </div>
@@ -72,7 +72,7 @@ export default function SeasonalRatesPage() {
               <Badge variant={rule.status === 'active' ? 'success' : 'purple'} className="text-[10px]">
                 {rule.status === 'active' ? 'Currently Active' : 'Scheduled'}
               </Badge>
-              <Button variant="ghost" size="sm" className="h-8 text-xs text-indigo-600 hover:text-indigo-800 font-semibold px-2">
+              <Button variant="ghost" size="sm" className="h-8 text-xs text-[#5e2b9d] hover:text-[#4d2282] font-semibold px-2">
                 Configure Rule
               </Button>
             </div>

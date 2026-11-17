@@ -1,4 +1,4 @@
-import React from 'react'
+﻿import React from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Plus, Calendar, Clock, User, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -34,7 +34,7 @@ export default function HousekeepingSchedulePage() {
             </p>
           </div>
         </div>
-        <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs h-9 font-semibold">
+        <Button size="sm" className="bg-[#5e2b9d] hover:bg-[#4d2282] text-white text-xs h-9 font-semibold">
           <Plus className="h-4 w-4 mr-1.5" />
           Assign Shift
         </Button>
@@ -48,7 +48,7 @@ export default function HousekeepingSchedulePage() {
               <div className="flex items-start justify-between">
                 <div>
                   <h3 className="text-base font-bold text-gray-900">{item.staff}</h3>
-                  <p className="text-xs text-indigo-600 font-medium">{item.role}</p>
+                  <p className="text-xs text-[#5e2b9d] font-medium">{item.role}</p>
                 </div>
                 <Badge variant={item.status === 'on_shift' ? 'success' : 'outline'} className="text-[10px]">
                   {item.status === 'on_shift' ? 'Active on Floor' : 'Upcoming'}
@@ -73,7 +73,7 @@ export default function HousekeepingSchedulePage() {
               </span>
               <div className="w-24 bg-gray-100 rounded-full h-2 overflow-hidden">
                 <div
-                  className="bg-indigo-600 h-2 rounded-full"
+                  className="bg-[#5e2b9d] h-2 rounded-full"
                   style={{ width: `${item.assignedRooms ? (item.completed / item.assignedRooms) * 100 : 0}%` }}
                 />
               </div>

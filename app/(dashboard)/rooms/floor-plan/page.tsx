@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import React, { useState } from 'react'
 import Link from 'next/link'
@@ -57,7 +57,7 @@ export default function FloorPlanPage() {
       case 'available':
         return <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">Available</span>
       case 'occupied':
-        return <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">Occupied</span>
+        return <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-[#4d2282] bg-[#f7f2fd] px-2 py-0.5 rounded border border-[#dfcef6]">Occupied</span>
       case 'reserved':
         return <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-purple-700 bg-purple-50 px-2 py-0.5 rounded border border-purple-200">Reserved</span>
       case 'dirty':
@@ -100,7 +100,7 @@ export default function FloorPlanPage() {
               onClick={() => setSelectedFloor(f.floor)}
               className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
                 selectedFloor === f.floor
-                  ? 'bg-indigo-600 text-white shadow-2xs'
+                  ? 'bg-[#5e2b9d] text-white shadow-2xs'
                   : 'text-gray-600 hover:bg-gray-100'
               }`}
             >
@@ -117,7 +117,7 @@ export default function FloorPlanPage() {
           <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> Available
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-indigo-500" /> Occupied
+          <span className="w-2.5 h-2.5 rounded-full bg-[#7e3ec2]" /> Occupied
         </span>
         <span className="flex items-center gap-1.5">
           <span className="w-2.5 h-2.5 rounded-full bg-purple-500" /> Reserved
@@ -151,7 +151,7 @@ export default function FloorPlanPage() {
               key={room.number}
               className={`p-4 rounded-lg border transition-all bg-white shadow-2xs hover:shadow-xs ${
                 room.status === 'occupied'
-                  ? 'border-indigo-200'
+                  ? 'border-[#dfcef6]'
                   : room.status === 'available'
                   ? 'border-emerald-200'
                   : room.status === 'dirty'
@@ -173,7 +173,7 @@ export default function FloorPlanPage() {
                 <div>
                   <span className="text-[10px] text-gray-400 uppercase font-semibold">Guest</span>
                   <p className="font-semibold text-gray-800 truncate max-w-[120px]">
-                    {room.guest || '— None —'}
+                    {room.guest || 'â€” None â€”'}
                   </p>
                 </div>
                 <div className="text-right">

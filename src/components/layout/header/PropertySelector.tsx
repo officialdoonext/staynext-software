@@ -73,9 +73,12 @@ export default function PropertySelector() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-1 focus:ring-indigo-600">
-          <Building2 className="h-3.5 w-3.5 text-indigo-600 shrink-0" />
-          <span className="max-w-[130px] sm:max-w-[180px] truncate text-left">
+        <button
+          type="button"
+          className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-50 border border-gray-200 rounded-md hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
+        >
+          <Building2 className="h-3.5 w-3.5 text-[#5e2b9d] shrink-0" />
+          <span className="max-w-[130px] sm:max-w-[180px] truncate text-left font-medium">
             {selected.name}
           </span>
           {properties.length > 1 && (
@@ -84,30 +87,30 @@ export default function PropertySelector() {
         </button>
       </DropdownMenuTrigger>
       {properties.length > 1 && (
-        <DropdownMenuContent align="start" className="w-64">
-          <DropdownMenuLabel>Select Active Property</DropdownMenuLabel>
+        <DropdownMenuContent align="start" className="w-64 rounded-md">
+          <DropdownMenuLabel className="font-medium">Select Active Property</DropdownMenuLabel>
           <DropdownMenuSeparator />
           {properties.map((property) => (
             <DropdownMenuItem
               key={property.id}
               onClick={() => setSelected(property)}
-              className="flex items-center justify-between py-2 cursor-pointer"
+              className="flex items-center justify-between py-2 cursor-pointer rounded-sm"
             >
               <div className="flex flex-col">
                 <span
                   className={cn(
                     'text-xs font-medium',
                     selected.id === property.id
-                      ? 'text-indigo-600 font-semibold'
+                      ? 'text-[#5e2b9d]'
                       : 'text-gray-800'
                   )}
                 >
                   {property.name}
                 </span>
-                <span className="text-[10px] text-gray-400">{property.type}</span>
+                <span className="text-[10px] text-gray-400 font-normal">{property.type}</span>
               </div>
               {selected.id === property.id && (
-                <Check className="h-3.5 w-3.5 text-indigo-600 shrink-0" />
+                <Check className="h-3.5 w-3.5 text-[#5e2b9d] shrink-0" />
               )}
             </DropdownMenuItem>
           ))}

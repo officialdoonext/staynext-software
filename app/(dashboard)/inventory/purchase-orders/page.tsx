@@ -1,4 +1,4 @@
-import React from 'react'
+﻿import React from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Plus, Download, Package, Truck, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -42,7 +42,7 @@ export default function PurchaseOrdersPage() {
             </p>
           </div>
         </div>
-        <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs h-9 font-semibold">
+        <Button size="sm" className="bg-[#5e2b9d] hover:bg-[#4d2282] text-white text-xs h-9 font-semibold">
           <Plus className="h-4 w-4 mr-1.5" />
           Create Purchase Order
         </Button>
@@ -64,7 +64,7 @@ export default function PurchaseOrdersPage() {
           <TableBody>
             {orders.map((po) => (
               <TableRow key={po.id}>
-                <TableCell className="font-mono text-xs font-bold text-indigo-600">{po.id}</TableCell>
+                <TableCell className="font-mono text-xs font-bold text-[#5e2b9d]">{po.id}</TableCell>
                 <TableCell className="font-mono text-xs">{po.date}</TableCell>
                 <TableCell className="font-semibold text-gray-900 text-xs">{po.supplier}</TableCell>
                 <TableCell className="text-xs text-gray-600 max-w-xs truncate">{po.items}</TableCell>

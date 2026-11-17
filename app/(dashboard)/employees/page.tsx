@@ -1,4 +1,4 @@
-import React from 'react'
+﻿import React from 'react'
 import { UserCog, Plus, ShieldCheck, Mail, Phone, CalendarCheck, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -52,7 +52,7 @@ export default async function EmployeesPage() {
         </div>
         <div className="flex items-center gap-2">
           <Link href="/employees/new">
-            <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs h-9 font-semibold">
+            <Button size="sm" className="bg-[#5e2b9d] hover:bg-[#4d2282] text-white text-xs h-9 font-semibold">
               <Plus className="h-4 w-4 mr-1.5" />
               Add Staff Member
             </Button>
@@ -62,7 +62,7 @@ export default async function EmployeesPage() {
 
       {employees.length === 0 ? (
         <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center max-w-lg mx-auto my-12 shadow-sm">
-          <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+          <div className="w-12 h-12 bg-[#f7f2fd] text-[#5e2b9d] rounded-xl flex items-center justify-center mx-auto mb-4">
             <Users className="h-6 w-6" />
           </div>
           <h3 className="text-base font-bold text-gray-900">No Employees Registered</h3>
@@ -71,7 +71,7 @@ export default async function EmployeesPage() {
           </p>
           <div className="mt-6">
             <Link href="/employees/new">
-              <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium">
+              <Button size="sm" className="bg-[#5e2b9d] hover:bg-[#4d2282] text-white font-medium">
                 <Plus className="h-4 w-4 mr-1.5" />
                 Add First Staff Member
               </Button>
@@ -95,7 +95,7 @@ export default async function EmployeesPage() {
                 <TableRow key={emp.id}>
                   <TableCell>
                     <div className="flex items-center gap-2.5">
-                      <div className="h-8 w-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-xs">
+                      <div className="h-8 w-8 rounded-full bg-[#f7f2fd] text-[#5e2b9d] flex items-center justify-center font-bold text-xs">
                         {emp.name[0]}
                       </div>
                       <div>

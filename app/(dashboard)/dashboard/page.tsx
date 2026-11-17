@@ -74,9 +74,9 @@ export default async function DashboardPage() {
 
   // Room status data formatted for the donut chart
   const occupancyChartData = [
-    { name: 'Occupied', value: stats.occupiedRooms, color: '#4f46e5' },
+    { name: 'Occupied', value: stats.occupiedRooms, color: '#5e2b9d' },
     { name: 'Available', value: stats.availableRooms, color: '#10b981' },
-    { name: 'Reserved', value: stats.reservedRooms, color: '#8b5cf6' },
+    { name: 'Reserved', value: stats.reservedRooms, color: '#7e3ec2' },
     { name: 'Dirty / Cleaning', value: stats.dirtyRooms + stats.cleaningRooms, color: '#f59e0b' },
     { name: 'Maintenance', value: stats.maintenanceRooms + stats.outOfOrderRooms, color: '#ef4444' },
   ]
@@ -99,10 +99,10 @@ export default async function DashboardPage() {
       {/* 2. Booking Statistics Cards */}
       <section className="space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-xs font-bold uppercase tracking-wider text-gray-500">
+          <h2 className="text-xs font-medium uppercase tracking-wider text-gray-500">
             Reservation Metrics
           </h2>
-          <Link href="/reservations" className="text-xs font-semibold text-indigo-600 hover:text-indigo-800">
+          <Link href="/reservations" className="text-xs font-medium text-[#5e2b9d] hover:text-[#4d2282]">
             View All Reservations &rarr;
           </Link>
         </div>
@@ -112,8 +112,8 @@ export default async function DashboardPage() {
             title="Total Reservations"
             value={stats.totalReservations}
             icon={Calendar}
-            iconColor="text-indigo-600"
-            iconBg="bg-indigo-50"
+            iconColor="text-[#5e2b9d]"
+            iconBg="bg-[#f7f2fd]"
             href="/reservations"
           />
           <StatCard
@@ -128,8 +128,8 @@ export default async function DashboardPage() {
             title="Today's Check-outs"
             value={stats.todayCheckOuts}
             icon={DoorClosed}
-            iconColor="text-blue-600"
-            iconBg="bg-blue-50"
+            iconColor="text-[#7e3ec2]"
+            iconBg="bg-[#f7f2fd]"
             href="/front-desk"
           />
           <StatCard
@@ -162,10 +162,10 @@ export default async function DashboardPage() {
       {/* 3. Room Inventory & Availability Cards */}
       <section className="space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-xs font-bold uppercase tracking-wider text-gray-500">
+          <h2 className="text-xs font-medium uppercase tracking-wider text-gray-500">
             Room Inventory Status
           </h2>
-          <Link href="/rooms" className="text-xs font-semibold text-indigo-600 hover:text-indigo-800">
+          <Link href="/rooms" className="text-xs font-medium text-[#5e2b9d] hover:text-[#4d2282]">
             Room Management &rarr;
           </Link>
         </div>
@@ -191,16 +191,16 @@ export default async function DashboardPage() {
             title="Occupied"
             value={stats.occupiedRooms}
             icon={Users}
-            iconColor="text-indigo-600"
-            iconBg="bg-indigo-50"
+            iconColor="text-[#5e2b9d]"
+            iconBg="bg-[#f7f2fd]"
             href="/rooms?status=occupied"
           />
           <StatCard
             title="Reserved"
             value={stats.reservedRooms}
             icon={Hotel}
-            iconColor="text-purple-600"
-            iconBg="bg-purple-50"
+            iconColor="text-[#7e3ec2]"
+            iconBg="bg-[#f7f2fd]"
             href="/rooms?status=reserved"
           />
           <StatCard
@@ -241,10 +241,10 @@ export default async function DashboardPage() {
       {/* 4. Financial Statistics Cards */}
       <section className="space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-xs font-bold uppercase tracking-wider text-gray-500">
+          <h2 className="text-xs font-medium uppercase tracking-wider text-gray-500">
             Financial Ledger &amp; Revenue
           </h2>
-          <Link href="/billing" className="text-xs font-semibold text-indigo-600 hover:text-indigo-800">
+          <Link href="/billing" className="text-xs font-medium text-[#5e2b9d] hover:text-[#4d2282]">
             Billing &amp; Payments &rarr;
           </Link>
         </div>
@@ -262,16 +262,16 @@ export default async function DashboardPage() {
             title="Monthly Revenue"
             value={formatCurrency(stats.monthlyRevenue)}
             icon={TrendingUp}
-            iconColor="text-indigo-600"
-            iconBg="bg-indigo-50"
+            iconColor="text-[#5e2b9d]"
+            iconBg="bg-[#f7f2fd]"
             href="/reports/revenue"
           />
           <StatCard
             title="Payments Received"
             value={formatCurrency(stats.totalPaymentsReceived)}
             icon={CreditCard}
-            iconColor="text-blue-600"
-            iconBg="bg-blue-50"
+            iconColor="text-[#7e3ec2]"
+            iconBg="bg-[#f7f2fd]"
             href="/billing/payments"
           />
           <StatCard
@@ -310,7 +310,7 @@ export default async function DashboardPage() {
               <h3 className="text-sm font-semibold text-gray-900">Revenue &amp; Expense Velocity</h3>
               <p className="text-xs text-gray-500 mt-0.5">Daily cash flow trends for past 30 days</p>
             </div>
-            <Link href="/reports/revenue" className="text-xs font-medium text-indigo-600 hover:text-indigo-800">
+            <Link href="/reports/revenue" className="text-xs font-medium text-[#5e2b9d] hover:text-[#4d2282]">
               Detailed Report
             </Link>
           </div>
@@ -318,11 +318,11 @@ export default async function DashboardPage() {
         </div>
 
         {/* Occupancy Overview (Donut chart) */}
-        <div className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm flex flex-col justify-between">
+        <div className="bg-white border border-gray-200 rounded-md p-5 shadow-sm flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-semibold text-gray-900">Occupancy Distribution</h3>
-              <span className="text-xs px-2 py-0.5 font-semibold bg-indigo-50 text-indigo-700 rounded border border-indigo-100">
+              <h3 className="text-sm font-medium text-gray-900">Occupancy Distribution</h3>
+              <span className="text-xs px-2 py-0.5 font-medium bg-[#f7f2fd] text-[#5e2b9d] rounded-md border border-[#dfcef6]">
                 {stats.totalRooms > 0
                   ? `${Math.round((stats.occupiedRooms / stats.totalRooms) * 100)}% Occupied`
                   : '0% Occupancy'}
@@ -339,28 +339,28 @@ export default async function DashboardPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Booking Sources (Donut/Pie chart) */}
-        <div className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
+        <div className="bg-white border border-gray-200 rounded-md p-5 shadow-sm">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-gray-900">Channel &amp; Booking Sources</h3>
-            <span className="text-xs text-gray-400">Distribution</span>
+            <h3 className="text-sm font-medium text-gray-900">Channel &amp; Booking Sources</h3>
+            <span className="text-xs text-gray-400 font-normal">Distribution</span>
           </div>
           <BookingSourcesChart data={bookingSources} />
         </div>
 
         {/* Booking Trends (Bar chart) */}
-        <div className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
+        <div className="bg-white border border-gray-200 rounded-md p-5 shadow-sm">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-gray-900">14-Day Reservation Volume</h3>
-            <span className="text-xs text-gray-400">Bookings / day</span>
+            <h3 className="text-sm font-medium text-gray-900">14-Day Reservation Volume</h3>
+            <span className="text-xs text-gray-400 font-normal">Bookings / day</span>
           </div>
           <BookingTrendsChart data={bookingTrends} />
         </div>
 
         {/* Room Type Performance */}
-        <div className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm flex flex-col">
+        <div className="bg-white border border-gray-200 rounded-md p-5 shadow-sm flex flex-col">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-gray-900">Room Type Performance</h3>
-            <Link href="/rooms" className="text-xs text-indigo-600 hover:text-indigo-800">
+            <h3 className="text-sm font-medium text-gray-900">Room Type Performance</h3>
+            <Link href="/rooms" className="text-xs font-medium text-[#5e2b9d] hover:text-[#4d2282]">
               Manage
             </Link>
           </div>
@@ -370,16 +370,16 @@ export default async function DashboardPage() {
               roomTypePerf.map((rt) => (
                 <div key={rt.roomType} className="py-2.5 flex items-center justify-between">
                   <div>
-                    <p className="text-xs font-semibold text-gray-900">{rt.roomType}</p>
+                    <p className="text-xs font-medium text-gray-900">{rt.roomType}</p>
                     <p className="text-[11px] text-gray-500">
                       {rt.occupiedRooms}/{rt.totalRooms} Occupied ({rt.occupancyRate}%)
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-xs font-bold text-gray-900">{formatCurrency(rt.revenue)}</p>
-                    <div className="w-16 bg-gray-100 rounded-full h-1.5 mt-1 overflow-hidden">
+                    <p className="text-xs font-medium text-gray-900">{formatCurrency(rt.revenue)}</p>
+                    <div className="w-16 bg-gray-100 rounded-md h-1.5 mt-1 overflow-hidden">
                       <div
-                        className="bg-indigo-600 h-1.5 rounded-full"
+                        className="bg-[#5e2b9d] h-1.5 rounded-md"
                         style={{ width: `${Math.min(100, rt.occupancyRate)}%` }}
                       />
                     </div>
@@ -397,15 +397,15 @@ export default async function DashboardPage() {
       </div>
 
       {/* 6. Today's Arrivals Section */}
-      <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+      <div className="bg-white border border-gray-200 rounded-md shadow-sm overflow-hidden">
         <div className="flex items-center justify-between p-4 sm:p-5 border-b border-gray-200 bg-white">
           <div className="flex items-center gap-2">
             <DoorOpen className="h-4 w-4 text-emerald-600" />
-            <h3 className="text-sm font-bold text-gray-900">
+            <h3 className="text-sm font-medium text-gray-900">
               Today&apos;s Arrivals ({arrivals.length})
             </h3>
           </div>
-          <Link href="/front-desk" className="text-xs font-semibold text-indigo-600 hover:text-indigo-800">
+          <Link href="/front-desk" className="text-xs font-medium text-[#5e2b9d] hover:text-[#4d2282]">
             Front Desk View All &rarr;
           </Link>
         </div>
@@ -413,15 +413,15 @@ export default async function DashboardPage() {
       </div>
 
       {/* 7. Today's Departures Section */}
-      <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+      <div className="bg-white border border-gray-200 rounded-md shadow-sm overflow-hidden">
         <div className="flex items-center justify-between p-4 sm:p-5 border-b border-gray-200 bg-white">
           <div className="flex items-center gap-2">
             <DoorClosed className="h-4 w-4 text-blue-600" />
-            <h3 className="text-sm font-bold text-gray-900">
+            <h3 className="text-sm font-medium text-gray-900">
               Today&apos;s Departures ({departures.length})
             </h3>
           </div>
-          <Link href="/front-desk" className="text-xs font-semibold text-indigo-600 hover:text-indigo-800">
+          <Link href="/front-desk" className="text-xs font-medium text-[#5e2b9d] hover:text-[#4d2282]">
             Front Desk View All &rarr;
           </Link>
         </div>
@@ -429,15 +429,15 @@ export default async function DashboardPage() {
       </div>
 
       {/* 8. Recent Reservations Section */}
-      <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+      <div className="bg-white border border-gray-200 rounded-md shadow-sm overflow-hidden">
         <div className="flex items-center justify-between p-4 sm:p-5 border-b border-gray-200 bg-white">
           <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-indigo-600" />
-            <h3 className="text-sm font-bold text-gray-900">
+            <Calendar className="h-4 w-4 text-[#5e2b9d]" />
+            <h3 className="text-sm font-medium text-gray-900">
               Recent Reservations
             </h3>
           </div>
-          <Link href="/reservations" className="text-xs font-semibold text-indigo-600 hover:text-indigo-800">
+          <Link href="/reservations" className="text-xs font-medium text-[#5e2b9d] hover:text-[#4d2282]">
             Reservations Ledger &rarr;
           </Link>
         </div>
@@ -447,10 +447,10 @@ export default async function DashboardPage() {
       {/* 9. Bottom Row: Housekeeping Overview + Operational Alerts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Housekeeping Overview */}
-        <div className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
+        <div className="bg-white border border-gray-200 rounded-md p-5 shadow-sm">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-gray-900">Housekeeping &amp; Room Turnover</h3>
-            <Link href="/housekeeping" className="text-xs text-indigo-600 hover:text-indigo-800 font-medium">
+            <h3 className="text-sm font-medium text-gray-900">Housekeeping &amp; Room Turnover</h3>
+            <Link href="/housekeeping" className="text-xs text-[#5e2b9d] hover:text-[#4d2282] font-medium">
               Task Board &rarr;
             </Link>
           </div>
@@ -458,10 +458,10 @@ export default async function DashboardPage() {
         </div>
 
         {/* Pending Tasks & Operational Alerts */}
-        <div className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
+        <div className="bg-white border border-gray-200 rounded-md p-5 shadow-sm">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-gray-900">Operational Alerts &amp; Critical Actions</h3>
-            <span className="text-xs px-2 py-0.5 bg-gray-100 rounded text-gray-600 font-medium">
+            <h3 className="text-sm font-medium text-gray-900">Operational Alerts &amp; Critical Actions</h3>
+            <span className="text-xs px-2 py-0.5 bg-gray-100 rounded-md text-gray-600 font-medium">
               Live Feed
             </span>
           </div>

@@ -1,4 +1,4 @@
-import React from 'react'
+﻿import React from 'react'
 import { Globe, Plus, CheckCircle2, RefreshCw, Key, Shield } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -32,7 +32,7 @@ export default function BookingEnginePage() {
             <RefreshCw className="h-4 w-4 mr-1.5" />
             Force Full Sync
           </Button>
-          <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs h-9 font-semibold">
+          <Button size="sm" className="bg-[#5e2b9d] hover:bg-[#4d2282] text-white text-xs h-9 font-semibold">
             <Globe className="h-4 w-4 mr-1.5" />
             Direct Engine Preview
           </Button>
@@ -77,7 +77,7 @@ export default function BookingEnginePage() {
           {channels.map((ch) => (
             <div key={ch.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-gray-50/60 transition-colors">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
+                <div className="p-2 bg-[#f7f2fd] text-[#5e2b9d] rounded-lg">
                   <Globe className="h-5 w-5" />
                 </div>
                 <div>

@@ -1,4 +1,4 @@
-import React from 'react'
+﻿import React from 'react'
 import { Plus, Building2, MapPin, Phone, Mail, Globe, BedDouble, Users, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -37,7 +37,7 @@ export default async function PropertiesPage() {
         </div>
         <div className="flex items-center gap-2">
           <Link href="/properties/new">
-            <Button className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs h-9 font-semibold">
+            <Button className="bg-[#5e2b9d] hover:bg-[#4d2282] text-white text-xs h-9 font-semibold">
               <Plus className="h-4 w-4 mr-1.5" />
               Add Property
             </Button>
@@ -47,7 +47,7 @@ export default async function PropertiesPage() {
 
       {properties.length === 0 ? (
         <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center max-w-lg mx-auto my-12">
-          <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+          <div className="w-12 h-12 bg-[#f7f2fd] text-[#5e2b9d] rounded-xl flex items-center justify-center mx-auto mb-4">
             <Building2 className="h-6 w-6" />
           </div>
           <h3 className="text-base font-bold text-gray-900">No Properties Found</h3>
@@ -56,7 +56,7 @@ export default async function PropertiesPage() {
           </p>
           <div className="mt-6">
             <Link href="/properties/new">
-              <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium">
+              <Button size="sm" className="bg-[#5e2b9d] hover:bg-[#4d2282] text-white font-medium">
                 <Plus className="h-4 w-4 mr-1.5" />
                 Register First Property
               </Button>
@@ -67,11 +67,11 @@ export default async function PropertiesPage() {
         /* Grid of properties */
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {properties.map((prop) => (
-            <Card key={prop.id} className="border-gray-200 shadow-sm hover:border-indigo-300 transition-all flex flex-col justify-between">
+            <Card key={prop.id} className="border-gray-200 shadow-sm hover:border-[#dfcef6] transition-all flex flex-col justify-between">
               <CardHeader className="pb-3 border-b border-gray-100">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-center gap-2.5">
-                    <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600">
+                    <div className="p-2 bg-[#f7f2fd] rounded-lg text-[#5e2b9d]">
                       <Building2 className="h-5 w-5" />
                     </div>
                     <div>
@@ -110,7 +110,7 @@ export default async function PropertiesPage() {
                 <div className="pt-3 border-t border-gray-100 flex items-center justify-between text-xs">
                   <span className="text-gray-400 font-medium">Currency: {prop.currency || 'INR'}</span>
                   <Link href={`/properties/${prop.id}/settings`}>
-                    <Button variant="ghost" size="sm" className="h-7 text-xs text-indigo-600 hover:text-indigo-700 p-0 font-medium">
+                    <Button variant="ghost" size="sm" className="h-7 text-xs text-[#5e2b9d] hover:text-[#4d2282] p-0 font-medium">
                       Configure &rarr;
                     </Button>
                   </Link>

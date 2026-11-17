@@ -1,4 +1,4 @@
-import React from 'react'
+﻿import React from 'react'
 import Link from 'next/link'
 import { ArrowLeft, CreditCard, CheckCircle2, Zap, Shield, Download } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -37,12 +37,12 @@ export default function SettingsBillingPage() {
       </div>
 
       {/* Active Plan Card */}
-      <Card className="border-indigo-100 bg-indigo-50/20 shadow-2xs">
+      <Card className="border-[#eee4fa] bg-[#f7f2fd]/20 shadow-2xs">
         <CardContent className="p-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
-                <Badge className="bg-indigo-600 text-white text-xs">Active Subscription</Badge>
+                <Badge className="bg-[#5e2b9d] text-white text-xs">Active Subscription</Badge>
                 <span className="text-xs text-gray-500">Renews Dec 01, 2026</span>
               </div>
               <h2 className="text-xl font-bold text-gray-900 mt-2">Enterprise Hospitality Suite</h2>
@@ -56,16 +56,16 @@ export default function SettingsBillingPage() {
             </div>
           </div>
 
-          <div className="mt-6 pt-4 border-t border-indigo-100 flex flex-wrap items-center justify-between gap-3 text-xs">
+          <div className="mt-6 pt-4 border-t border-[#eee4fa] flex flex-wrap items-center justify-between gap-3 text-xs">
             <div className="flex items-center gap-2 text-gray-700">
-              <CreditCard className="h-4 w-4 text-indigo-600" />
+              <CreditCard className="h-4 w-4 text-[#5e2b9d]" />
               <span>Billed to <strong>Visa ending in 4242</strong></span>
             </div>
             <div className="flex items-center gap-2">
               <Button variant="outline" size="sm" className="h-8 text-xs bg-white">
                 Update Card
               </Button>
-              <Button size="sm" className="h-8 text-xs bg-indigo-600 hover:bg-indigo-700 text-white font-semibold">
+              <Button size="sm" className="h-8 text-xs bg-[#5e2b9d] hover:bg-[#4d2282] text-white font-semibold">
                 Upgrade Room Tier
               </Button>
             </div>
@@ -90,7 +90,7 @@ export default function SettingsBillingPage() {
               <div className="flex items-center gap-4">
                 <span className="font-mono font-bold text-gray-900">{formatCurrency(item.amount)}</span>
                 <Badge variant="success" className="text-[10px]">Paid</Badge>
-                <Button variant="ghost" size="sm" className="h-7 text-xs text-indigo-600 font-semibold px-2">
+                <Button variant="ghost" size="sm" className="h-7 text-xs text-[#5e2b9d] font-semibold px-2">
                   <Download className="h-3.5 w-3.5 mr-1" />
                   PDF
                 </Button>

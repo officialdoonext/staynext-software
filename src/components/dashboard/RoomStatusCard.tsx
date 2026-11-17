@@ -32,8 +32,8 @@ export default function RoomStatusCard({
 }: RoomStatusCardProps) {
   const statuses: StatusItem[] = [
     { label: 'Available', count: availableRooms, icon: CheckSquare, color: 'text-green-600', bg: 'bg-green-50' },
-    { label: 'Occupied', count: occupiedRooms, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50' },
-    { label: 'Reserved', count: reservedRooms, icon: Hotel, color: 'text-purple-600', bg: 'bg-purple-50' },
+    { label: 'Occupied', count: occupiedRooms, icon: Users, color: 'text-[#5e2b9d]', bg: 'bg-[#f7f2fd]' },
+    { label: 'Reserved', count: reservedRooms, icon: Hotel, color: 'text-[#7e3ec2]', bg: 'bg-[#f7f2fd]' },
     { label: 'Dirty', count: dirtyRooms, icon: AlertTriangle, color: 'text-yellow-600', bg: 'bg-yellow-50' },
     { label: 'Cleaning', count: cleaningRooms, icon: Clock, color: 'text-cyan-600', bg: 'bg-cyan-50' },
     { label: 'Maintenance', count: maintenanceRooms, icon: Wrench, color: 'text-orange-600', bg: 'bg-orange-50' },
@@ -43,22 +43,22 @@ export default function RoomStatusCard({
   const occupancyPct = totalRooms > 0 ? Math.round((occupiedRooms / totalRooms) * 100) : 0
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
+    <div className="bg-white border border-gray-200 rounded-md p-5 shadow-sm">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-sm font-semibold text-gray-900">Room Status</h3>
+          <h3 className="text-sm font-medium text-gray-900">Room Status</h3>
           <p className="text-xs text-gray-500 mt-0.5">{totalRooms} total rooms</p>
         </div>
         <div className="text-right">
-          <p className="text-2xl font-semibold text-indigo-600">{occupancyPct}%</p>
+          <p className="text-2xl font-medium text-[#5e2b9d]">{occupancyPct}%</p>
           <p className="text-xs text-gray-500">Occupancy</p>
         </div>
       </div>
 
       {/* Occupancy bar */}
-      <div className="w-full h-2 bg-gray-100 rounded-full mb-4 overflow-hidden">
+      <div className="w-full h-2 bg-gray-100 rounded-md mb-4 overflow-hidden">
         <div
-          className="h-full bg-indigo-500 rounded-full transition-all"
+          className="h-full bg-[#5e2b9d] rounded-md transition-all"
           style={{ width: `${occupancyPct}%` }}
         />
       </div>
@@ -66,12 +66,12 @@ export default function RoomStatusCard({
       <div className="grid grid-cols-2 gap-2">
         {statuses.map(({ label, count, icon: StatusIcon, color, bg }) => (
           <div key={label} className="flex items-center gap-2 p-2 rounded-md hover:bg-gray-50">
-            <div className={cn('w-7 h-7 rounded flex items-center justify-center flex-shrink-0', bg)}>
+            <div className={cn('w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0', bg)}>
               <StatusIcon className={cn('h-3.5 w-3.5', color)} />
             </div>
             <div className="min-w-0">
               <p className="text-xs text-gray-500 truncate">{label}</p>
-              <p className="text-sm font-semibold text-gray-900">{count}</p>
+              <p className="text-sm font-medium text-gray-900">{count}</p>
             </div>
           </div>
         ))}

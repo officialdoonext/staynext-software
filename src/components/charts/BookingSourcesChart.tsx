@@ -11,7 +11,7 @@ interface BookingSourcesChartProps {
   data: BookingSourceData[]
 }
 
-const COLORS = ['#4f46e5', '#7c3aed', '#2563eb', '#0891b2', '#059669', '#d97706', '#dc2626']
+const COLORS = ['#5e2b9d', '#7e3ec2', '#a779e4', '#0891b2', '#059669', '#d97706', '#dc2626']
 
 const DEFAULT_SOURCES = [
   { name: 'Direct', value: 0 },

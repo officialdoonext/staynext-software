@@ -76,19 +76,19 @@ export default function FinancialReportsPage() {
                   key={idx}
                   className={
                     isNet
-                      ? 'bg-indigo-50/70 font-bold'
+                      ? 'bg-[#f7f2fd]/70 font-bold'
                       : isHighlight
                       ? 'bg-gray-50/80 font-semibold'
                       : ''
                   }
                 >
-                  <TableCell className={`text-xs ${isNet ? 'text-indigo-900 text-sm font-bold' : isHighlight ? 'text-gray-900 font-bold' : 'text-gray-700 pl-6'}`}>
+                  <TableCell className={`text-xs ${isNet ? 'text-[#5e2b9d] text-sm font-medium' : isHighlight ? 'text-gray-900 font-medium' : 'text-gray-700 pl-6'}`}>
                     {row.category}
                   </TableCell>
-                  <TableCell className={`font-mono text-xs ${isNet ? 'text-indigo-700 text-sm font-bold' : isHighlight ? 'text-gray-900 font-bold' : row.mtd < 0 ? 'text-rose-600' : 'text-gray-900'}`}>
+                  <TableCell className={`font-mono text-xs ${isNet ? 'text-[#4d2282] text-sm font-bold' : isHighlight ? 'text-gray-900 font-bold' : row.mtd < 0 ? 'text-rose-600' : 'text-gray-900'}`}>
                     {formatCurrency(row.mtd)}
                   </TableCell>
-                  <TableCell className={`text-right font-mono text-xs ${isNet ? 'text-indigo-700 text-sm font-bold' : isHighlight ? 'text-gray-900 font-bold' : row.ytd < 0 ? 'text-rose-600' : 'text-gray-900'}`}>
+                  <TableCell className={`text-right font-mono text-xs ${isNet ? 'text-[#4d2282] text-sm font-bold' : isHighlight ? 'text-gray-900 font-bold' : row.ytd < 0 ? 'text-rose-600' : 'text-gray-900'}`}>
                     {formatCurrency(row.ytd)}
                   </TableCell>
                 </TableRow>

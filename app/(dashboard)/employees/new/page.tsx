@@ -1,4 +1,4 @@
-import React from 'react'
+﻿import React from 'react'
 import Link from 'next/link'
 import { ArrowLeft, UserPlus, Save, Shield } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -32,7 +32,7 @@ export default function NewEmployeePage() {
         <Card className="border-gray-200 shadow-2xs">
           <CardHeader className="pb-3 border-b border-gray-100">
             <CardTitle className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-              <UserPlus className="h-4 w-4 text-indigo-600" />
+              <UserPlus className="h-4 w-4 text-[#5e2b9d]" />
               Personal &amp; Contact Details
             </CardTitle>
           </CardHeader>
@@ -44,7 +44,7 @@ export default function NewEmployeePage() {
                   type="text"
                   placeholder="e.g. Maria"
                   defaultValue="Lucas"
-                  className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-600"
+                  className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
                   required
                 />
               </div>
@@ -55,7 +55,7 @@ export default function NewEmployeePage() {
                   type="text"
                   placeholder="e.g. Santos"
                   defaultValue="Bennett"
-                  className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-600"
+                  className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
                   required
                 />
               </div>
@@ -66,7 +66,7 @@ export default function NewEmployeePage() {
                   type="email"
                   placeholder="lucas.b@staynext-resort.com"
                   defaultValue="lucas.bennett@hotel.com"
-                  className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-600"
+                  className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
                   required
                 />
               </div>
@@ -77,14 +77,14 @@ export default function NewEmployeePage() {
                   type="tel"
                   placeholder="+1 (555) 012-3456"
                   defaultValue="+1 (555) 772-9102"
-                  className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-600"
+                  className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
                   required
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Department *</label>
-                <select className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-600">
+                <select className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]">
                   <option value="front_desk">Front Desk &amp; Concierge</option>
                   <option value="housekeeping">Housekeeping Operations</option>
                   <option value="maintenance">Maintenance &amp; Engineering</option>
@@ -96,7 +96,7 @@ export default function NewEmployeePage() {
 
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">System Role &amp; Access Tier *</label>
-                <select className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-600">
+                <select className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]">
                   <option value="receptionist">Receptionist / Front Desk Agent</option>
                   <option value="manager">Property Duty Manager</option>
                   <option value="housekeeper">Housekeeping Room Attendant</option>
@@ -111,7 +111,7 @@ export default function NewEmployeePage() {
                   type="text"
                   placeholder="$24.00 / hr"
                   defaultValue="$26.50 / hr"
-                  className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-600"
+                  className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
                 />
               </div>
 
@@ -120,7 +120,7 @@ export default function NewEmployeePage() {
                 <input
                   type="date"
                   defaultValue="2026-11-15"
-                  className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-600"
+                  className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
                 />
               </div>
             </div>
@@ -133,7 +133,7 @@ export default function NewEmployeePage() {
               Cancel
             </Button>
           </Link>
-          <Button type="button" className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs h-9">
+          <Button type="button" className="bg-[#5e2b9d] hover:bg-[#4d2282] text-white font-semibold text-xs h-9">
             <Save className="h-4 w-4 mr-1.5" />
             Save &amp; Send Invite Email
           </Button>

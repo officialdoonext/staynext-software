@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -91,7 +91,7 @@ export default function NewReservationPage() {
         <Card className="border-gray-200 shadow-sm">
           <CardHeader className="pb-3 border-b border-gray-100">
             <div className="flex items-center gap-2">
-              <User className="h-4 w-4 text-indigo-600" />
+              <User className="h-4 w-4 text-[#5e2b9d]" />
               <CardTitle className="text-sm font-semibold">1. Guest Contact Information</CardTitle>
             </div>
           </CardHeader>
@@ -152,7 +152,7 @@ export default function NewReservationPage() {
         <Card className="border-gray-200 shadow-sm">
           <CardHeader className="pb-3 border-b border-gray-100">
             <div className="flex items-center gap-2">
-              <Building2 className="h-4 w-4 text-indigo-600" />
+              <Building2 className="h-4 w-4 text-[#5e2b9d]" />
               <CardTitle className="text-sm font-semibold">2. Stay Dates &amp; Room Assignment</CardTitle>
             </div>
           </CardHeader>
@@ -188,7 +188,7 @@ export default function NewReservationPage() {
                 name="roomTypeId"
                 value={formData.roomTypeId}
                 onChange={handleChange}
-                className="w-full h-9 px-3 border border-gray-300 rounded-md text-xs bg-white text-gray-800 focus:outline-none focus:ring-1 focus:ring-indigo-600"
+                className="w-full h-9 px-3 border border-gray-300 rounded-md text-xs bg-white text-gray-800 focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
               >
                 <option value="c0000000-0000-0000-0000-000000000001">Deluxe King Room ($220/nt)</option>
                 <option value="c0000000-0000-0000-0000-000000000002">Executive Double Queen ($280/nt)</option>
@@ -203,7 +203,7 @@ export default function NewReservationPage() {
                 name="roomId"
                 value={formData.roomId}
                 onChange={handleChange}
-                className="w-full h-9 px-3 border border-gray-300 rounded-md text-xs bg-white text-gray-800 focus:outline-none focus:ring-1 focus:ring-indigo-600 font-mono"
+                className="w-full h-9 px-3 border border-gray-300 rounded-md text-xs bg-white text-gray-800 focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] font-mono"
               >
                 <option value="d0000000-0000-0000-0000-000000000101">Room #101 (Available)</option>
                 <option value="d0000000-0000-0000-0000-000000000203">Room #203 (Available)</option>
@@ -244,7 +244,7 @@ export default function NewReservationPage() {
         <Card className="border-gray-200 shadow-sm">
           <CardHeader className="pb-3 border-b border-gray-100">
             <div className="flex items-center gap-2">
-              <CreditCard className="h-4 w-4 text-indigo-600" />
+              <CreditCard className="h-4 w-4 text-[#5e2b9d]" />
               <CardTitle className="text-sm font-semibold">3. Financial Ledger &amp; Deposit</CardTitle>
             </div>
           </CardHeader>
@@ -281,7 +281,7 @@ export default function NewReservationPage() {
                 name="bookingSource"
                 value={formData.bookingSource}
                 onChange={handleChange}
-                className="w-full h-9 px-3 border border-gray-300 rounded-md text-xs bg-white text-gray-800 focus:outline-none focus:ring-1 focus:ring-indigo-600"
+                className="w-full h-9 px-3 border border-gray-300 rounded-md text-xs bg-white text-gray-800 focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
               >
                 <option value="direct">Direct Walk-in / Phone</option>
                 <option value="website">Official Website Engine</option>
@@ -299,7 +299,7 @@ export default function NewReservationPage() {
                 value={formData.specialRequests}
                 onChange={handleChange}
                 placeholder="High floor, quiet room, late check-in..."
-                className="w-full p-2.5 border border-gray-300 rounded-md text-xs bg-white text-gray-800 focus:outline-none focus:ring-1 focus:ring-indigo-600"
+                className="w-full p-2.5 border border-gray-300 rounded-md text-xs bg-white text-gray-800 focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
               />
             </div>
           </CardContent>
@@ -315,7 +315,7 @@ export default function NewReservationPage() {
           <Button
             type="submit"
             disabled={loading}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs h-9 px-6 font-semibold shadow-sm"
+            className="bg-[#5e2b9d] hover:bg-[#4d2282] text-white text-xs h-9 px-6 font-semibold shadow-sm"
           >
             {loading ? 'Confirming...' : 'Confirm & Create Reservation'}
           </Button>

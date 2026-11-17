@@ -1,4 +1,4 @@
-import React from 'react'
+﻿import React from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Plus, Calendar, Clock, CheckCircle2, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -7,12 +7,12 @@ import { Badge } from '@/components/ui/badge'
 export const metadata = { title: 'Employee Shift Schedules | StayNext' }
 
 const employeeShifts = [
-  { id: 'sh-1', employee: 'Amanda Sterling', department: 'Front Desk', role: 'Duty Manager', shift: 'Morning (07:00 – 15:30)', days: 'Mon – Fri', status: 'active' },
-  { id: 'sh-2', employee: 'Lucas Bennett', department: 'Front Desk', role: 'Receptionist', shift: 'Evening (15:00 – 23:30)', days: 'Wed – Sun', status: 'active' },
-  { id: 'sh-3', employee: 'David Miller', department: 'Maintenance', role: 'Chief Engineer', shift: 'Day On-Call (08:00 – 17:00)', days: 'Mon – Fri', status: 'active' },
-  { id: 'sh-4', employee: 'Maria Santos', department: 'Housekeeping', role: 'Lead Cleaner', shift: 'Morning (07:30 – 16:00)', days: 'Tue – Sat', status: 'active' },
-  { id: 'sh-5', employee: 'Chef Marco', department: 'Food & Beverage', role: 'Head Chef', shift: 'Dinner Service (14:00 – 22:30)', days: 'Wed – Sun', status: 'active' },
-  { id: 'sh-6', employee: 'Night Auditor James', department: 'Front Desk / Audit', role: 'Night Auditor', shift: 'Overnight (23:00 – 07:30)', days: 'Mon – Sun (Rotational)', status: 'active' },
+  { id: 'sh-1', employee: 'Amanda Sterling', department: 'Front Desk', role: 'Duty Manager', shift: 'Morning (07:00 â€“ 15:30)', days: 'Mon â€“ Fri', status: 'active' },
+  { id: 'sh-2', employee: 'Lucas Bennett', department: 'Front Desk', role: 'Receptionist', shift: 'Evening (15:00 â€“ 23:30)', days: 'Wed â€“ Sun', status: 'active' },
+  { id: 'sh-3', employee: 'David Miller', department: 'Maintenance', role: 'Chief Engineer', shift: 'Day On-Call (08:00 â€“ 17:00)', days: 'Mon â€“ Fri', status: 'active' },
+  { id: 'sh-4', employee: 'Maria Santos', department: 'Housekeeping', role: 'Lead Cleaner', shift: 'Morning (07:30 â€“ 16:00)', days: 'Tue â€“ Sat', status: 'active' },
+  { id: 'sh-5', employee: 'Chef Marco', department: 'Food & Beverage', role: 'Head Chef', shift: 'Dinner Service (14:00 â€“ 22:30)', days: 'Wed â€“ Sun', status: 'active' },
+  { id: 'sh-6', employee: 'Night Auditor James', department: 'Front Desk / Audit', role: 'Night Auditor', shift: 'Overnight (23:00 â€“ 07:30)', days: 'Mon â€“ Sun (Rotational)', status: 'active' },
 ]
 
 export default function EmployeeSchedulesPage() {
@@ -35,7 +35,7 @@ export default function EmployeeSchedulesPage() {
             </p>
           </div>
         </div>
-        <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs h-9 font-semibold">
+        <Button size="sm" className="bg-[#5e2b9d] hover:bg-[#4d2282] text-white text-xs h-9 font-semibold">
           <Plus className="h-4 w-4 mr-1.5" />
           Publish New Rota
         </Button>
@@ -48,7 +48,7 @@ export default function EmployeeSchedulesPage() {
               <div className="flex items-start justify-between">
                 <div>
                   <h3 className="text-base font-bold text-gray-900">{shift.employee}</h3>
-                  <p className="text-xs text-indigo-600 font-medium">{shift.role}</p>
+                  <p className="text-xs text-[#5e2b9d] font-medium">{shift.role}</p>
                 </div>
                 <Badge variant="outline" className="text-[10px] bg-gray-50">
                   {shift.department}
@@ -71,7 +71,7 @@ export default function EmployeeSchedulesPage() {
               <span className="text-emerald-600 font-medium flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> On Schedule
               </span>
-              <Button variant="ghost" size="sm" className="h-8 text-xs text-indigo-600 font-semibold px-2">
+              <Button variant="ghost" size="sm" className="h-8 text-xs text-[#5e2b9d] font-semibold px-2">
                 Swap Shift
               </Button>
             </div>

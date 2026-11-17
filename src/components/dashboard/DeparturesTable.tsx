@@ -53,8 +53,8 @@ export default function DeparturesTable({ departures }: DeparturesTableProps) {
         <TableBody>
           {departures.map((row) => (
             <TableRow key={row.id}>
-              <TableCell className="font-mono text-xs font-semibold text-indigo-600">
-                <Link href={`/reservations?id=${row.id}`} className="hover:underline">
+              <TableCell className="font-mono text-xs font-medium text-[#5e2b9d]">
+                <Link href={`/reservations?id=${row.id}`} className="hover:underline cursor-pointer">
                   {row.reservation_number}
                 </Link>
               </TableCell>
@@ -121,7 +121,7 @@ export default function DeparturesTable({ departures }: DeparturesTableProps) {
                   <Button
                     size="sm"
                     variant="outline"
-                    className="h-8 px-2.5 text-xs text-indigo-600 border-indigo-200 hover:bg-indigo-50"
+                    className="h-8 px-2.5 text-xs text-[#5e2b9d] border-[#dfcef6] hover:bg-[#f7f2fd] font-medium rounded-md cursor-pointer"
                     onClick={() => handleProcessCheckout(row.reservation_number)}
                   >
                     <LogOut className="h-3.5 w-3.5 mr-1" />

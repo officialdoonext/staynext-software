@@ -1,4 +1,4 @@
-import React from 'react'
+﻿import React from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Download, Users, Star, Globe, Heart } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -67,7 +67,7 @@ export default function GuestReportsPage() {
         <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-2xs">
           <span className="text-xs font-semibold text-gray-500">VIP Club Profiles</span>
           <p className="text-2xl font-bold text-gray-900 mt-1">82 Guests</p>
-          <p className="text-[11px] text-indigo-600 mt-0.5">&gt; $3,000 spend tier</p>
+          <p className="text-[11px] text-[#5e2b9d] mt-0.5">&gt; $3,000 spend tier</p>
         </div>
       </div>
 
@@ -89,7 +89,7 @@ export default function GuestReportsPage() {
             {guestSegments.map((s) => (
               <TableRow key={s.segment}>
                 <TableCell className="font-semibold text-gray-900 text-xs">{s.segment}</TableCell>
-                <TableCell className="font-mono text-xs font-bold text-indigo-600">{s.share}</TableCell>
+                <TableCell className="font-mono text-xs font-bold text-[#5e2b9d]">{s.share}</TableCell>
                 <TableCell className="font-mono text-xs">{s.avgStay}</TableCell>
                 <TableCell className="font-mono text-xs font-bold text-emerald-600">{s.repeatRate}</TableCell>
                 <TableCell className="text-right font-mono text-xs font-bold text-gray-900">{formatCurrency(s.avgSpendPerStay)}</TableCell>

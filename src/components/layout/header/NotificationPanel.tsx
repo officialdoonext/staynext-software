@@ -67,7 +67,7 @@ export default function NotificationPanel() {
   const getIcon = (type: NotificationItem['type']) => {
     switch (type) {
       case 'reservation':
-        return <Calendar className="h-4 w-4 text-indigo-600" />
+        return <Calendar className="h-4 w-4 text-[#5e2b9d]" />
       case 'housekeeping':
         return <Sparkles className="h-4 w-4 text-cyan-600" />
       case 'payment':
@@ -83,26 +83,28 @@ export default function NotificationPanel() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button
-          className="relative p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors focus:outline-none"
+          type="button"
+          className="relative p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors focus:outline-none cursor-pointer"
           title="Notifications"
         >
           <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
-            <span className="absolute top-1.5 right-1.5 flex h-4 min-w-[16px] px-1 items-center justify-center rounded-full bg-indigo-600 text-[10px] font-bold text-white leading-none">
+            <span className="absolute top-1.5 right-1.5 flex h-4 min-w-[16px] px-1 items-center justify-center rounded-md bg-[#5e2b9d] text-[10px] font-medium text-white leading-none">
               {unreadCount}
             </span>
           )}
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-80 p-0 shadow-lg">
+      <DropdownMenuContent align="end" className="w-80 p-0 shadow-lg rounded-md">
         <div className="flex items-center justify-between p-3.5 border-b border-gray-200">
-          <DropdownMenuLabel className="p-0 font-semibold text-gray-900 text-sm">
+          <DropdownMenuLabel className="p-0 font-medium text-gray-900 text-sm">
             Notifications
           </DropdownMenuLabel>
           {unreadCount > 0 && (
             <button
+              type="button"
               onClick={markAllAsRead}
-              className="flex items-center gap-1 text-[11px] font-medium text-indigo-600 hover:text-indigo-800"
+              className="flex items-center gap-1 text-[11px] font-medium text-[#5e2b9d] hover:text-[#4d2282] cursor-pointer"
             >
               <Check className="h-3 w-3" />
               Mark all as read
@@ -115,14 +117,14 @@ export default function NotificationPanel() {
             <div
               key={item.id}
               className={`flex items-start gap-3 p-3 transition-colors ${
-                item.read ? 'bg-white' : 'bg-indigo-50/40'
+                item.read ? 'bg-white' : 'bg-[#f7f2fd]/60'
               }`}
             >
               <div className="p-1.5 bg-gray-50 border border-gray-200 rounded-md shrink-0 mt-0.5">
                 {getIcon(item.type)}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold text-gray-900 leading-tight">
+                <p className="text-xs font-medium text-gray-900 leading-tight">
                   {item.title}
                 </p>
                 <p className="text-[11px] text-gray-600 mt-0.5 line-clamp-2">
@@ -133,7 +135,7 @@ export default function NotificationPanel() {
                 </span>
               </div>
               {!item.read && (
-                <span className="h-2 w-2 rounded-full bg-indigo-600 shrink-0 mt-1.5" />
+                <span className="h-2 w-2 rounded-full bg-[#5e2b9d] shrink-0 mt-1.5" />
               )}
             </div>
           ))}
@@ -143,7 +145,7 @@ export default function NotificationPanel() {
         <div className="p-2 text-center bg-gray-50/50">
           <Link
             href="/settings/notifications"
-            className="text-xs font-medium text-indigo-600 hover:text-indigo-800"
+            className="text-xs font-medium text-[#5e2b9d] hover:text-[#4d2282] cursor-pointer"
           >
             Notification Settings &amp; History &rarr;
           </Link>
@@ -152,4 +154,3 @@ export default function NotificationPanel() {
     </DropdownMenu>
   )
 }
-

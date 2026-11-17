@@ -26,6 +26,7 @@ import {
   ChevronRight,
   Hotel,
   X,
+  PanelLeftClose,
   LucideIcon,
 } from 'lucide-react'
 import { navigationSections } from '@/constants/navigation'
@@ -35,6 +36,7 @@ interface SidebarProps {
   isOpen: boolean
   mobileOpen: boolean
   onMobileClose: () => void
+  onToggle?: () => void
 }
 
 const iconMap: Record<string, LucideIcon> = {
@@ -58,7 +60,7 @@ const iconMap: Record<string, LucideIcon> = {
   Settings,
 }
 
-export default function Sidebar({ isOpen, mobileOpen, onMobileClose }: SidebarProps) {
+export default function Sidebar({ isOpen, mobileOpen, onMobileClose, onToggle }: SidebarProps) {
   const pathname = usePathname()
   const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>(() => {
     // Auto-expand menu matching current pathname
@@ -81,43 +83,57 @@ export default function Sidebar({ isOpen, mobileOpen, onMobileClose }: SidebarPr
   }
 
   const sidebarContent = (
-    <div className="flex h-full flex-col bg-white border-r border-gray-200 select-none">
+    <div className="flex h-full flex-col bg-white select-none">
       {/* Brand Header */}
       <div className="flex h-16 items-center justify-between px-4 border-b border-gray-200 bg-white">
-        <Link href="/dashboard" className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-600 text-white shadow-sm">
+        <Link href="/dashboard" className="flex items-center gap-3 cursor-pointer">
+          <div className="flex h-9 w-9 items-center justify-center rounded-md bg-[#5e2b9d] text-white shadow-sm">
             <Hotel className="h-5 w-5" />
           </div>
-          {isOpen && (
-            <div className="flex flex-col">
-              <span className="text-base font-bold tracking-tight text-gray-900 leading-none">
-                STAYNEXT
-              </span>
-              <span className="text-[10px] font-medium uppercase tracking-wider text-indigo-600 mt-0.5">
-                Hotel & Resort SaaS
-              </span>
-            </div>
-          )}
+          <div className="flex flex-col">
+            <span className="text-base font-medium tracking-tight text-gray-900 leading-none">
+              STAYNEXT
+            </span>
+            <span className="text-[10px] font-medium uppercase tracking-wider text-[#5e2b9d] mt-0.5">
+              Hotel &amp; Resort SaaS
+            </span>
+          </div>
         </Link>
-        {mobileOpen && (
-          <button
-            onClick={onMobileClose}
-            className="md:hidden p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-md"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        )}
+        <div className="flex items-center gap-1">
+          {/* Desktop Collapse Button inside Sidebar */}
+          {onToggle && (
+            <button
+              type="button"
+              onClick={onToggle}
+              className="hidden md:flex p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors cursor-pointer"
+              title="Collapse Sidebar"
+              aria-label="Collapse Sidebar"
+            >
+              <PanelLeftClose className="h-5 w-5" />
+            </button>
+          )}
+
+          {/* Mobile Close Button */}
+          {mobileOpen && (
+            <button
+              type="button"
+              onClick={onMobileClose}
+              className="md:hidden p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
+              aria-label="Close Mobile Sidebar"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Nav List */}
       <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-6 scrollbar-thin">
         {navigationSections.map((section, idx) => (
           <div key={idx} className="space-y-1">
-            {isOpen && (
-              <h4 className="px-3 text-[11px] font-semibold uppercase tracking-wider text-gray-400">
-                {section.title}
-              </h4>
-            )}
+            <h4 className="px-3 text-[11px] font-medium uppercase tracking-wider text-gray-400">
+              {section.title}
+            </h4>
             <div className="space-y-0.5">
               {section.items.map((item) => {
                 const Icon = iconMap[item.icon || 'LayoutDashboard'] || LayoutDashboard
@@ -129,29 +145,27 @@ export default function Sidebar({ isOpen, mobileOpen, onMobileClose }: SidebarPr
                   return (
                     <div key={item.title} className="space-y-0.5">
                       <button
+                        type="button"
                         onClick={() => toggleSubmenu(item.title)}
                         className={cn(
-                          "w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-md transition-colors",
+                          "w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-md transition-colors cursor-pointer",
                           isActive
-                            ? "bg-indigo-50/70 text-indigo-700"
+                            ? "bg-[#f7f2fd] text-[#5e2b9d]"
                             : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
                         )}
-                        title={!isOpen ? item.title : undefined}
                       >
                         <div className="flex items-center gap-3">
-                          <Icon className={cn("h-4 w-4 shrink-0", isActive ? "text-indigo-600" : "text-gray-500")} />
-                          {isOpen && <span>{item.title}</span>}
+                          <Icon className={cn("h-4 w-4 shrink-0", isActive ? "text-[#5e2b9d]" : "text-gray-500")} />
+                          <span>{item.title}</span>
                         </div>
-                        {isOpen && (
-                          isExpanded ? (
-                            <ChevronDown className="h-3.5 w-3.5 text-gray-400" />
-                          ) : (
-                            <ChevronRight className="h-3.5 w-3.5 text-gray-400" />
-                          )
+                        {isExpanded ? (
+                          <ChevronDown className="h-3.5 w-3.5 text-gray-400" />
+                        ) : (
+                          <ChevronRight className="h-3.5 w-3.5 text-gray-400" />
                         )}
                       </button>
 
-                      {isOpen && isExpanded && (
+                      {isExpanded && (
                         <div className="ml-7 pl-2 border-l border-gray-200 space-y-0.5 mt-0.5">
                           {item.children?.map((sub) => {
                             const isSubActive = pathname === sub.href
@@ -160,9 +174,9 @@ export default function Sidebar({ isOpen, mobileOpen, onMobileClose }: SidebarPr
                                 key={sub.href || sub.title}
                                 href={sub.href || '#'}
                                 className={cn(
-                                  "block px-2.5 py-1.5 text-xs rounded-md transition-colors",
+                                  "block px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer",
                                   isSubActive
-                                    ? "bg-indigo-50 text-indigo-700 font-semibold"
+                                    ? "bg-[#f7f2fd] text-[#5e2b9d]"
                                     : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                                 )}
                               >
@@ -181,15 +195,14 @@ export default function Sidebar({ isOpen, mobileOpen, onMobileClose }: SidebarPr
                     key={item.href || item.title}
                     href={item.href || '#'}
                     className={cn(
-                      "flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors",
+                      "flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors cursor-pointer",
                       isActive
-                        ? "bg-indigo-50 text-indigo-700 font-semibold border-l-2 border-indigo-600"
+                        ? "bg-[#f7f2fd] text-[#5e2b9d] border-l-2 border-[#5e2b9d]"
                         : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
                     )}
-                    title={!isOpen ? item.title : undefined}
                   >
-                    <Icon className={cn("h-4 w-4 shrink-0", isActive ? "text-indigo-600" : "text-gray-500")} />
-                    {isOpen && <span>{item.title}</span>}
+                    <Icon className={cn("h-4 w-4 shrink-0", isActive ? "text-[#5e2b9d]" : "text-gray-500")} />
+                    <span>{item.title}</span>
                   </Link>
                 )
               })}
@@ -199,33 +212,35 @@ export default function Sidebar({ isOpen, mobileOpen, onMobileClose }: SidebarPr
       </nav>
 
       {/* Property Status Footer */}
-      {isOpen && (
-        <div className="border-t border-gray-200 p-3 bg-gray-50/50">
-          <div className="flex items-center gap-2">
-            <span className="flex h-2 w-2 rounded-full bg-emerald-500" />
-            <span className="text-xs text-gray-600 font-medium truncate">System Online &bull; Supabase</span>
-          </div>
+      <div className="border-t border-gray-200 p-3 bg-gray-50/50">
+        <div className="flex items-center gap-2">
+          <span className="flex h-2 w-2 rounded-full bg-emerald-500" />
+          <span className="text-xs text-gray-600 font-medium truncate">System Online &bull; Supabase</span>
         </div>
-      )}
+      </div>
     </div>
   )
 
   return (
     <>
-      {/* Desktop Sidebar */}
+      {/* Desktop Sidebar: Smoothly collapses to 0 width allowing page to occupy full width */}
       <aside
         className={cn(
-          "hidden md:flex md:flex-col shrink-0 transition-all duration-200",
-          isOpen ? "w-64" : "w-16"
+          "hidden md:flex md:flex-col shrink-0 transition-[width,opacity] duration-300 ease-in-out bg-white overflow-hidden",
+          isOpen
+            ? "w-64 border-r border-gray-200 opacity-100"
+            : "w-0 border-r-0 opacity-0 pointer-events-none"
         )}
       >
-        {sidebarContent}
+        <div className="w-64 h-full flex flex-col">
+          {sidebarContent}
+        </div>
       </aside>
 
       {/* Mobile Drawer Overlay */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/40 md:hidden backdrop-blur-xs"
+          className="fixed inset-0 z-40 bg-black/40 md:hidden backdrop-blur-xs cursor-pointer"
           onClick={onMobileClose}
         />
       )}
@@ -233,7 +248,7 @@ export default function Sidebar({ isOpen, mobileOpen, onMobileClose }: SidebarPr
       {/* Mobile Drawer */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 w-64 md:hidden transform transition-transform duration-200 ease-in-out",
+          "fixed inset-y-0 left-0 z-50 w-64 md:hidden transform transition-transform duration-200 ease-in-out border-r border-gray-200",
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >

@@ -1,4 +1,4 @@
-import React from 'react'
+﻿import React from 'react'
 import { BarChart3, Download, TrendingUp, Calendar, FileText, CheckCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -29,7 +29,7 @@ export default function ReportsPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs h-9 font-semibold">
+          <Button size="sm" className="bg-[#5e2b9d] hover:bg-[#4d2282] text-white text-xs h-9 font-semibold">
             <Download className="h-4 w-4 mr-1.5" />
             Generate Custom Audit
           </Button>
@@ -45,7 +45,7 @@ export default function ReportsPage() {
         </div>
         <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-2xs">
           <span className="text-xs text-gray-500 font-medium">RevPAR (Revenue per Available Room)</span>
-          <p className="text-2xl font-bold text-indigo-600 mt-2">{formatCurrency(186.37)}</p>
+          <p className="text-2xl font-bold text-[#5e2b9d] mt-2">{formatCurrency(186.37)}</p>
           <p className="text-[11px] text-emerald-600 mt-0.5">&uarr; 9.4% yield performance</p>
         </div>
         <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-2xs">
@@ -71,7 +71,7 @@ export default function ReportsPage() {
           {reportsList.map((rep) => (
             <div key={rep.id} className="p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 hover:bg-gray-50/60 transition-colors">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg shrink-0">
+                <div className="p-2 bg-[#f7f2fd] text-[#5e2b9d] rounded-lg shrink-0">
                   <FileText className="h-5 w-5" />
                 </div>
                 <div>

@@ -1,4 +1,4 @@
-import React from 'react'
+﻿import React from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Plus, UtensilsCrossed, Edit2, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -38,7 +38,7 @@ export default function RestaurantMenuPage() {
             </p>
           </div>
         </div>
-        <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs h-9 font-semibold">
+        <Button size="sm" className="bg-[#5e2b9d] hover:bg-[#4d2282] text-white text-xs h-9 font-semibold">
           <Plus className="h-4 w-4 mr-1.5" />
           Add Menu Item
         </Button>
@@ -67,7 +67,7 @@ export default function RestaurantMenuPage() {
                 {item.status === 'available' ? 'Available' : 'Sold Out (86)'}
               </Badge>
               {item.roomService && (
-                <span className="text-[10px] font-semibold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded">
+                <span className="text-[10px] font-semibold text-[#5e2b9d] bg-[#f7f2fd] px-1.5 py-0.5 rounded">
                   Room Service
                 </span>
               )}

@@ -1,4 +1,4 @@
-import React from 'react'
+﻿import React from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Plus, Users, Shield, Briefcase } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -35,7 +35,7 @@ export default function DepartmentsPage() {
             </p>
           </div>
         </div>
-        <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs h-9 font-semibold">
+        <Button size="sm" className="bg-[#5e2b9d] hover:bg-[#4d2282] text-white text-xs h-9 font-semibold">
           <Plus className="h-4 w-4 mr-1.5" />
           Add Department
         </Button>
@@ -47,7 +47,7 @@ export default function DepartmentsPage() {
             <div>
               <div className="flex items-start justify-between">
                 <h3 className="text-base font-bold text-gray-900">{d.name}</h3>
-                <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
+                <span className="text-xs font-bold text-[#5e2b9d] bg-[#f7f2fd] px-2 py-0.5 rounded">
                   {d.staffCount} Staff
                 </span>
               </div>
@@ -61,7 +61,7 @@ export default function DepartmentsPage() {
 
             <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
               <span>{d.openShifts > 0 ? `${d.openShifts} open shifts` : 'Fully staffed'}</span>
-              <Button variant="ghost" size="sm" className="h-8 text-xs text-indigo-600 font-semibold px-2">
+              <Button variant="ghost" size="sm" className="h-8 text-xs text-[#5e2b9d] font-semibold px-2">
                 View Roster &rarr;
               </Button>
             </div>

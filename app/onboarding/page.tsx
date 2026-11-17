@@ -27,12 +27,12 @@ export default async function OnboardingPage() {
     <div className="min-h-screen bg-slate-50 flex flex-col justify-between">
       <header className="border-b border-gray-200 bg-white py-4 px-6 sm:px-10 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold text-sm shadow-sm">
+          <div className="h-9 w-9 rounded-md bg-[#5e2b9d] flex items-center justify-center text-white font-medium text-sm shadow-sm">
             SN
           </div>
           <div>
-            <span className="font-bold text-base text-gray-900 tracking-tight">StayNext</span>
-            <span className="text-[10px] ml-1.5 px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 font-semibold border border-indigo-100 uppercase">
+            <span className="font-medium text-base text-gray-900 tracking-tight">StayNext</span>
+            <span className="text-[10px] ml-1.5 px-2 py-0.5 rounded-md bg-[#f7f2fd] text-[#5e2b9d] font-medium border border-[#dfcef6] uppercase">
               Multi-Tenant
             </span>
           </div>

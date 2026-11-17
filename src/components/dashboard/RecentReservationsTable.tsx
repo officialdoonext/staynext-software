@@ -46,8 +46,8 @@ export default function RecentReservationsTable({ reservations }: RecentReservat
         <TableBody>
           {reservations.map((row) => (
             <TableRow key={row.id}>
-              <TableCell className="font-mono text-xs font-semibold text-indigo-600">
-                <Link href={`/reservations?id=${row.id}`} className="hover:underline">
+              <TableCell className="font-mono text-xs font-medium text-[#5e2b9d]">
+                <Link href={`/reservations?id=${row.id}`} className="hover:underline cursor-pointer">
                   {row.reservation_number}
                 </Link>
               </TableCell>

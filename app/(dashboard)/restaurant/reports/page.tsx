@@ -1,4 +1,4 @@
-import React from 'react'
+﻿import React from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Download, UtensilsCrossed, DollarSign, TrendingUp, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -53,7 +53,7 @@ export default function RestaurantReportsPage() {
         <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-2xs">
           <span className="text-xs font-semibold text-gray-500">Today&apos;s F&amp;B Revenue</span>
           <p className="text-2xl font-bold text-gray-900 mt-1">{formatCurrency(3420)}</p>
-          <p className="text-[11px] text-emerald-600 mt-0.5">↑ 14% vs yesterday</p>
+          <p className="text-[11px] text-emerald-600 mt-0.5">â†‘ 14% vs yesterday</p>
         </div>
         <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-2xs">
           <span className="text-xs font-semibold text-gray-500">Total Covers (Guests)</span>
@@ -63,7 +63,7 @@ export default function RestaurantReportsPage() {
         <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-2xs">
           <span className="text-xs font-semibold text-gray-500">Room Service Volume</span>
           <p className="text-2xl font-bold text-gray-900 mt-1">32 Orders</p>
-          <p className="text-[11px] text-indigo-600 mt-0.5">42% of total F&amp;B revenue</p>
+          <p className="text-[11px] text-[#5e2b9d] mt-0.5">42% of total F&amp;B revenue</p>
         </div>
         <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-2xs">
           <span className="text-xs font-semibold text-gray-500">Average Kitchen Prep Time</span>
