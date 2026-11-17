@@ -131,21 +131,51 @@ export async function createReservationAction(formData: FormData): Promise<Actio
       }
     }
 
-    // 3. If room selected, allocate room
-    if (roomId && reservation) {
+    // 3. Allocate room (either user-selected or auto-allocated available room of that category)
+    let allocatedRoomId = roomId
+
+    if (!allocatedRoomId && roomTypeId && propertyId) {
+      const { data: candidateRooms } = await supabase
+        .from('rooms')
+        .select('id')
+        .eq('property_id', propertyId)
+        .eq('room_type_id', roomTypeId)
+        .eq('is_active', true)
+        .order('room_number', { ascending: true })
+
+      if (candidateRooms && candidateRooms.length > 0) {
+        for (const candidate of candidateRooms) {
+          const { data: existingBookings } = await supabase
+            .from('reservation_rooms')
+            .select('id')
+            .eq('room_id', candidate.id)
+            .eq('is_active', true)
+            .lt('check_in_date', checkOutDate)
+            .gt('check_out_date', checkInDate)
+
+          if (!existingBookings || existingBookings.length === 0) {
+            allocatedRoomId = candidate.id
+            break
+          }
+        }
+      }
+    }
+
+    if (allocatedRoomId && reservation) {
       await supabase.from('reservation_rooms').insert({
         reservation_id: reservation.id,
-        room_id: roomId,
+        room_id: allocatedRoomId,
         check_in_date: checkInDate,
         check_out_date: checkOutDate,
         rate_per_night: totalAmount,
       })
 
-      await supabase.from('rooms').update({ status: 'reserved' }).eq('id', roomId)
+      await supabase.from('rooms').update({ status: 'reserved' }).eq('id', allocatedRoomId)
     }
 
     revalidatePath('/dashboard')
     revalidatePath('/reservations')
+    revalidatePath('/reservations/calendar')
     revalidatePath('/rooms')
     revalidatePath('/front-desk')
 

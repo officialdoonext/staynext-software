@@ -7,13 +7,23 @@ import Link from 'next/link'
 import { Building2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 export const metadata = { title: 'Reservation Calendar Matrix | StayNext' }
 
-export default async function ReservationCalendarPage() {
+export default async function ReservationCalendarPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ propertyId?: string }>
+}) {
+  const resolvedParams = searchParams ? await searchParams : {}
   const properties = await getProperties()
-  const primaryProp = properties[0]
+  
+  const currentPropertyId = resolvedParams.propertyId || properties[0]?.id
+  const currentProp = properties.find((p) => p.id === currentPropertyId) || properties[0]
 
-  if (!primaryProp) {
+  if (!currentProp) {
     return (
       <div className="bg-white rounded-md border border-gray-200 p-12 text-center max-w-lg mx-auto my-8">
         <Building2 className="h-8 w-8 text-[#5e2b9d] mx-auto mb-3" />
@@ -31,13 +41,13 @@ export default async function ReservationCalendarPage() {
   }
 
   const [{ reservations }, { rooms }] = await Promise.all([
-    getReservations(primaryProp.id),
-    getRooms(primaryProp.id),
+    getReservations(currentProp.id, { limit: 500 }),
+    getRooms(currentProp.id),
   ])
 
   return (
     <ReservationCalendarClient
-      property={primaryProp}
+      property={currentProp}
       properties={properties}
       rooms={rooms}
       reservations={reservations}

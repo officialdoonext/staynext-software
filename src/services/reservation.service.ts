@@ -368,20 +368,52 @@ export async function createReservation(payload: {
 
     if (resErr) throw resErr
 
-    // 3. Allocate room if selected
-    if (payload.room_id) {
+    // 3. Allocate room (either user-selected or auto-allocated available room of that category)
+    let allocatedRoomId = payload.room_id
+
+    if (!allocatedRoomId && payload.room_type_id && payload.property_id) {
+      // Find candidate rooms matching the room type in this property
+      const { data: candidateRooms } = await supabase
+        .from('rooms')
+        .select('id')
+        .eq('property_id', payload.property_id)
+        .eq('room_type_id', payload.room_type_id)
+        .eq('is_active', true)
+        .order('room_number', { ascending: true })
+
+      if (candidateRooms && candidateRooms.length > 0) {
+        for (const candidate of candidateRooms) {
+          // Check for date collision in reservation_rooms
+          const { data: existingBookings } = await supabase
+            .from('reservation_rooms')
+            .select('id')
+            .eq('room_id', candidate.id)
+            .eq('is_active', true)
+            .lt('check_in_date', payload.check_out_date)
+            .gt('check_out_date', payload.check_in_date)
+
+          if (!existingBookings || existingBookings.length === 0) {
+            allocatedRoomId = candidate.id
+            break
+          }
+        }
+      }
+    }
+
+    if (allocatedRoomId) {
       await supabase.from('reservation_rooms').insert({
         reservation_id: reservation.id,
-        room_id: payload.room_id,
+        room_id: allocatedRoomId,
         check_in_date: payload.check_in_date,
         check_out_date: payload.check_out_date,
         rate_per_night: payload.total_amount,
       })
 
-      await supabase.from('rooms').update({ status: 'reserved' }).eq('id', payload.room_id)
+      await supabase.from('rooms').update({ status: 'reserved' }).eq('id', allocatedRoomId)
     }
 
     revalidatePath('/reservations')
+    revalidatePath('/reservations/calendar')
     revalidatePath('/front-desk')
     revalidatePath('/dashboard')
     revalidatePath('/rooms')
@@ -434,6 +466,7 @@ export async function checkInReservation(
     }
 
     revalidatePath('/reservations')
+    revalidatePath('/reservations/calendar')
     revalidatePath('/front-desk')
     revalidatePath('/dashboard')
     revalidatePath('/rooms')
@@ -511,10 +544,76 @@ export async function checkOutReservation(
     }
 
     revalidatePath('/reservations')
+    revalidatePath('/reservations/calendar')
     revalidatePath('/front-desk')
     revalidatePath('/housekeeping')
     revalidatePath('/dashboard')
     revalidatePath('/rooms')
+    return { success: true }
+  } catch (err: any) {
+    return { success: false, error: err.message }
+  }
+}
+
+/**
+ * Assign or reassign a physical room to a reservation
+ */
+export async function assignRoomToReservation(
+  reservationId: string,
+  roomId: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const supabase = await createClient()
+
+    // 1. Fetch reservation
+    const { data: res, error: resErr } = await supabase
+      .from('reservations')
+      .select('id, property_id, check_in_date, check_out_date, total_amount')
+      .eq('id', reservationId)
+      .single()
+
+    if (resErr || !res) throw new Error('Reservation record not found')
+
+    // 2. Check if already has an allocation
+    const { data: existing } = await supabase
+      .from('reservation_rooms')
+      .select('id')
+      .eq('reservation_id', reservationId)
+      .maybeSingle()
+
+    if (existing) {
+      await supabase
+        .from('reservation_rooms')
+        .update({
+          room_id: roomId,
+          check_in_date: res.check_in_date,
+          check_out_date: res.check_out_date,
+          rate_per_night: res.total_amount,
+          is_active: true,
+        })
+        .eq('id', existing.id)
+    } else {
+      await supabase
+        .from('reservation_rooms')
+        .insert({
+          reservation_id: reservationId,
+          room_id: roomId,
+          check_in_date: res.check_in_date,
+          check_out_date: res.check_out_date,
+          rate_per_night: res.total_amount,
+          is_active: true,
+        })
+    }
+
+    // 3. Mark room as reserved
+    await supabase.from('rooms').update({ status: 'reserved' }).eq('id', roomId)
+
+    revalidatePath('/reservations')
+    revalidatePath('/reservations/calendar')
+    revalidatePath('/front-desk')
+    revalidatePath('/dashboard')
+    revalidatePath('/rooms')
+
     return { success: true }
   } catch (err: any) {
     return { success: false, error: err.message }
@@ -555,6 +654,7 @@ export async function cancelReservation(
     }
 
     revalidatePath('/reservations')
+    revalidatePath('/reservations/calendar')
     revalidatePath('/front-desk')
     revalidatePath('/dashboard')
     revalidatePath('/rooms')
