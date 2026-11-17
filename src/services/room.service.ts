@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { generateRoomQRCode } from '@/services/qr.service'
 
 export interface RoomItem {
   id: string
@@ -550,5 +551,330 @@ export async function releaseRoomBlock(blockId: string, roomId: string): Promise
     return { success: true }
   } catch (err: any) {
     return { success: false, error: err.message }
+  }
+}
+
+// ============================================================================
+// BULK UPLOAD ROOMS WITH AUTO-GENERATION OF TYPES, BUILDINGS & FLOORS
+// ============================================================================
+
+export interface BulkUploadRoomInput {
+  room_number: string
+  room_type: string
+  building?: string
+  floor?: string | number
+  base_rate?: number
+  max_occupancy?: number
+  bed_type?: string
+  status?: string
+  is_smoking?: boolean
+  notes?: string
+}
+
+export interface BulkUploadResult {
+  success: boolean
+  totalProcessed: number
+  createdRoomsCount: number
+  createdRoomTypesCount: number
+  createdBuildingsCount: number
+  createdFloorsCount: number
+  createdRoomTypes: string[]
+  createdBuildings: string[]
+  createdFloors: string[]
+  skippedDuplicates: string[]
+  errors: { room_number: string; message: string }[]
+  error?: string
+}
+
+export async function bulkUploadRooms(
+  propertyId: string,
+  rows: BulkUploadRoomInput[]
+): Promise<BulkUploadResult> {
+  try {
+    const supabase = await createClient()
+
+    if (!propertyId) {
+      return {
+        success: false,
+        totalProcessed: 0,
+        createdRoomsCount: 0,
+        createdRoomTypesCount: 0,
+        createdBuildingsCount: 0,
+        createdFloorsCount: 0,
+        createdRoomTypes: [],
+        createdBuildings: [],
+        createdFloors: [],
+        skippedDuplicates: [],
+        errors: [],
+        error: 'Property ID is required.',
+      }
+    }
+
+    if (!rows || rows.length === 0) {
+      return {
+        success: false,
+        totalProcessed: 0,
+        createdRoomsCount: 0,
+        createdRoomTypesCount: 0,
+        createdBuildingsCount: 0,
+        createdFloorsCount: 0,
+        createdRoomTypes: [],
+        createdBuildings: [],
+        createdFloors: [],
+        skippedDuplicates: [],
+        errors: [],
+        error: 'No room rows provided for bulk upload.',
+      }
+    }
+
+    const createdRoomTypes: string[] = []
+    const createdBuildings: string[] = []
+    const createdFloors: string[] = []
+    const skippedDuplicates: string[] = []
+    const errors: { room_number: string; message: string }[] = []
+
+    // 1. Fetch existing rooms to prevent duplicate room numbers in this property
+    const { data: existingRooms } = await supabase
+      .from('rooms')
+      .select('room_number')
+      .eq('property_id', propertyId)
+
+    const existingRoomNumbers = new Set(
+      (existingRooms || []).map((r: any) => String(r.room_number).trim().toLowerCase())
+    )
+
+    // 2. Fetch existing buildings
+    const { data: existingBuildings } = await supabase
+      .from('buildings')
+      .select('id, name')
+      .eq('property_id', propertyId)
+
+    const buildingMap = new Map<string, string>() // lowerName -> id
+    for (const b of existingBuildings || []) {
+      buildingMap.set(b.name.trim().toLowerCase(), b.id)
+    }
+
+    // 3. Fetch existing floors
+    const { data: existingFloors } = await supabase
+      .from('floors')
+      .select('id, floor_number, building_id')
+      .eq('property_id', propertyId)
+
+    const floorMap = new Map<string, string>() // `${building_id || 'nobldg'}_${floor_number}` -> id
+    for (const f of existingFloors || []) {
+      floorMap.set(`${f.building_id || 'nobldg'}_${f.floor_number}`, f.id)
+    }
+
+    // 4. Fetch existing room types
+    const { data: existingRoomTypes } = await supabase
+      .from('room_types')
+      .select('id, name')
+      .eq('property_id', propertyId)
+
+    const roomTypeMap = new Map<string, string>() // lowerName -> id
+    for (const rt of existingRoomTypes || []) {
+      roomTypeMap.set(rt.name.trim().toLowerCase(), rt.id)
+    }
+
+    // 5. AUTO-CREATE MISSING BUILDINGS
+    for (const row of rows) {
+      const bName = (row.building || '').trim()
+      if (bName && !buildingMap.has(bName.toLowerCase())) {
+        const { data: newB, error: bErr } = await supabase
+          .from('buildings')
+          .insert({
+            property_id: propertyId,
+            name: bName,
+            code: bName.replace(/[^a-zA-Z0-9]/g, '').slice(0, 4).toUpperCase() || 'BLD',
+            is_active: true,
+          })
+          .select('id, name')
+          .single()
+
+        if (!bErr && newB) {
+          buildingMap.set(newB.name.trim().toLowerCase(), newB.id)
+          createdBuildings.push(newB.name)
+        }
+      }
+    }
+
+    // 6. AUTO-CREATE MISSING FLOORS
+    for (const row of rows) {
+      const bName = (row.building || '').trim()
+      const bId = bName ? buildingMap.get(bName.toLowerCase()) : null
+
+      let floorNum = 1
+      if (row.floor !== undefined && row.floor !== null && row.floor !== '') {
+        const parsed = parseInt(String(row.floor).replace(/[^\d-]/g, ''), 10)
+        floorNum = isNaN(parsed) ? 1 : parsed
+      }
+
+      const floorKey = `${bId || 'nobldg'}_${floorNum}`
+      if (!floorMap.has(floorKey)) {
+        const floorName = floorNum === 0 ? 'Ground Floor' : `Floor ${floorNum}`
+        const { data: newF, error: fErr } = await supabase
+          .from('floors')
+          .insert({
+            property_id: propertyId,
+            building_id: bId || null,
+            floor_number: floorNum,
+            name: floorName,
+            is_active: true,
+          })
+          .select('id, floor_number, building_id')
+          .single()
+
+        if (!fErr && newF) {
+          floorMap.set(`${newF.building_id || 'nobldg'}_${newF.floor_number}`, newF.id)
+          createdFloors.push(`${floorName}${bName ? ` (${bName})` : ''}`)
+        }
+      }
+    }
+
+    // 7. AUTO-CREATE MISSING ROOM TYPES
+    for (const row of rows) {
+      const rtName = (row.room_type || '').trim()
+      if (rtName && !roomTypeMap.has(rtName.toLowerCase())) {
+        const code = rtName.replace(/[^a-zA-Z0-9]/g, '').slice(0, 4).toUpperCase() || 'STD'
+        const baseRate = typeof row.base_rate === 'number' && row.base_rate > 0 ? row.base_rate : 2500
+        const maxOcc = typeof row.max_occupancy === 'number' && row.max_occupancy > 0 ? row.max_occupancy : 2
+        const bedType = row.bed_type?.trim() || 'King Bed'
+
+        const { data: newRT, error: rtErr } = await supabase
+          .from('room_types')
+          .insert({
+            property_id: propertyId,
+            name: rtName,
+            code,
+            description: `${rtName} accommodation`,
+            base_rate: baseRate,
+            max_occupancy: maxOcc,
+            bed_type: bedType,
+            size_sqft: 320,
+            amenities: ['High-speed WiFi', 'Air Conditioning', 'Flat-screen TV', 'Room Service', 'Ensuite Bathroom'],
+            images: [],
+            is_active: true,
+          })
+          .select('id, name')
+          .single()
+
+        if (!rtErr && newRT) {
+          roomTypeMap.set(newRT.name.trim().toLowerCase(), newRT.id)
+          createdRoomTypes.push(newRT.name)
+        }
+      }
+    }
+
+    // 8. PREPARE ROOMS TO INSERT
+    const roomsToInsert: any[] = []
+    const validStatuses = ['available', 'occupied', 'reserved', 'dirty', 'cleaning', 'maintenance', 'out_of_order', 'blocked']
+
+    for (const row of rows) {
+      const roomNum = String(row.room_number || '').trim()
+      if (!roomNum) {
+        errors.push({ room_number: 'N/A', message: 'Missing room number.' })
+        continue
+      }
+
+      if (existingRoomNumbers.has(roomNum.toLowerCase())) {
+        skippedDuplicates.push(roomNum)
+        continue
+      }
+
+      const rtName = (row.room_type || '').trim()
+      const rtId = roomTypeMap.get(rtName.toLowerCase())
+      if (!rtId) {
+        errors.push({ room_number: roomNum, message: `Could not assign room category "${rtName}".` })
+        continue
+      }
+
+      const bName = (row.building || '').trim()
+      const bId = bName ? buildingMap.get(bName.toLowerCase()) || null : null
+
+      let floorNum = 1
+      if (row.floor !== undefined && row.floor !== null && row.floor !== '') {
+        const parsed = parseInt(String(row.floor).replace(/[^\d-]/g, ''), 10)
+        floorNum = isNaN(parsed) ? 1 : parsed
+      }
+      const floorId = floorMap.get(`${bId || 'nobldg'}_${floorNum}`) || null
+
+      const status = row.status && validStatuses.includes(row.status.toLowerCase())
+        ? row.status.toLowerCase()
+        : 'available'
+
+      roomsToInsert.push({
+        property_id: propertyId,
+        room_number: roomNum,
+        building_id: bId,
+        floor_id: floorId,
+        room_type_id: rtId,
+        status,
+        is_smoking: Boolean(row.is_smoking),
+        notes: row.notes || 'Bulk imported room',
+        is_active: true,
+      })
+
+      // Add to set to prevent duplicates within the same batch
+      existingRoomNumbers.add(roomNum.toLowerCase())
+    }
+
+    // 9. BATCH INSERT ROOMS
+    let createdRoomsCount = 0
+    if (roomsToInsert.length > 0) {
+      const { data: insertedRooms, error: insertError } = await supabase
+        .from('rooms')
+        .insert(roomsToInsert)
+        .select('id, room_number')
+
+      if (insertError) {
+        throw insertError
+      }
+
+      createdRoomsCount = insertedRooms?.length || 0
+
+      // 10. AUTO-GENERATE QR CODES FOR ALL CREATED ROOMS
+      if (insertedRooms && insertedRooms.length > 0) {
+        await Promise.allSettled(
+          insertedRooms.map((r: any) => generateRoomQRCode(propertyId, r.id))
+        )
+      }
+    }
+
+    // 11. REVALIDATE PATHS
+    revalidatePath('/rooms')
+    revalidatePath('/rooms/types')
+    revalidatePath('/rooms/floors')
+    revalidatePath('/rooms/buildings')
+    revalidatePath('/rooms/qr-codes')
+    revalidatePath('/dashboard')
+
+    return {
+      success: true,
+      totalProcessed: rows.length,
+      createdRoomsCount,
+      createdRoomTypesCount: createdRoomTypes.length,
+      createdBuildingsCount: createdBuildings.length,
+      createdFloorsCount: createdFloors.length,
+      createdRoomTypes,
+      createdBuildings,
+      createdFloors,
+      skippedDuplicates,
+      errors,
+    }
+  } catch (err: any) {
+    return {
+      success: false,
+      totalProcessed: rows.length,
+      createdRoomsCount: 0,
+      createdRoomTypesCount: 0,
+      createdBuildingsCount: 0,
+      createdFloorsCount: 0,
+      createdRoomTypes: [],
+      createdBuildings: [],
+      createdFloors: [],
+      skippedDuplicates: [],
+      errors: [],
+      error: err.message,
+    }
   }
 }

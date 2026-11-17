@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import {
   BedDouble,
   Plus,
@@ -21,7 +22,8 @@ import {
   Clock,
   ExternalLink,
   Building2,
-  Layers
+  Layers,
+  Upload
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -29,6 +31,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { RoomItem, RoomTypeItem, updateRoomStatus, deleteRoom } from '@/services/room.service'
 import { BuildingItem, FloorItem, PropertyItem } from '@/services/property.service'
 import { formatCurrency } from '@/lib/utils'
+import BulkUploadRoomsModal from '@/components/rooms/BulkUploadRoomsModal'
 
 interface RoomsListClientProps {
   initialRooms: RoomItem[]
@@ -45,6 +48,7 @@ export default function RoomsListClient({
   floors,
   properties,
 }: RoomsListClientProps) {
+  const router = useRouter()
   const [rooms, setRooms] = useState<RoomItem[]>(initialRooms)
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid')
   const [searchTerm, setSearchTerm] = useState('')
@@ -52,6 +56,7 @@ export default function RoomsListClient({
   const [selectedFloor, setSelectedFloor] = useState('all')
   const [selectedStatus, setSelectedStatus] = useState('all')
   const [updatingId, setUpdatingId] = useState<string | null>(null)
+  const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false)
 
   const handleQuickStatus = async (roomId: string, newStatus: RoomItem['status']) => {
     setUpdatingId(roomId)
@@ -221,6 +226,16 @@ export default function RoomsListClient({
               QR Codes
             </Button>
           </Link>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsBulkUploadOpen(true)}
+            className="text-xs h-9 rounded-md cursor-pointer border-[#dfcef6] text-[#5e2b9d] hover:bg-[#f7f2fd] font-medium"
+          >
+            <Upload className="h-3.5 w-3.5 mr-1.5" />
+            Bulk Upload
+          </Button>
 
           <Link href="/rooms/new">
             <Button className="bg-[#5e2b9d] hover:bg-[#4d2282] text-white text-xs h-9 font-medium rounded-md cursor-pointer">
@@ -521,6 +536,20 @@ export default function RoomsListClient({
           </table>
         </div>
       )}
+      {/* Bulk Upload Rooms Modal */}
+      <BulkUploadRoomsModal
+        isOpen={isBulkUploadOpen}
+        onClose={() => setIsBulkUploadOpen(false)}
+        properties={properties}
+        currentPropertyId={properties[0]?.id || ''}
+        existingRoomTypes={roomTypes}
+        existingBuildings={buildings}
+        existingFloors={floors}
+        existingRoomNumbers={rooms.map((r) => r.room_number)}
+        onSuccess={() => {
+          router.refresh()
+        }}
+      />
     </div>
   )
 }
