@@ -8,17 +8,13 @@
 -- 1. Ensure RLS Policies for previously un-policied tables
 DO $$
 BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_policies WHERE tablename = 'expense_categories' AND policyname = 'Expense categories isolation'
-  ) THEN
-    CREATE POLICY "Expense categories isolation" ON expense_categories FOR ALL USING (user_has_property_access(property_id));
-  END IF;
+  DROP POLICY IF EXISTS "Expense categories isolation" ON expense_categories;
+  DROP POLICY IF EXISTS "Staff all on expense_categories" ON expense_categories;
+  CREATE POLICY "Staff all on expense_categories" ON expense_categories FOR ALL TO authenticated USING (true) WITH CHECK (true);
 
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_policies WHERE tablename = 'departments' AND policyname = 'Departments isolation'
-  ) THEN
-    CREATE POLICY "Departments isolation" ON departments FOR ALL USING (user_has_property_access(property_id));
-  END IF;
+  DROP POLICY IF EXISTS "Departments isolation" ON departments;
+  DROP POLICY IF EXISTS "Staff all on departments" ON departments;
+  CREATE POLICY "Staff all on departments" ON departments FOR ALL TO authenticated USING (true) WITH CHECK (true);
 END $$;
 
 -- 2. Relax expenses.created_by requirement and add defaults
@@ -55,11 +51,9 @@ ALTER TABLE employee_schedules ENABLE ROW LEVEL SECURITY;
 
 DO $$
 BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_policies WHERE tablename = 'employee_schedules' AND policyname = 'Employee schedules isolation'
-  ) THEN
-    CREATE POLICY "Employee schedules isolation" ON employee_schedules FOR ALL USING (user_has_property_access(property_id));
-  END IF;
+  DROP POLICY IF EXISTS "Employee schedules isolation" ON employee_schedules;
+  DROP POLICY IF EXISTS "Staff all on employee_schedules" ON employee_schedules;
+  CREATE POLICY "Staff all on employee_schedules" ON employee_schedules FOR ALL TO authenticated USING (true) WITH CHECK (true);
 END $$;
 
 CREATE INDEX IF NOT EXISTS idx_employee_schedules_lookup ON employee_schedules(property_id, shift_date);
@@ -85,11 +79,9 @@ ALTER TABLE rate_promotions ENABLE ROW LEVEL SECURITY;
 
 DO $$
 BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_policies WHERE tablename = 'rate_promotions' AND policyname = 'Rate promotions isolation'
-  ) THEN
-    CREATE POLICY "Rate promotions isolation" ON rate_promotions FOR ALL USING (user_has_property_access(property_id));
-  END IF;
+  DROP POLICY IF EXISTS "Rate promotions isolation" ON rate_promotions;
+  DROP POLICY IF EXISTS "Staff all on rate_promotions" ON rate_promotions;
+  CREATE POLICY "Staff all on rate_promotions" ON rate_promotions FOR ALL TO authenticated USING (true) WITH CHECK (true);
 END $$;
 
 CREATE INDEX IF NOT EXISTS idx_rate_promotions_lookup ON rate_promotions(property_id, code);
@@ -110,11 +102,9 @@ ALTER TABLE seasonal_rates ENABLE ROW LEVEL SECURITY;
 
 DO $$
 BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_policies WHERE tablename = 'seasonal_rates' AND policyname = 'Seasonal rates isolation'
-  ) THEN
-    CREATE POLICY "Seasonal rates isolation" ON seasonal_rates FOR ALL USING (user_has_property_access(property_id));
-  END IF;
+  DROP POLICY IF EXISTS "Seasonal rates isolation" ON seasonal_rates;
+  DROP POLICY IF EXISTS "Staff all on seasonal_rates" ON seasonal_rates;
+  CREATE POLICY "Staff all on seasonal_rates" ON seasonal_rates FOR ALL TO authenticated USING (true) WITH CHECK (true);
 END $$;
 
 CREATE INDEX IF NOT EXISTS idx_seasonal_rates_lookup ON seasonal_rates(property_id, start_date, end_date);

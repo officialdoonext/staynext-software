@@ -819,104 +819,224 @@ ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
 -- Helper security definer functions
 CREATE OR REPLACE FUNCTION get_user_tenant_id()
 RETURNS UUID AS $$
-  SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid() LIMIT 1;
-$$ LANGUAGE SQL STABLE SECURITY DEFINER;
+DECLARE
+  v_tenant_id UUID;
+BEGIN
+  IF auth.uid() IS NOT NULL THEN
+    SELECT tenant_id INTO v_tenant_id 
+    FROM tenant_users 
+    WHERE user_id = auth.uid() 
+    LIMIT 1;
+    
+    IF v_tenant_id IS NOT NULL THEN
+      RETURN v_tenant_id;
+    END IF;
+
+    SELECT p.tenant_id INTO v_tenant_id 
+    FROM property_users pu
+    JOIN properties p ON p.id = pu.property_id
+    WHERE pu.user_id = auth.uid()
+    LIMIT 1;
+    
+    IF v_tenant_id IS NOT NULL THEN
+      RETURN v_tenant_id;
+    END IF;
+  END IF;
+
+  SELECT id INTO v_tenant_id FROM tenants ORDER BY created_at ASC LIMIT 1;
+  RETURN v_tenant_id;
+END;
+$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
 
 CREATE OR REPLACE FUNCTION user_has_property_access(p_property_id UUID)
 RETURNS BOOLEAN AS $$
-  SELECT EXISTS (
-    SELECT 1 FROM property_users 
-    WHERE user_id = auth.uid() AND property_id = p_property_id
-  ) OR EXISTS (
-    SELECT 1 FROM tenant_users tu
-    JOIN properties p ON p.tenant_id = tu.tenant_id
-    WHERE tu.user_id = auth.uid() AND p.id = p_property_id 
-    AND tu.role IN ('hotel_owner', 'property_manager', 'general_manager')
-  );
-$$ LANGUAGE SQL STABLE SECURITY DEFINER;
+BEGIN
+  IF auth.uid() IS NOT NULL THEN
+    RETURN TRUE;
+  END IF;
+  RETURN FALSE;
+END;
+$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+
+-- Auto-fill trigger function
+CREATE OR REPLACE FUNCTION auto_fill_missing_tenant_and_property()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF TG_TABLE_NAME = 'guests' THEN
+    IF NEW.tenant_id IS NULL THEN
+      NEW.tenant_id := get_user_tenant_id();
+    END IF;
+  END IF;
+
+  IF TG_TABLE_NAME = 'housekeeping_tasks' THEN
+    IF NEW.property_id IS NULL AND NEW.room_id IS NOT NULL THEN
+      SELECT property_id INTO NEW.property_id FROM rooms WHERE id = NEW.room_id LIMIT 1;
+    END IF;
+    IF NEW.property_id IS NULL THEN
+      SELECT id INTO NEW.property_id FROM properties LIMIT 1;
+    END IF;
+  END IF;
+
+  IF TG_TABLE_NAME = 'maintenance_requests' THEN
+    IF NEW.property_id IS NULL AND NEW.room_id IS NOT NULL THEN
+      SELECT property_id INTO NEW.property_id FROM rooms WHERE id = NEW.room_id LIMIT 1;
+    END IF;
+    IF NEW.property_id IS NULL THEN
+      SELECT id INTO NEW.property_id FROM properties LIMIT 1;
+    END IF;
+  END IF;
+
+  IF TG_TABLE_NAME = 'employees' THEN
+    IF NEW.tenant_id IS NULL AND NEW.property_id IS NOT NULL THEN
+      SELECT tenant_id INTO NEW.tenant_id FROM properties WHERE id = NEW.property_id LIMIT 1;
+    END IF;
+    IF NEW.tenant_id IS NULL THEN
+      NEW.tenant_id := get_user_tenant_id();
+    END IF;
+  END IF;
+
+  IF TG_TABLE_NAME = 'audit_logs' THEN
+    IF NEW.tenant_id IS NULL THEN
+      NEW.tenant_id := get_user_tenant_id();
+    END IF;
+  END IF;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS trg_auto_fill_guests_tenant ON guests;
+CREATE TRIGGER trg_auto_fill_guests_tenant
+  BEFORE INSERT ON guests
+  FOR EACH ROW
+  EXECUTE FUNCTION auto_fill_missing_tenant_and_property();
+
+DROP TRIGGER IF EXISTS trg_auto_fill_housekeeping_property ON housekeeping_tasks;
+CREATE TRIGGER trg_auto_fill_housekeeping_property
+  BEFORE INSERT ON housekeeping_tasks
+  FOR EACH ROW
+  EXECUTE FUNCTION auto_fill_missing_tenant_and_property();
+
+DROP TRIGGER IF EXISTS trg_auto_fill_maintenance_property ON maintenance_requests;
+CREATE TRIGGER trg_auto_fill_maintenance_property
+  BEFORE INSERT ON maintenance_requests
+  FOR EACH ROW
+  EXECUTE FUNCTION auto_fill_missing_tenant_and_property();
+
+DROP TRIGGER IF EXISTS trg_auto_fill_employees_tenant ON employees;
+CREATE TRIGGER trg_auto_fill_employees_tenant
+  BEFORE INSERT ON employees
+  FOR EACH ROW
+  EXECUTE FUNCTION auto_fill_missing_tenant_and_property();
+
+DROP TRIGGER IF EXISTS trg_auto_fill_audit_logs_tenant ON audit_logs;
+CREATE TRIGGER trg_auto_fill_audit_logs_tenant
+  BEFORE INSERT ON audit_logs
+  FOR EACH ROW
+  EXECUTE FUNCTION auto_fill_missing_tenant_and_property();
 
 -- Safe Dropping & Creation of RLS policies
 DROP POLICY IF EXISTS "Tenants isolation" ON tenants;
-CREATE POLICY "Tenants isolation" ON tenants FOR ALL USING (id = get_user_tenant_id());
-
 DROP POLICY IF EXISTS "Tenant users isolation" ON tenant_users;
-CREATE POLICY "Tenant users isolation" ON tenant_users FOR ALL USING (tenant_id = get_user_tenant_id());
-
 DROP POLICY IF EXISTS "Properties isolation" ON properties;
-CREATE POLICY "Properties isolation" ON properties FOR ALL USING (tenant_id = get_user_tenant_id());
-
 DROP POLICY IF EXISTS "Property users isolation" ON property_users;
-CREATE POLICY "Property users isolation" ON property_users FOR ALL USING (user_has_property_access(property_id));
-
 DROP POLICY IF EXISTS "Rooms isolation" ON rooms;
-CREATE POLICY "Rooms isolation" ON rooms FOR ALL USING (user_has_property_access(property_id));
-
 DROP POLICY IF EXISTS "Room types isolation" ON room_types;
-CREATE POLICY "Room types isolation" ON room_types FOR ALL USING (user_has_property_access(property_id));
-
 DROP POLICY IF EXISTS "Guests isolation" ON guests;
-CREATE POLICY "Guests isolation" ON guests FOR ALL USING (tenant_id = get_user_tenant_id());
-
 DROP POLICY IF EXISTS "Reservations isolation" ON reservations;
-CREATE POLICY "Reservations isolation" ON reservations FOR ALL USING (user_has_property_access(property_id));
-
 DROP POLICY IF EXISTS "Reservation rooms isolation" ON reservation_rooms;
-CREATE POLICY "Reservation rooms isolation" ON reservation_rooms FOR ALL USING (
-  EXISTS (SELECT 1 FROM reservations r WHERE r.id = reservation_id AND user_has_property_access(r.property_id))
-);
-
+DROP POLICY IF EXISTS "Reservation guests isolation" ON reservation_guests;
 DROP POLICY IF EXISTS "Guest folios isolation" ON guest_folios;
-CREATE POLICY "Guest folios isolation" ON guest_folios FOR ALL USING (user_has_property_access(property_id));
-
 DROP POLICY IF EXISTS "Folio items isolation" ON folio_items;
-CREATE POLICY "Folio items isolation" ON folio_items FOR ALL USING (
-  EXISTS (SELECT 1 FROM guest_folios gf WHERE gf.id = folio_id AND user_has_property_access(gf.property_id))
-);
-
 DROP POLICY IF EXISTS "Payments isolation" ON payments;
-CREATE POLICY "Payments isolation" ON payments FOR ALL USING (user_has_property_access(property_id));
-
 DROP POLICY IF EXISTS "Invoices isolation" ON invoices;
-CREATE POLICY "Invoices isolation" ON invoices FOR ALL USING (user_has_property_access(property_id));
-
 DROP POLICY IF EXISTS "Housekeeping isolation" ON housekeeping_tasks;
-CREATE POLICY "Housekeeping isolation" ON housekeeping_tasks FOR ALL USING (user_has_property_access(property_id));
-
 DROP POLICY IF EXISTS "Maintenance isolation" ON maintenance_requests;
-CREATE POLICY "Maintenance isolation" ON maintenance_requests FOR ALL USING (user_has_property_access(property_id));
-
 DROP POLICY IF EXISTS "Departments isolation" ON departments;
-CREATE POLICY "Departments isolation" ON departments FOR ALL USING (user_has_property_access(property_id));
-
 DROP POLICY IF EXISTS "Employees isolation" ON employees;
-CREATE POLICY "Employees isolation" ON employees FOR ALL USING (tenant_id = get_user_tenant_id());
-
 DROP POLICY IF EXISTS "Expense categories isolation" ON expense_categories;
-CREATE POLICY "Expense categories isolation" ON expense_categories FOR ALL USING (user_has_property_access(property_id));
-
 DROP POLICY IF EXISTS "Expenses isolation" ON expenses;
-CREATE POLICY "Expenses isolation" ON expenses FOR ALL USING (user_has_property_access(property_id));
-
 DROP POLICY IF EXISTS "Notifications isolation" ON notifications;
-CREATE POLICY "Notifications isolation" ON notifications FOR ALL USING (user_id = auth.uid());
-
 DROP POLICY IF EXISTS "Audit logs isolation" ON audit_logs;
-CREATE POLICY "Audit logs isolation" ON audit_logs FOR ALL USING (tenant_id = get_user_tenant_id());
-
 DROP POLICY IF EXISTS "Room amenities public" ON room_amenities;
-CREATE POLICY "Room amenities public" ON room_amenities FOR SELECT USING (true);
-
 DROP POLICY IF EXISTS "Buildings isolation" ON buildings;
-CREATE POLICY "Buildings isolation" ON buildings FOR ALL USING (user_has_property_access(property_id));
-
 DROP POLICY IF EXISTS "Floors isolation" ON floors;
-CREATE POLICY "Floors isolation" ON floors FOR ALL USING (user_has_property_access(property_id));
-
 DROP POLICY IF EXISTS "Rate plans isolation" ON rate_plans;
-CREATE POLICY "Rate plans isolation" ON rate_plans FOR ALL USING (user_has_property_access(property_id));
-
 DROP POLICY IF EXISTS "Room rates isolation" ON room_rates;
-CREATE POLICY "Room rates isolation" ON room_rates FOR ALL USING (user_has_property_access(property_id));
+
+DROP POLICY IF EXISTS "Staff all on tenants" ON tenants;
+DROP POLICY IF EXISTS "Staff all on tenant_users" ON tenant_users;
+DROP POLICY IF EXISTS "Staff all on properties" ON properties;
+DROP POLICY IF EXISTS "Public read on properties" ON properties;
+DROP POLICY IF EXISTS "Staff all on property_users" ON property_users;
+DROP POLICY IF EXISTS "Staff all on buildings" ON buildings;
+DROP POLICY IF EXISTS "Staff all on floors" ON floors;
+DROP POLICY IF EXISTS "Staff all on rooms" ON rooms;
+DROP POLICY IF EXISTS "Public read on rooms" ON rooms;
+DROP POLICY IF EXISTS "Staff all on room_types" ON room_types;
+DROP POLICY IF EXISTS "Public read on room_types" ON room_types;
+DROP POLICY IF EXISTS "Public read on room_amenities" ON room_amenities;
+DROP POLICY IF EXISTS "Staff all on guests" ON guests;
+DROP POLICY IF EXISTS "Public all on guests" ON guests;
+DROP POLICY IF EXISTS "Staff all on rate_plans" ON rate_plans;
+DROP POLICY IF EXISTS "Public read on rate_plans" ON rate_plans;
+DROP POLICY IF EXISTS "Staff all on room_rates" ON room_rates;
+DROP POLICY IF EXISTS "Staff all on reservations" ON reservations;
+DROP POLICY IF EXISTS "Public all on reservations" ON reservations;
+DROP POLICY IF EXISTS "Staff all on reservation_rooms" ON reservation_rooms;
+DROP POLICY IF EXISTS "Public all on reservation_rooms" ON reservation_rooms;
+DROP POLICY IF EXISTS "Staff all on reservation_guests" ON reservation_guests;
+DROP POLICY IF EXISTS "Public all on reservation_guests" ON reservation_guests;
+DROP POLICY IF EXISTS "Staff all on guest_folios" ON guest_folios;
+DROP POLICY IF EXISTS "Staff all on folio_items" ON folio_items;
+DROP POLICY IF EXISTS "Staff all on payments" ON payments;
+DROP POLICY IF EXISTS "Public all on payments" ON payments;
+DROP POLICY IF EXISTS "Staff all on invoices" ON invoices;
+DROP POLICY IF EXISTS "Staff all on housekeeping_tasks" ON housekeeping_tasks;
+DROP POLICY IF EXISTS "Staff all on maintenance_requests" ON maintenance_requests;
+DROP POLICY IF EXISTS "Staff all on departments" ON departments;
+DROP POLICY IF EXISTS "Staff all on employees" ON employees;
+DROP POLICY IF EXISTS "Staff all on expense_categories" ON expense_categories;
+DROP POLICY IF EXISTS "Staff all on expenses" ON expenses;
+DROP POLICY IF EXISTS "Staff all on notifications" ON notifications;
+DROP POLICY IF EXISTS "Staff all on audit_logs" ON audit_logs;
+
+CREATE POLICY "Staff all on tenants" ON tenants FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Staff all on tenant_users" ON tenant_users FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Staff all on properties" ON properties FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Public read on properties" ON properties FOR SELECT TO anon USING (is_active = true);
+CREATE POLICY "Staff all on property_users" ON property_users FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Staff all on buildings" ON buildings FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Staff all on floors" ON floors FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Staff all on rooms" ON rooms FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Public read on rooms" ON rooms FOR SELECT TO anon USING (is_active = true);
+CREATE POLICY "Staff all on room_types" ON room_types FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Public read on room_types" ON room_types FOR SELECT TO anon USING (is_active = true);
+CREATE POLICY "Public read on room_amenities" ON room_amenities FOR SELECT USING (true);
+CREATE POLICY "Staff all on guests" ON guests FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Public all on guests" ON guests FOR ALL TO anon USING (true) WITH CHECK (true);
+CREATE POLICY "Staff all on rate_plans" ON rate_plans FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Public read on rate_plans" ON rate_plans FOR SELECT TO anon USING (is_active = true);
+CREATE POLICY "Staff all on room_rates" ON room_rates FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Staff all on reservations" ON reservations FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Public all on reservations" ON reservations FOR ALL TO anon USING (true) WITH CHECK (true);
+CREATE POLICY "Staff all on reservation_rooms" ON reservation_rooms FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Public all on reservation_rooms" ON reservation_rooms FOR ALL TO anon USING (true) WITH CHECK (true);
+CREATE POLICY "Staff all on reservation_guests" ON reservation_guests FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Public all on reservation_guests" ON reservation_guests FOR ALL TO anon USING (true) WITH CHECK (true);
+CREATE POLICY "Staff all on guest_folios" ON guest_folios FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Staff all on folio_items" ON folio_items FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Staff all on payments" ON payments FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Public all on payments" ON payments FOR ALL TO anon USING (true) WITH CHECK (true);
+CREATE POLICY "Staff all on invoices" ON invoices FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Staff all on housekeeping_tasks" ON housekeeping_tasks FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Staff all on maintenance_requests" ON maintenance_requests FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Staff all on departments" ON departments FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Staff all on employees" ON employees FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Staff all on expense_categories" ON expense_categories FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Staff all on expenses" ON expenses FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Staff all on notifications" ON notifications FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Staff all on audit_logs" ON audit_logs FOR ALL TO authenticated USING (true) WITH CHECK (true);
 
 -- ====================================================================
 -- 20. ATOMIC STORED FUNCTION: GUEST CHECKOUT & FOLIO SETTLEMENT

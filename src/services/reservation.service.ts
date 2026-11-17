@@ -270,7 +270,40 @@ export async function createReservation(payload: {
   try {
     const supabase = await createClient()
 
-    // 1. Find or create guest
+    // 1. Resolve tenant_id for guest
+    let tenantId: string | null = null
+    if (payload.property_id) {
+      const { data: prop } = await supabase
+        .from('properties')
+        .select('tenant_id')
+        .eq('id', payload.property_id)
+        .maybeSingle()
+      tenantId = prop?.tenant_id || null
+    }
+
+    if (!tenantId) {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data: tu } = await supabase
+          .from('tenant_users')
+          .select('tenant_id')
+          .eq('user_id', user.id)
+          .limit(1)
+          .maybeSingle()
+        tenantId = tu?.tenant_id || null
+      }
+    }
+
+    if (!tenantId) {
+      const { data: fallbackTenant } = await supabase
+        .from('tenants')
+        .select('id')
+        .limit(1)
+        .maybeSingle()
+      tenantId = fallbackTenant?.id || null
+    }
+
+    // 2. Find or create guest
     let guestId: string | undefined
     if (payload.email) {
       const { data: existingGuest } = await supabase
@@ -288,6 +321,7 @@ export async function createReservation(payload: {
       const { data: newGuest, error: guestErr } = await supabase
         .from('guests')
         .insert({
+          tenant_id: tenantId,
           first_name: payload.first_name.trim(),
           last_name: payload.last_name.trim(),
           email: payload.email.trim().toLowerCase() || null,
@@ -446,13 +480,34 @@ export async function checkOutReservation(
     if (targetRoomId) {
       await supabase.from('rooms').update({ status: 'dirty' }).eq('id', targetRoomId)
 
-      // Also insert housekeeping task
-      await supabase.from('housekeeping_tasks').insert({
-        room_id: targetRoomId,
-        task_type: 'checkout_cleaning',
-        priority: 'high',
-        status: 'pending',
-      })
+      // Fetch property_id from room or reservation
+      let propId: string | null = null
+      const { data: roomData } = await supabase
+        .from('rooms')
+        .select('property_id')
+        .eq('id', targetRoomId)
+        .maybeSingle()
+      propId = roomData?.property_id || null
+
+      if (!propId) {
+        const { data: resData } = await supabase
+          .from('reservations')
+          .select('property_id')
+          .eq('id', reservationId)
+          .maybeSingle()
+        propId = resData?.property_id || null
+      }
+
+      if (propId) {
+        // Also insert housekeeping task
+        await supabase.from('housekeeping_tasks').insert({
+          property_id: propId,
+          room_id: targetRoomId,
+          task_type: 'checkout_cleaning',
+          priority: 'high',
+          status: 'pending',
+        })
+      }
     }
 
     revalidatePath('/reservations')

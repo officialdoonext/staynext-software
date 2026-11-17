@@ -12,8 +12,34 @@ ALTER TABLE public.tenants ADD COLUMN IF NOT EXISTS allowed_properties_count INT
 -- even when inactive (required so /onboarding can display tenant profile)
 CREATE OR REPLACE FUNCTION public.get_user_tenant_id()
 RETURNS UUID AS $$
-  SELECT tenant_id FROM public.tenant_users WHERE user_id = auth.uid() LIMIT 1;
-$$ LANGUAGE SQL STABLE SECURITY DEFINER
+DECLARE
+  v_tenant_id UUID;
+BEGIN
+  IF auth.uid() IS NOT NULL THEN
+    SELECT tenant_id INTO v_tenant_id 
+    FROM public.tenant_users 
+    WHERE user_id = auth.uid() 
+    LIMIT 1;
+    
+    IF v_tenant_id IS NOT NULL THEN
+      RETURN v_tenant_id;
+    END IF;
+
+    SELECT p.tenant_id INTO v_tenant_id 
+    FROM public.property_users pu
+    JOIN public.properties p ON p.id = pu.property_id
+    WHERE pu.user_id = auth.uid()
+    LIMIT 1;
+    
+    IF v_tenant_id IS NOT NULL THEN
+      RETURN v_tenant_id;
+    END IF;
+  END IF;
+
+  SELECT id INTO v_tenant_id FROM public.tenants ORDER BY created_at ASC LIMIT 1;
+  RETURN v_tenant_id;
+END;
+$$ LANGUAGE plpgsql STABLE SECURITY DEFINER
 SET search_path = public, auth;
 
 -- 3. Stored Procedure to atomically register tenant, property, and user

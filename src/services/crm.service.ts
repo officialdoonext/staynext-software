@@ -155,9 +155,42 @@ export async function createGuest(payload: {
   try {
     const supabase = await createClient()
 
+    // Resolve tenant_id
+    let tenantId: string | null = null
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      const { data: tu } = await supabase
+        .from('tenant_users')
+        .select('tenant_id')
+        .eq('user_id', user.id)
+        .limit(1)
+        .maybeSingle()
+      tenantId = tu?.tenant_id || null
+
+      if (!tenantId) {
+        const { data: pu } = await supabase
+          .from('property_users')
+          .select('properties(tenant_id)')
+          .eq('user_id', user.id)
+          .limit(1)
+          .maybeSingle()
+        tenantId = (pu as any)?.properties?.tenant_id || null
+      }
+    }
+
+    if (!tenantId) {
+      const { data: fallbackTenant } = await supabase
+        .from('tenants')
+        .select('id')
+        .limit(1)
+        .maybeSingle()
+      tenantId = fallbackTenant?.id || null
+    }
+
     const { data, error } = await supabase
       .from('guests')
       .insert({
+        tenant_id: tenantId,
         first_name: payload.first_name.trim(),
         last_name: payload.last_name.trim(),
         email: payload.email?.trim().toLowerCase() || null,

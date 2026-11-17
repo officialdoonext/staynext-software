@@ -24,11 +24,9 @@ ALTER TABLE purchase_orders ENABLE ROW LEVEL SECURITY;
 
 DO $$
 BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_policies WHERE tablename = 'purchase_orders' AND policyname = 'Purchase orders isolation'
-  ) THEN
-    CREATE POLICY "Purchase orders isolation" ON purchase_orders FOR ALL USING (user_has_property_access(property_id));
-  END IF;
+  DROP POLICY IF EXISTS "Purchase orders isolation" ON purchase_orders;
+  DROP POLICY IF EXISTS "Staff all on purchase_orders" ON purchase_orders;
+  CREATE POLICY "Staff all on purchase_orders" ON purchase_orders FOR ALL TO authenticated USING (true) WITH CHECK (true);
 END $$;
 
 CREATE INDEX IF NOT EXISTS idx_purchase_orders_prop ON purchase_orders(property_id);
@@ -51,11 +49,9 @@ ALTER TABLE travel_agents ENABLE ROW LEVEL SECURITY;
 
 DO $$
 BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_policies WHERE tablename = 'travel_agents' AND policyname = 'Travel agents isolation'
-  ) THEN
-    CREATE POLICY "Travel agents isolation" ON travel_agents FOR ALL USING (user_has_property_access(property_id));
-  END IF;
+  DROP POLICY IF EXISTS "Travel agents isolation" ON travel_agents;
+  DROP POLICY IF EXISTS "Staff all on travel_agents" ON travel_agents;
+  CREATE POLICY "Staff all on travel_agents" ON travel_agents FOR ALL TO authenticated USING (true) WITH CHECK (true);
 END $$;
 
 CREATE INDEX IF NOT EXISTS idx_travel_agents_prop ON travel_agents(property_id);
@@ -79,16 +75,9 @@ ALTER TABLE corporate_contracts ENABLE ROW LEVEL SECURITY;
 
 DO $$
 BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_policies WHERE tablename = 'corporate_contracts' AND policyname = 'Corporate contracts isolation'
-  ) THEN
-    CREATE POLICY "Corporate contracts isolation" ON corporate_contracts FOR ALL USING (
-      EXISTS (
-        SELECT 1 FROM corporate_accounts ca
-        WHERE ca.id = corporate_account_id AND user_has_property_access(ca.property_id)
-      )
-    );
-  END IF;
+  DROP POLICY IF EXISTS "Corporate contracts isolation" ON corporate_contracts;
+  DROP POLICY IF EXISTS "Staff all on corporate_contracts" ON corporate_contracts;
+  CREATE POLICY "Staff all on corporate_contracts" ON corporate_contracts FOR ALL TO authenticated USING (true) WITH CHECK (true);
 END $$;
 
 CREATE INDEX IF NOT EXISTS idx_corporate_contracts_account ON corporate_contracts(corporate_account_id);

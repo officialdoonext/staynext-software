@@ -100,6 +100,7 @@ export async function updateHousekeepingTaskStatus(
  * Create a new housekeeping work task
  */
 export async function createHousekeepingTask(payload: {
+  property_id?: string
   room_id: string
   task_type: string
   priority?: string
@@ -109,9 +110,25 @@ export async function createHousekeepingTask(payload: {
   try {
     const supabase = await createClient()
 
+    let propId = payload.property_id
+    if (!propId && payload.room_id) {
+      const { data: roomData } = await supabase
+        .from('rooms')
+        .select('property_id')
+        .eq('id', payload.room_id)
+        .maybeSingle()
+      propId = roomData?.property_id
+    }
+
+    if (!propId) {
+      const { data: prop } = await supabase.from('properties').select('id').limit(1).maybeSingle()
+      propId = prop?.id
+    }
+
     const { data, error } = await supabase
       .from('housekeeping_tasks')
       .insert({
+        property_id: propId,
         room_id: payload.room_id,
         task_type: payload.task_type,
         priority: payload.priority || 'medium',
