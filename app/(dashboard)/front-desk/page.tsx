@@ -1,14 +1,38 @@
 import React from 'react'
-import { DoorOpen, DoorClosed, UserPlus, ArrowLeftRight, BellRing, Search, Plus } from 'lucide-react'
+import { DoorOpen, DoorClosed, UserPlus, ArrowLeftRight, BellRing, Search, Plus, Calendar } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, formatDate } from '@/lib/utils'
 import Link from 'next/link'
+import { createClient } from '@/lib/supabase/server'
 
 export const metadata = { title: 'Front Desk Operations | StayNext' }
 
-export default function FrontDeskPage() {
+export default async function FrontDeskPage() {
+  const supabase = await createClient()
+
+  let todayArrivals = 0
+  let todayDepartures = 0
+
+  try {
+    const today = new Date().toISOString().split('T')[0]
+
+    const { count: arrCount } = await supabase
+      .from('reservations')
+      .select('*', { count: 'exact', head: true })
+      .eq('check_in_date', today)
+      .in('status', ['confirmed', 'checked_in'])
+
+    const { count: depCount } = await supabase
+      .from('reservations')
+      .select('*', { count: 'exact', head: true })
+      .eq('check_out_date', today)
+      .eq('status', 'checked_in')
+
+    todayArrivals = arrCount || 0
+    todayDepartures = depCount || 0
+  } catch {}
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Header */}
@@ -25,7 +49,7 @@ export default function FrontDeskPage() {
           <Link href="/reservations/new">
             <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs h-9 font-semibold">
               <UserPlus className="h-4 w-4 mr-1.5" />
-              Walk-in Express Check-in
+              Express Check-in
             </Button>
           </Link>
         </div>
@@ -38,8 +62,8 @@ export default function FrontDeskPage() {
             <DoorOpen className="h-5 w-5" />
             <span className="text-xs font-semibold">Today&apos;s Arrivals</span>
           </div>
-          <p className="text-2xl font-bold text-gray-900 mt-2">14</p>
-          <p className="text-[11px] text-gray-500 mt-0.5">8 checked-in, 6 expected</p>
+          <p className="text-2xl font-bold text-gray-900 mt-2">{todayArrivals}</p>
+          <p className="text-[11px] text-gray-400 mt-0.5">Scheduled for check-in today</p>
         </div>
 
         <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-2xs">
@@ -47,26 +71,8 @@ export default function FrontDeskPage() {
             <DoorClosed className="h-5 w-5" />
             <span className="text-xs font-semibold">Today&apos;s Departures</span>
           </div>
-          <p className="text-2xl font-bold text-gray-900 mt-2">9</p>
-          <p className="text-[11px] text-gray-500 mt-0.5">5 checked-out, 4 remaining</p>
-        </div>
-
-        <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-2xs">
-          <div className="flex items-center gap-2 text-indigo-600">
-            <ArrowLeftRight className="h-5 w-5" />
-            <span className="text-xs font-semibold">Room Transfers</span>
-          </div>
-          <p className="text-2xl font-bold text-gray-900 mt-2">2</p>
-          <p className="text-[11px] text-gray-500 mt-0.5">Upgrade requests approved</p>
-        </div>
-
-        <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-2xs">
-          <div className="flex items-center gap-2 text-amber-600">
-            <BellRing className="h-5 w-5" />
-            <span className="text-xs font-semibold">Guest Service Requests</span>
-          </div>
-          <p className="text-2xl font-bold text-gray-900 mt-2">5</p>
-          <p className="text-[11px] text-gray-500 mt-0.5">Extra pillows, wake-up call, taxi</p>
+          <p className="text-2xl font-bold text-gray-900 mt-2">{todayDepartures}</p>
+          <p className="text-[11px] text-gray-400 mt-0.5">Scheduled for checkout today</p>
         </div>
       </div>
 
@@ -76,7 +82,7 @@ export default function FrontDeskPage() {
           <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide">
             Instant Guest Check-in Lookup
           </h2>
-          <span className="text-xs text-gray-400">Scan QR or enter reservation code</span>
+          <span className="text-xs text-gray-400">Search by booking number</span>
         </div>
 
         <div className="flex flex-col sm:flex-row gap-3">
@@ -84,7 +90,7 @@ export default function FrontDeskPage() {
             <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
             <input
               type="text"
-              placeholder="Enter Booking confirmation number, guest surname, or passport ID..."
+              placeholder="Enter Booking confirmation number, guest surname, or phone..."
               className="w-full pl-10 pr-4 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-600"
             />
           </div>
@@ -95,54 +101,13 @@ export default function FrontDeskPage() {
       </div>
 
       {/* Active Guest Requests Board */}
-      <div className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-semibold text-gray-900">Active Concierge &amp; Room Service Requests</h3>
-          <Badge variant="purple">5 Active Requests</Badge>
-        </div>
-
-        <div className="divide-y divide-gray-100">
-          <div className="py-3 flex items-center justify-between">
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-mono font-bold text-xs bg-gray-100 px-2 py-0.5 rounded text-gray-900">Room #201</span>
-                <span className="text-xs font-semibold text-gray-900">Late Check-out Request (2:00 PM)</span>
-                <Badge variant="warning" className="text-[10px]">Pending Approval</Badge>
-              </div>
-              <p className="text-[11px] text-gray-500 mt-1">Requested by Sophia Montgomery (VIP Diamond guest)</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button size="sm" variant="outline" className="h-7 text-xs text-rose-600 border-rose-200">Decline</Button>
-              <Button size="sm" className="h-7 text-xs bg-emerald-600 hover:bg-emerald-700 text-white">Approve 2 PM</Button>
-            </div>
-          </div>
-
-          <div className="py-3 flex items-center justify-between">
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-mono font-bold text-xs bg-gray-100 px-2 py-0.5 rounded text-gray-900">Room #102</span>
-                <span className="text-xs font-semibold text-gray-900">Airport Shuttle Transfer (6:30 AM Tomorrow)</span>
-                <Badge variant="success" className="text-[10px]">Confirmed</Badge>
-              </div>
-              <p className="text-[11px] text-gray-500 mt-1">Driver assigned: Marcus Vance (Mercedes Van #3)</p>
-            </div>
-            <Button size="sm" variant="ghost" className="h-7 text-xs text-indigo-600">Details</Button>
-          </div>
-
-          <div className="py-3 flex items-center justify-between">
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-mono font-bold text-xs bg-gray-100 px-2 py-0.5 rounded text-gray-900">Room #304</span>
-                <span className="text-xs font-semibold text-gray-900">Extra Memory Foam Pillows &amp; Towels</span>
-                <Badge variant="info" className="text-[10px]">Dispatched to Housekeeping</Badge>
-              </div>
-              <p className="text-[11px] text-gray-500 mt-1">Assigned to: Maria Santos</p>
-            </div>
-            <Button size="sm" variant="ghost" className="h-7 text-xs text-indigo-600">Mark Completed</Button>
-          </div>
-        </div>
+      <div className="bg-white border border-gray-200 rounded-lg p-8 shadow-sm text-center">
+        <BellRing className="h-8 w-8 text-gray-300 mx-auto mb-2" />
+        <h3 className="text-sm font-semibold text-gray-800">No Pending Front-Desk Requests</h3>
+        <p className="text-xs text-gray-400 mt-1">
+          Special requests, amenities, and room services for in-house guests will appear here.
+        </p>
       </div>
     </div>
   )
 }
-

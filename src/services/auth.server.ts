@@ -14,6 +14,8 @@ import {
  */
 export async function getServerTenantProfile(): Promise<TenantProfile | null> {
   const supabase = await createServerClient()
+  const admin = createAdminClient()
+
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -24,19 +26,45 @@ export async function getServerTenantProfile(): Promise<TenantProfile | null> {
 
   let tenantRecord: any = null
   try {
-    const { data } = await supabase
-      .from('tenants')
-      .select('*')
+    // 1. Fetch via tenant_users mapping (using admin client to bypass RLS)
+    const { data: mapping } = await admin
+      .from('tenant_users')
+      .select('tenant_id')
+      .eq('user_id', user.id)
       .maybeSingle()
 
-    tenantRecord = data
-  } catch {
-    // Database query failed
+    if (mapping?.tenant_id) {
+      const { data: tenant } = await admin
+        .from('tenants')
+        .select('*')
+        .eq('id', mapping.tenant_id)
+        .maybeSingle()
+
+      tenantRecord = tenant
+    }
+
+    // 2. Fallback search by email
+    if (!tenantRecord && user.email) {
+      const { data: tenant } = await admin
+        .from('tenants')
+        .select('*')
+        .eq('email', user.email)
+        .maybeSingle()
+
+      tenantRecord = tenant
+    }
+  } catch (err) {
+    console.warn('Error reading tenant record:', err)
   }
 
-  const propertyName = tenantRecord?.name || meta.property_name || 'My Hotel / Property'
+  const propertyName =
+    tenantRecord?.name || meta.property_name || 'My Hotel / Property'
   const mobileNumber = tenantRecord?.phone || meta.mobile_number || ''
-  const username = tenantRecord?.username || meta.username || user.email?.split('@')[0] || ''
+  const username =
+    tenantRecord?.username ||
+    meta.username ||
+    user.email?.split('@')[0] ||
+    ''
   const email = tenantRecord?.email || user.email || ''
   const city = tenantRecord?.city || meta.city || ''
   const address = tenantRecord?.address || meta.address || ''
@@ -66,6 +94,42 @@ export async function getServerTenantProfile(): Promise<TenantProfile | null> {
     expiryDate: rawExpiry,
     isExpired,
     subscriptionPlan: tenantRecord?.subscription_plan || 'trial',
+  }
+}
+
+/**
+ * Server Action: Instantly re-checks tenant activation status and returns fresh profile.
+ */
+export async function refreshTenantStatusAction(): Promise<{
+  success: boolean
+  profile: TenantProfile | null
+  isActivated: boolean
+  error?: string
+}> {
+  try {
+    const profile = await getServerTenantProfile()
+    if (!profile) {
+      return {
+        success: false,
+        profile: null,
+        isActivated: false,
+        error: 'User session not found. Please log in again.',
+      }
+    }
+
+    const isActivated = profile.isActive && !profile.isExpired
+    return {
+      success: true,
+      profile,
+      isActivated,
+    }
+  } catch (err: any) {
+    return {
+      success: false,
+      profile: null,
+      isActivated: false,
+      error: err.message || 'Error refreshing status.',
+    }
   }
 }
 

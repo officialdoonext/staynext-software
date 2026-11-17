@@ -1,5 +1,5 @@
 import React from 'react'
-import { CreditCard, DollarSign, Receipt, FileText, Download, Plus, ArrowUpRight } from 'lucide-react'
+import { CreditCard, DollarSign, Receipt, FileText, Download, Plus, ArrowUpRight, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -11,18 +11,67 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { formatCurrency, formatDate } from '@/lib/utils'
+import Link from 'next/link'
+import { createClient } from '@/lib/supabase/server'
 
 export const metadata = { title: 'Billing & Folios | StayNext' }
 
-const folios = [
-  { id: 'fol-1', folioNumber: 'FOL-2026-001', guest: 'Sophia Montgomery', room: '201', totalCharges: 4250.00, totalPayments: 4250.00, balance: 0.00, status: 'settled', lastUpdated: '2026-11-11' },
-  { id: 'fol-2', folioNumber: 'FOL-2026-002', guest: 'Liam Gallagher', room: '102', totalCharges: 810.00, totalPayments: 660.00, balance: 150.00, status: 'open', lastUpdated: '2026-11-11' },
-  { id: 'fol-3', folioNumber: 'FOL-2026-003', guest: 'Elena Rostova', room: '202', totalCharges: 1400.00, totalPayments: 500.00, balance: 900.00, status: 'open', lastUpdated: '2026-11-11' },
-  { id: 'fol-4', folioNumber: 'FOL-2026-004', guest: 'David Chen', room: '304', totalCharges: 785.00, totalPayments: 785.00, balance: 0.00, status: 'settled', lastUpdated: '2026-11-10' },
-  { id: 'fol-5', folioNumber: 'FOL-2026-005', guest: 'Lucas Meyer', room: '103', totalCharges: 840.00, totalPayments: 0.00, balance: 840.00, status: 'pending_invoice', lastUpdated: '2026-11-11' },
-]
+export default async function BillingPage() {
+  const supabase = await createClient()
 
-export default function BillingPage() {
+  let folios: any[] = []
+  let todayCollected = 0
+  let pendingBalance = 0
+
+  try {
+    const today = new Date().toISOString().split('T')[0]
+
+    // 1. Fetch folios
+    const { data: folioData } = await supabase
+      .from('guest_folios')
+      .select(`
+        id,
+        folio_number,
+        total_charges,
+        total_payments,
+        balance,
+        status,
+        updated_at,
+        reservations (
+          reservation_number,
+          guests (
+            first_name,
+            last_name
+          )
+        )
+      `)
+      .order('updated_at', { ascending: false })
+
+    if (folioData) {
+      folios = folioData.map((f: any) => ({
+        id: f.id,
+        folioNumber: f.folio_number,
+        guest: `${f.reservations?.guests?.first_name || ''} ${f.reservations?.guests?.last_name || ''}`.trim() || 'Guest',
+        room: '-',
+        totalCharges: Number(f.total_charges || 0),
+        totalPayments: Number(f.total_payments || 0),
+        balance: Number(f.balance || 0),
+        status: f.status,
+        lastUpdated: f.updated_at?.split('T')[0] || today,
+      }))
+    }
+
+    // 2. Metrics
+    const { data: payments } = await supabase
+      .from('payments')
+      .select('amount')
+      .gte('created_at', `${today}T00:00:00`)
+      .eq('status', 'completed')
+
+    todayCollected = (payments || []).reduce((acc: number, p: any) => acc + (p.amount || 0), 0)
+    pendingBalance = folios.reduce((acc: number, f: any) => acc + (f.balance || 0), 0)
+  } catch {}
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Header */}
@@ -36,14 +85,18 @@ export default function BillingPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="text-xs h-9">
-            <Download className="h-4 w-4 mr-1.5" />
-            Financial Audit Export
-          </Button>
-          <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs h-9 font-semibold">
-            <Plus className="h-4 w-4 mr-1.5" />
-            Post Payment
-          </Button>
+          <Link href="/billing/invoices">
+            <Button variant="outline" size="sm" className="text-xs h-9">
+              <FileText className="h-4 w-4 mr-1.5" />
+              Tax Invoices
+            </Button>
+          </Link>
+          <Link href="/billing/payments">
+            <Button variant="outline" size="sm" className="text-xs h-9">
+              <CreditCard className="h-4 w-4 mr-1.5" />
+              Payment Records
+            </Button>
+          </Link>
         </div>
       </div>
 
@@ -54,108 +107,77 @@ export default function BillingPage() {
             <DollarSign className="h-5 w-5" />
             <span className="text-xs font-semibold">Collected Today</span>
           </div>
-          <p className="text-2xl font-bold text-gray-900 mt-2">{formatCurrency(4890)}</p>
-          <p className="text-[11px] text-emerald-600 mt-0.5">Stripe, Terminal, &amp; Cash</p>
+          <p className="text-2xl font-bold text-gray-900 mt-2">{formatCurrency(todayCollected)}</p>
+          <p className="text-[11px] text-gray-400 mt-0.5">Real-time payments</p>
         </div>
 
         <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-2xs">
-          <div className="flex items-center gap-2 text-rose-600">
+          <div className="flex items-center gap-2 text-amber-600">
             <CreditCard className="h-5 w-5" />
-            <span className="text-xs font-semibold">Outstanding Balance</span>
+            <span className="text-xs font-semibold">Pending Balance</span>
           </div>
-          <p className="text-2xl font-bold text-gray-900 mt-2">{formatCurrency(1890)}</p>
-          <p className="text-[11px] text-gray-500 mt-0.5">3 in-house folios pending checkout</p>
-        </div>
-
-        <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-2xs">
-          <div className="flex items-center gap-2 text-indigo-600">
-            <Receipt className="h-5 w-5" />
-            <span className="text-xs font-semibold">MTD Tax Accrual</span>
-          </div>
-          <p className="text-2xl font-bold text-gray-900 mt-2">{formatCurrency(3410)}</p>
-          <p className="text-[11px] text-gray-500 mt-0.5">State Occupancy &amp; VAT (12%)</p>
-        </div>
-
-        <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-2xs">
-          <div className="flex items-center gap-2 text-blue-600">
-            <FileText className="h-5 w-5" />
-            <span className="text-xs font-semibold">Invoices Dispatched</span>
-          </div>
-          <p className="text-2xl font-bold text-gray-900 mt-2">124</p>
-          <p className="text-[11px] text-blue-600 mt-0.5">100% PDF delivery success</p>
+          <p className="text-2xl font-bold text-gray-900 mt-2">{formatCurrency(pendingBalance)}</p>
+          <p className="text-[11px] text-gray-400 mt-0.5">Unsettled guest folios</p>
         </div>
       </div>
 
-      {/* Guest Folios Table */}
-      <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
-        <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-          <h3 className="text-sm font-bold text-gray-900">Active Guest Folios &amp; Accounts</h3>
-          <span className="text-xs text-gray-400">Real-time ledger updates</span>
+      {folios.length === 0 ? (
+        <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center max-w-lg mx-auto my-12 shadow-sm">
+          <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+            <Receipt className="h-6 w-6" />
+          </div>
+          <h3 className="text-base font-bold text-gray-900">No Billing Folios Recorded</h3>
+          <p className="text-xs text-gray-500 mt-1 max-w-sm mx-auto">
+            Billing folios are automatically initiated upon guest check-in and reservation confirmation.
+          </p>
         </div>
-
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Folio Number</TableHead>
-              <TableHead>Guest Name</TableHead>
-              <TableHead>Room</TableHead>
-              <TableHead>Total Charges</TableHead>
-              <TableHead>Payments Applied</TableHead>
-              <TableHead>Balance Due</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {folios.map((f) => (
-              <TableRow key={f.id}>
-                <TableCell className="font-mono text-xs font-bold text-indigo-600">
-                  {f.folioNumber}
-                </TableCell>
-                <TableCell className="font-semibold text-gray-900">
-                  {f.guest}
-                </TableCell>
-                <TableCell>
-                  <span className="font-mono px-2 py-0.5 bg-gray-100 rounded text-xs font-semibold text-gray-800">
-                    #{f.room}
-                  </span>
-                </TableCell>
-                <TableCell className="text-xs font-semibold text-gray-900">
-                  {formatCurrency(f.totalCharges)}
-                </TableCell>
-                <TableCell className="text-xs font-semibold text-emerald-600">
-                  {formatCurrency(f.totalPayments)}
-                </TableCell>
-                <TableCell className="text-xs font-bold">
-                  {f.balance > 0 ? (
-                    <span className="text-rose-600">{formatCurrency(f.balance)}</span>
-                  ) : (
-                    <span className="text-emerald-600">Settled ($0.00)</span>
-                  )}
-                </TableCell>
-                <TableCell>
-                  <Badge variant={f.status === 'settled' ? 'success' : f.balance > 0 ? 'warning' : 'secondary'} className="capitalize text-[10px]">
-                    {f.status.replace('_', ' ')}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex items-center justify-end gap-1.5">
-                    <Button size="sm" variant="outline" className="h-7 text-xs">
-                      View Folio
-                    </Button>
-                    {f.balance > 0 && (
-                      <Button size="sm" className="h-7 text-xs bg-indigo-600 hover:bg-indigo-700 text-white">
-                        Collect
-                      </Button>
-                    )}
-                  </div>
-                </TableCell>
+      ) : (
+        /* Folio Table */
+        <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Folio Number</TableHead>
+                <TableHead>Guest</TableHead>
+                <TableHead>Total Charges</TableHead>
+                <TableHead>Total Paid</TableHead>
+                <TableHead>Outstanding Balance</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Last Updated</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+            </TableHeader>
+            <TableBody>
+              {folios.map((folio) => (
+                <TableRow key={folio.id}>
+                  <TableCell className="font-mono text-xs font-bold text-indigo-600">
+                    {folio.folioNumber}
+                  </TableCell>
+                  <TableCell className="text-sm font-semibold text-gray-900">
+                    {folio.guest}
+                  </TableCell>
+                  <TableCell className="text-xs font-medium text-gray-800">
+                    {formatCurrency(folio.totalCharges)}
+                  </TableCell>
+                  <TableCell className="text-xs font-medium text-emerald-600">
+                    {formatCurrency(folio.totalPayments)}
+                  </TableCell>
+                  <TableCell className="text-xs font-bold text-rose-600">
+                    {formatCurrency(folio.balance)}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={folio.status === 'settled' ? 'success' : 'warning'}>
+                      {folio.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right text-xs text-gray-400">
+                    {formatDate(folio.lastUpdated)}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
     </div>
   )
 }
-

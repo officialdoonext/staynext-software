@@ -23,6 +23,7 @@ import { Badge } from '@/components/ui/badge'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import type { TenantProfile } from '@/services/auth.service'
+import { refreshTenantStatusAction } from '@/services/auth.server'
 import { formatDate } from '@/lib/utils'
 
 interface OnboardingClientProps {
@@ -35,49 +36,40 @@ export default function OnboardingClient({
   userEmail,
 }: OnboardingClientProps) {
   const router = useRouter()
+  const [currentProfile, setCurrentProfile] = useState<TenantProfile | null>(profile)
   const [checking, setChecking] = useState(false)
   const [signingOut, setSigningOut] = useState(false)
 
-  const propertyName = profile?.propertyName || 'Registered Property'
-  const mobileNumber = profile?.mobileNumber || 'Not provided'
-  const username = profile?.username || 'user'
-  const email = profile?.email || userEmail || 'user@property.com'
-  const city = profile?.city || 'Not provided'
-  const address = profile?.address || 'Not provided'
-  const status = profile?.status || 'inactive'
-  const expiryDate = profile?.expiryDate ? new Date(profile.expiryDate) : new Date(Date.now() - 86400000)
+  const propertyName = currentProfile?.propertyName || 'Registered Property'
+  const mobileNumber = currentProfile?.mobileNumber || 'Not provided'
+  const username = currentProfile?.username || 'user'
+  const email = currentProfile?.email || userEmail || 'user@property.com'
+  const city = currentProfile?.city || 'Not provided'
+  const address = currentProfile?.address || 'Not provided'
+  const status = currentProfile?.status || 'inactive'
+  const expiryDate = currentProfile?.expiryDate
+    ? new Date(currentProfile.expiryDate)
+    : new Date(Date.now() - 86400000)
 
   const handleRefreshStatus = async () => {
     setChecking(true)
     try {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
+      const res = await refreshTenantStatusAction()
 
-      if (!user) {
-        router.push('/login')
+      if (!res.success || !res.profile) {
+        toast.error(res.error || 'Unable to refresh profile status.')
         return
       }
 
-      const { data: tenant } = await supabase
-        .from('tenants')
-        .select('status, is_active, subscription_expires_at')
-        .maybeSingle()
+      // Update state instantly with zero lag!
+      setCurrentProfile(res.profile)
 
-      const isActive = tenant
-        ? tenant.is_active === true || tenant.status === 'active'
-        : user.user_metadata?.is_active === true || user.user_metadata?.status === 'active'
-
-      const rawExp = tenant?.subscription_expires_at || user.user_metadata?.subscription_expires_at || user.user_metadata?.expiry_date
-      const expDate = rawExp ? new Date(rawExp) : new Date(0)
-      const isNotExpired = expDate.getTime() >= Date.now()
-
-      if (isActive && isNotExpired) {
-        toast.success('Your account has been activated! Unlocking software...')
+      if (res.isActivated) {
+        toast.success('Your property account has been activated! Unlocking software...')
         router.push('/dashboard')
         router.refresh()
       } else {
-        toast.info('Account is still Inactive or Expired. Please wait for administrator approval.')
-        router.refresh()
+        toast.info('Status updated: Account is Inactive & Expired. Waiting for administrator activation.')
       }
     } catch {
       toast.error('Unable to refresh status. Please try again.')
@@ -162,7 +154,7 @@ export default function OnboardingClient({
           </div>
           <div className="flex items-center gap-2">
             <Badge variant="destructive" className="bg-rose-100 text-rose-800 border-rose-200 text-xs">
-              Status: Inactive
+              Status: {status === 'active' ? 'Active' : 'Inactive'}
             </Badge>
             <Badge variant="outline" className="bg-amber-50 text-amber-800 border-amber-200 text-xs">
               Subscription: Expired
@@ -282,4 +274,3 @@ export default function OnboardingClient({
     </div>
   )
 }
-

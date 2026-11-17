@@ -1,82 +1,38 @@
 import React from 'react'
 import Link from 'next/link'
-import { Plus, BedDouble, Users, Sparkles, Check, Edit2 } from 'lucide-react'
+import { Plus, BedDouble, Users, Sparkles, Check, Edit2, Layers } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { formatCurrency } from '@/lib/utils'
+import { createClient } from '@/lib/supabase/server'
 
 export const metadata = { title: 'Room Types & Categories | StayNext' }
 
-const roomTypes = [
-  {
-    id: 'rt-1',
-    name: 'Presidential Suite',
-    code: 'PRES-STE',
-    baseRate: 650,
-    maxOccupancy: 4,
-    totalRooms: 4,
-    size: '120 sqm',
-    bedding: '1 King Bed + 1 Queen Bed',
-    amenities: ['Private Balcony', 'Ocean View', 'Jacuzzi', 'Minibar', 'Butler Service', 'High-Speed Wi-Fi'],
-  },
-  {
-    id: 'rt-2',
-    name: 'Ocean Villa',
-    code: 'OCN-VIL',
-    baseRate: 520,
-    maxOccupancy: 4,
-    totalRooms: 6,
-    size: '95 sqm',
-    bedding: '2 King Beds',
-    amenities: ['Direct Beach Access', 'Infinity Pool', 'Espresso Machine', 'Smart TV', 'Lounge Area'],
-  },
-  {
-    id: 'rt-3',
-    name: 'Junior Suite',
-    code: 'JR-STE',
-    baseRate: 350,
-    maxOccupancy: 2,
-    totalRooms: 10,
-    size: '55 sqm',
-    bedding: '1 King Bed',
-    amenities: ['City View', 'Bathtub', 'Workstation', 'Espresso Machine', 'Mini Fridge'],
-  },
-  {
-    id: 'rt-4',
-    name: 'Executive Double',
-    code: 'EXEC-DBL',
-    baseRate: 280,
-    maxOccupancy: 4,
-    totalRooms: 14,
-    size: '42 sqm',
-    bedding: '2 Queen Beds',
-    amenities: ['High Floor', 'Ergonomic Chair', 'Safe', 'Rain Shower', 'Complimentary Breakfast'],
-  },
-  {
-    id: 'rt-5',
-    name: 'Deluxe King',
-    code: 'DLX-KNG',
-    baseRate: 220,
-    maxOccupancy: 2,
-    totalRooms: 18,
-    size: '36 sqm',
-    bedding: '1 King Bed',
-    amenities: ['Garden View', 'Tea & Coffee Maker', 'Iron & Board', 'Hair Dryer'],
-  },
-  {
-    id: 'rt-6',
-    name: 'Standard Queen',
-    code: 'STD-QUN',
-    baseRate: 175,
-    maxOccupancy: 2,
-    totalRooms: 12,
-    size: '28 sqm',
-    bedding: '1 Queen Bed',
-    amenities: ['Standard View', 'Smart TV', 'Air Conditioning', 'En-suite Bathroom'],
-  },
-]
+export default async function RoomTypesPage() {
+  const supabase = await createClient()
 
-export default function RoomTypesPage() {
+  let types: any[] = []
+  try {
+    const { data } = await supabase
+      .from('room_types')
+      .select('*')
+      .order('base_rate', { ascending: false })
+
+    if (data) {
+      types = data.map((rt: any) => ({
+        id: rt.id,
+        name: rt.name,
+        code: rt.code || 'STD',
+        baseRate: Number(rt.base_rate || 0),
+        maxOccupancy: rt.max_occupancy || 2,
+        totalRooms: rt.total_rooms || 0,
+        size: rt.size_sqft ? `${rt.size_sqft} sqft` : 'Standard',
+        bedding: rt.bed_type || 'Double Bed',
+        amenities: Array.isArray(rt.amenities) ? rt.amenities : [],
+      }))
+    }
+  } catch {}
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Header */}
@@ -86,87 +42,59 @@ export default function RoomTypesPage() {
             Room Types &amp; Categories
           </h1>
           <p className="text-xs text-gray-500 mt-1">
-            Define pricing models, maximum occupancy caps, bedding layouts, and room class amenities.
+            Define pricing tiers, base occupancy, bedding configurations, and marketing amenities.
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Link href="/rooms">
-            <Button variant="outline" size="sm" className="text-xs h-9">
-              View All Rooms
-            </Button>
-          </Link>
-          <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs h-9 font-semibold">
-            <Plus className="h-4 w-4 mr-1.5" />
-            Add Room Type
-          </Button>
-        </div>
       </div>
 
-      {/* Grid of Room Types */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {roomTypes.map((rt) => (
-          <div
-            key={rt.id}
-            className="bg-white border border-gray-200 rounded-lg p-5 shadow-2xs hover:border-gray-300 transition-all flex flex-col justify-between"
-          >
-            <div>
-              <div className="flex items-start justify-between">
-                <div>
-                  <Badge variant="outline" className="text-[10px] uppercase font-mono font-bold tracking-wider text-indigo-600 bg-indigo-50/50 border-indigo-100">
-                    {rt.code}
-                  </Badge>
-                  <h3 className="text-base font-bold text-gray-900 mt-1.5">{rt.name}</h3>
-                </div>
-                <div className="text-right">
-                  <div className="text-xl font-bold font-mono text-gray-900">{formatCurrency(rt.baseRate)}</div>
-                  <span className="text-[11px] text-gray-400">/ night base</span>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-2 py-3 my-3 border-y border-gray-100 text-xs">
-                <div>
-                  <span className="text-[10px] text-gray-400 uppercase font-semibold">Max Guests</span>
-                  <p className="font-semibold text-gray-800 mt-0.5">{rt.maxOccupancy} Adults</p>
-                </div>
-                <div>
-                  <span className="text-[10px] text-gray-400 uppercase font-semibold">Inventory</span>
-                  <p className="font-semibold text-gray-800 mt-0.5">{rt.totalRooms} Units</p>
-                </div>
-                <div>
-                  <span className="text-[10px] text-gray-400 uppercase font-semibold">Floor Space</span>
-                  <p className="font-semibold text-gray-800 mt-0.5">{rt.size}</p>
-                </div>
-              </div>
-
-              <p className="text-xs text-gray-500 font-medium mb-2.5">
-                Bedding: <span className="text-gray-800">{rt.bedding}</span>
-              </p>
-
-              <div>
-                <span className="text-[10px] text-gray-400 uppercase font-semibold tracking-wider">Features</span>
-                <div className="flex flex-wrap gap-1.5 mt-1.5">
-                  {rt.amenities.map((item, idx) => (
-                    <span
-                      key={idx}
-                      className="inline-flex items-center text-[11px] bg-gray-50 border border-gray-200 px-2 py-0.5 rounded text-gray-600"
-                    >
-                      {item}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="pt-4 mt-4 border-t border-gray-100 flex items-center justify-between">
-              <span className="text-xs text-gray-400">Active in booking engine</span>
-              <Button variant="ghost" size="sm" className="h-8 text-xs text-indigo-600 hover:text-indigo-800 font-semibold px-2">
-                <Edit2 className="h-3.5 w-3.5 mr-1" />
-                Edit Plan
-              </Button>
-            </div>
+      {types.length === 0 ? (
+        <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center max-w-lg mx-auto my-12 shadow-sm">
+          <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+            <Layers className="h-6 w-6" />
           </div>
-        ))}
-      </div>
+          <h3 className="text-base font-bold text-gray-900">No Room Categories Created</h3>
+          <p className="text-xs text-gray-500 mt-1 max-w-sm mx-auto">
+            You have not configured any room types for your property yet (e.g. Standard, Deluxe, Suite).
+          </p>
+        </div>
+      ) : (
+        /* Categories Grid */
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {types.map((type) => (
+            <div
+              key={type.id}
+              className="bg-white border border-gray-200 rounded-xl p-5 shadow-2xs hover:border-indigo-300 transition-all flex flex-col justify-between"
+            >
+              <div>
+                <div className="flex items-start justify-between gap-2 mb-3">
+                  <div>
+                    <h3 className="text-base font-bold text-gray-900">{type.name}</h3>
+                    <span className="font-mono text-[10px] text-gray-400 font-semibold">{type.code}</span>
+                  </div>
+                  <Badge variant="purple" className="text-xs font-semibold">
+                    {formatCurrency(type.baseRate)}/night
+                  </Badge>
+                </div>
+
+                <div className="space-y-2 py-3 border-y border-gray-100 text-xs text-gray-600">
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-400">Inventory Units:</span>
+                    <span className="font-semibold text-gray-900">{type.totalRooms} rooms</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-400">Max Occupancy:</span>
+                    <span className="font-semibold text-gray-900">{type.maxOccupancy} Guests</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-400">Bedding:</span>
+                    <span className="font-semibold text-gray-900">{type.bedding}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

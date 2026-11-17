@@ -11,19 +11,49 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, formatDate } from '@/lib/utils'
+import { createClient } from '@/lib/supabase/server'
 
 export const metadata = { title: 'Tax Invoices & Receipts | StayNext' }
 
-const invoices = [
-  { id: 'inv-101', number: 'INV-2026-0891', date: '2026-11-11', guest: 'Sophia Montgomery', room: '201', subtotal: 3900.00, tax: 350.00, total: 4250.00, status: 'paid' },
-  { id: 'inv-102', number: 'INV-2026-0892', date: '2026-11-11', guest: 'Liam Gallagher', room: '102', subtotal: 660.00, tax: 150.00, total: 810.00, status: 'partially_paid' },
-  { id: 'inv-103', number: 'INV-2026-0893', date: '2026-11-10', guest: 'David Chen', room: '304', subtotal: 700.00, tax: 85.00, total: 785.00, status: 'paid' },
-  { id: 'inv-104', number: 'INV-2026-0894', date: '2026-11-09', guest: 'Global Tech Consulting', room: 'Corporate Account', subtotal: 8200.00, tax: 740.00, total: 8940.00, status: 'issued' },
-  { id: 'inv-105', number: 'INV-2026-0895', date: '2026-11-08', guest: 'Elena Rostova', room: '202', subtotal: 1250.00, tax: 150.00, total: 1400.00, status: 'issued' },
-]
+export default async function InvoicesPage() {
+  const supabase = await createClient()
 
-export default function InvoicesPage() {
+  let invoices: any[] = []
+  try {
+    const { data } = await supabase
+      .from('invoices')
+      .select(`
+        id,
+        invoice_number,
+        total_amount,
+        tax_amount,
+        status,
+        created_at,
+        guest_folios (
+          reservations (
+            guests (
+              first_name,
+              last_name
+            )
+          )
+        )
+      `)
+      .order('created_at', { ascending: false })
+
+    if (data) {
+      invoices = data.map((inv: any) => ({
+        id: inv.id,
+        number: inv.invoice_number,
+        date: inv.created_at?.split('T')[0] || '',
+        guest: `${inv.guest_folios?.reservations?.guests?.first_name || ''} ${inv.guest_folios?.reservations?.guests?.last_name || ''}`.trim() || 'Guest',
+        tax: Number(inv.tax_amount || 0),
+        total: Number(inv.total_amount || 0),
+        status: inv.status,
+      }))
+    }
+  } catch {}
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Header */}
@@ -43,53 +73,53 @@ export default function InvoicesPage() {
             </p>
           </div>
         </div>
-        <Button variant="outline" size="sm" className="text-xs h-9">
-          <Download className="h-4 w-4 mr-1.5" />
-          Export Invoices CSV
-        </Button>
       </div>
 
-      <div className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-2xs">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Invoice #</TableHead>
-              <TableHead>Issue Date</TableHead>
-              <TableHead>Bill To / Guest</TableHead>
-              <TableHead>Room / Account</TableHead>
-              <TableHead>Subtotal</TableHead>
-              <TableHead>Tax (VAT/GST)</TableHead>
-              <TableHead>Total Amount</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Action</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {invoices.map((inv) => (
-              <TableRow key={inv.id}>
-                <TableCell className="font-mono text-xs font-bold text-indigo-600">{inv.number}</TableCell>
-                <TableCell className="font-mono text-xs">{inv.date}</TableCell>
-                <TableCell className="font-semibold text-gray-900 text-xs">{inv.guest}</TableCell>
-                <TableCell className="text-xs text-gray-600">{inv.room}</TableCell>
-                <TableCell className="font-mono text-xs">{formatCurrency(inv.subtotal)}</TableCell>
-                <TableCell className="font-mono text-xs text-gray-500">{formatCurrency(inv.tax)}</TableCell>
-                <TableCell className="font-mono text-xs font-bold text-gray-900">{formatCurrency(inv.total)}</TableCell>
-                <TableCell>
-                  <Badge variant={inv.status === 'paid' ? 'success' : inv.status === 'partially_paid' ? 'warning' : 'outline'} className="text-[10px]">
-                    {inv.status === 'paid' ? 'Paid in Full' : inv.status === 'partially_paid' ? 'Partial' : 'Issued'}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-right">
-                  <Button variant="ghost" size="sm" className="h-8 text-xs text-indigo-600 font-semibold px-2">
-                    <Printer className="h-3.5 w-3.5 mr-1" />
-                    Print PDF
-                  </Button>
-                </TableCell>
+      {invoices.length === 0 ? (
+        <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center max-w-lg mx-auto my-12 shadow-sm">
+          <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+            <FileText className="h-6 w-6" />
+          </div>
+          <h3 className="text-base font-bold text-gray-900">No Invoices Issued</h3>
+          <p className="text-xs text-gray-500 mt-1 max-w-sm mx-auto">
+            Tax invoices will be generated when folios are settled or upon guest checkout.
+          </p>
+        </div>
+      ) : (
+        /* Invoices Table */
+        <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Invoice #</TableHead>
+                <TableHead>Date</TableHead>
+                <TableHead>Guest</TableHead>
+                <TableHead>Tax Amount</TableHead>
+                <TableHead>Total Amount</TableHead>
+                <TableHead>Status</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+            </TableHeader>
+            <TableBody>
+              {invoices.map((inv) => (
+                <TableRow key={inv.id}>
+                  <TableCell className="font-mono text-xs font-bold text-indigo-600">
+                    {inv.number}
+                  </TableCell>
+                  <TableCell className="text-xs text-gray-500">{formatDate(inv.date)}</TableCell>
+                  <TableCell className="text-sm font-semibold text-gray-900">{inv.guest}</TableCell>
+                  <TableCell className="text-xs text-gray-600">{formatCurrency(inv.tax)}</TableCell>
+                  <TableCell className="text-xs font-bold text-gray-900">{formatCurrency(inv.total)}</TableCell>
+                  <TableCell>
+                    <Badge variant={inv.status === 'paid' ? 'success' : 'warning'}>
+                      {inv.status}
+                    </Badge>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
     </div>
   )
 }

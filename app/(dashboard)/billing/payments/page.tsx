@@ -1,6 +1,6 @@
 import React from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Download, Plus, CreditCard, DollarSign, CheckCircle2, RefreshCw } from 'lucide-react'
+import { ArrowLeft, Download, CreditCard, DollarSign, ArrowUpRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Table,
@@ -11,20 +11,34 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
-import { formatCurrency, formatDateTime } from '@/lib/utils'
+import { formatCurrency, formatDate } from '@/lib/utils'
+import { createClient } from '@/lib/supabase/server'
 
 export const metadata = { title: 'Payment Transactions | StayNext' }
 
-const payments = [
-  { id: 'pay-001', txnId: 'ch_3N8zXpLkd', date: '2026-11-11 09:45 AM', guest: 'Sophia Montgomery', method: 'Credit Card (Stripe)', cardLast4: '4242', amount: 3900.00, folio: 'FOL-2026-001', status: 'completed' },
-  { id: 'pay-002', txnId: 'pos_terminal_04', date: '2026-11-11 10:15 AM', guest: 'Liam Gallagher', method: 'Terminal / Chip & PIN', cardLast4: '8812', amount: 660.00, folio: 'FOL-2026-002', status: 'completed' },
-  { id: 'pay-003', txnId: 'csh_00912', date: '2026-11-11 10:40 AM', guest: 'Walk-in Guest (Lobby)', method: 'Cash (Front Desk Till)', cardLast4: '—', amount: 180.00, folio: 'FOL-2026-008', status: 'completed' },
-  { id: 'pay-004', txnId: 'ch_3N8zYkMop', date: '2026-11-10 03:22 PM', guest: 'David Chen', method: 'Apple Pay (Direct)', cardLast4: '1099', amount: 785.00, folio: 'FOL-2026-004', status: 'completed' },
-  { id: 'pay-005', txnId: 'wire_9921', date: '2026-11-09 11:00 AM', guest: 'Global Tech Consulting', method: 'Bank Wire Transfer', cardLast4: '—', amount: 8940.00, folio: 'CORP-881', status: 'completed' },
-  { id: 'pay-006', txnId: 'ch_fail_091', date: '2026-11-09 02:14 PM', guest: 'Lucas Meyer', method: 'Credit Card (Declined)', cardLast4: '5511', amount: 840.00, folio: 'FOL-2026-005', status: 'failed' },
-]
+export default async function PaymentsPage() {
+  const supabase = await createClient()
 
-export default function PaymentsPage() {
+  let payments: any[] = []
+  try {
+    const { data } = await supabase
+      .from('payments')
+      .select('*')
+      .order('created_at', { ascending: false })
+
+    if (data) {
+      payments = data.map((p: any) => ({
+        id: p.id,
+        reference: p.transaction_reference || p.id.slice(0, 8),
+        date: p.created_at?.split('T')[0] || '',
+        guest: 'Guest Payment',
+        method: p.payment_method || 'Credit Card',
+        amount: Number(p.amount || 0),
+        status: p.status || 'completed',
+      }))
+    }
+  } catch {}
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Header */}
@@ -37,84 +51,60 @@ export default function PaymentsPage() {
           </Link>
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-gray-900">
-              Payment Gateway &amp; Transaction Logs
+              Payment Transactions
             </h1>
             <p className="text-xs text-gray-500 mt-0.5">
-              Live processing records across Stripe, point-of-sale terminals, wire deposits, and cash register audits.
+              Live settlement ledger, payment gateway logs, card terminals, and cash deposits.
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="text-xs h-9">
-            <Download className="h-4 w-4 mr-1.5" />
-            Export Payments CSV
-          </Button>
-          <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs h-9 font-semibold">
-            <Plus className="h-4 w-4 mr-1.5" />
-            Process Manual Charge
-          </Button>
-        </div>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-2xs">
-          <span className="text-xs font-semibold text-gray-500">Collected Today</span>
-          <p className="text-2xl font-bold text-gray-900 mt-1">{formatCurrency(4890)}</p>
-          <p className="text-[11px] text-emerald-600 mt-0.5">3 successful transactions</p>
+      {payments.length === 0 ? (
+        <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center max-w-lg mx-auto my-12 shadow-sm">
+          <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+            <CreditCard className="h-6 w-6" />
+          </div>
+          <h3 className="text-base font-bold text-gray-900">No Payment Records Found</h3>
+          <p className="text-xs text-gray-500 mt-1 max-w-sm mx-auto">
+            Payment transactions will automatically appear here as guests make deposits or settle bills.
+          </p>
         </div>
-        <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-2xs">
-          <span className="text-xs font-semibold text-gray-500">Card Processor Rate</span>
-          <p className="text-2xl font-bold text-gray-900 mt-1">98.2%</p>
-          <p className="text-[11px] text-emerald-600 mt-0.5">Stripe Gateway healthy</p>
-        </div>
-        <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-2xs">
-          <span className="text-xs font-semibold text-gray-500">Cash in Till</span>
-          <p className="text-2xl font-bold text-gray-900 mt-1">{formatCurrency(640)}</p>
-          <p className="text-[11px] text-gray-400 mt-0.5">Front desk register #1</p>
-        </div>
-        <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-2xs">
-          <span className="text-xs font-semibold text-gray-500">Total Month-to-Date</span>
-          <p className="text-2xl font-bold text-gray-900 mt-1">{formatCurrency(62500)}</p>
-          <p className="text-[11px] text-indigo-600 mt-0.5">Target: $75,000</p>
-        </div>
-      </div>
-
-      {/* Transactions Table */}
-      <div className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-2xs">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Transaction ID</TableHead>
-              <TableHead>Date &amp; Time</TableHead>
-              <TableHead>Guest / Payer</TableHead>
-              <TableHead>Payment Method</TableHead>
-              <TableHead>Folio Ref</TableHead>
-              <TableHead>Amount</TableHead>
-              <TableHead>Status</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {payments.map((p) => (
-              <TableRow key={p.id}>
-                <TableCell className="font-mono text-xs font-bold text-indigo-600">{p.txnId}</TableCell>
-                <TableCell className="font-mono text-xs text-gray-600">{p.date}</TableCell>
-                <TableCell className="font-semibold text-gray-900 text-xs">{p.guest}</TableCell>
-                <TableCell className="text-xs text-gray-700">
-                  {p.method} {p.cardLast4 !== '—' && <span className="font-mono text-gray-400">•••• {p.cardLast4}</span>}
-                </TableCell>
-                <TableCell className="font-mono text-xs text-gray-500">{p.folio}</TableCell>
-                <TableCell className="font-mono text-xs font-bold text-gray-900">{formatCurrency(p.amount)}</TableCell>
-                <TableCell>
-                  <Badge variant={p.status === 'completed' ? 'success' : 'destructive'} className="text-[10px]">
-                    {p.status === 'completed' ? 'Settled' : 'Card Declined'}
-                  </Badge>
-                </TableCell>
+      ) : (
+        /* Table */
+        <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Ref ID</TableHead>
+                <TableHead>Date</TableHead>
+                <TableHead>Method</TableHead>
+                <TableHead>Amount</TableHead>
+                <TableHead className="text-right">Status</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+            </TableHeader>
+            <TableBody>
+              {payments.map((pay) => (
+                <TableRow key={pay.id}>
+                  <TableCell className="font-mono text-xs font-bold text-indigo-600">
+                    {pay.reference}
+                  </TableCell>
+                  <TableCell className="text-xs text-gray-500">{formatDate(pay.date)}</TableCell>
+                  <TableCell className="text-xs font-semibold capitalize">{pay.method}</TableCell>
+                  <TableCell className="text-xs font-bold text-emerald-600">
+                    {formatCurrency(pay.amount)}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Badge variant={pay.status === 'completed' ? 'success' : 'warning'}>
+                      {pay.status}
+                    </Badge>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
     </div>
   )
 }

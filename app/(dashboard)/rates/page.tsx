@@ -4,18 +4,34 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { formatCurrency } from '@/lib/utils'
+import Link from 'next/link'
+import { createClient } from '@/lib/supabase/server'
 
 export const metadata = { title: 'Rate Management | StayNext' }
 
-const ratePlans = [
-  { id: 'rp-1', name: 'Best Flexible Rate (BAR)', code: 'BAR', mealPlan: 'Room Only (EP)', cancellation: 'Free cancellation up to 24h prior', isDefault: true, multiplier: '1.0x', active: true },
-  { id: 'rp-2', name: 'Bed & Breakfast Package', code: 'BB', mealPlan: 'Continental Breakfast (CP)', cancellation: 'Free cancellation up to 48h prior', isDefault: false, multiplier: '1.15x', active: true },
-  { id: 'rp-3', name: 'Non-Refundable Advance Purchase', code: 'NONREF', mealPlan: 'Room Only (EP)', cancellation: '100% non-refundable, prepaid', isDefault: false, multiplier: '0.85x (-15%)', active: true },
-  { id: 'rp-4', name: 'Weekend Escape Promotion', code: 'WKND', mealPlan: 'Buffet Breakfast + Late Checkout', cancellation: 'Non-refundable', isDefault: false, multiplier: '1.20x', active: true },
-  { id: 'rp-5', name: 'Corporate Negotiated Tier 1', code: 'CORP1', mealPlan: 'Breakfast + High-speed WiFi', cancellation: 'Same day 6 PM cancellation', isDefault: false, multiplier: 'Fixed $180/nt', active: true },
-]
+export default async function RatesPage() {
+  const supabase = await createClient()
 
-export default function RatesPage() {
+  let ratePlans: any[] = []
+  try {
+    const { data } = await supabase
+      .from('rate_plans')
+      .select('*')
+      .order('name', { ascending: true })
+
+    if (data) {
+      ratePlans = data.map((rp: any) => ({
+        id: rp.id,
+        name: rp.name,
+        code: rp.code || 'BAR',
+        mealPlan: rp.meal_plan ? rp.meal_plan.toUpperCase() : 'Room Only',
+        cancellation: rp.cancellation_policy || 'Standard cancellation policy',
+        isDefault: rp.is_default || false,
+        active: rp.is_active,
+      }))
+    }
+  } catch {}
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Header */}
@@ -28,85 +44,58 @@ export default function RatesPage() {
             Dynamic pricing rules, seasonal rate multipliers, meal plan policies, and corporate negotiated contracts.
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs h-9 font-semibold">
-            <Plus className="h-4 w-4 mr-1.5" />
-            Create Rate Plan
-          </Button>
-        </div>
       </div>
 
-      {/* Overview Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-2xs">
-          <div className="flex items-center gap-2 text-indigo-600">
-            <Tag className="h-5 w-5" />
-            <span className="text-xs font-semibold">Active Rate Plans</span>
+      {ratePlans.length === 0 ? (
+        <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center max-w-lg mx-auto my-12 shadow-sm">
+          <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+            <Tag className="h-6 w-6" />
           </div>
-          <p className="text-2xl font-bold text-gray-900 mt-2">5 Plans</p>
-          <p className="text-[11px] text-gray-500 mt-0.5">Primary pricing: Best Available Rate (BAR)</p>
+          <h3 className="text-base font-bold text-gray-900">No Rate Plans Defined</h3>
+          <p className="text-xs text-gray-500 mt-1 max-w-sm mx-auto">
+            Configure dynamic rate plans, weekend pricing surges, and meal package inclusions.
+          </p>
         </div>
-
-        <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-2xs">
-          <div className="flex items-center gap-2 text-emerald-600">
-            <Percent className="h-5 w-5" />
-            <span className="text-xs font-semibold">Weekend Pricing Surge</span>
-          </div>
-          <p className="text-2xl font-bold text-gray-900 mt-2">+20% Multiplier</p>
-          <p className="text-[11px] text-gray-500 mt-0.5">Applied automatically Friday &amp; Saturday</p>
-        </div>
-
-        <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-2xs">
-          <div className="flex items-center gap-2 text-amber-600">
-            <Calendar className="h-5 w-5" />
-            <span className="text-xs font-semibold">Peak Holiday Season</span>
-          </div>
-          <p className="text-2xl font-bold text-gray-900 mt-2">Active in 34 Days</p>
-          <p className="text-[11px] text-gray-500 mt-0.5">Winter Peak Surge: +35% across all room types</p>
-        </div>
-      </div>
-
-      {/* Rate Plans List */}
-      <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
-        <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-          <h3 className="text-sm font-bold text-gray-900">Configured Rate Plans</h3>
-          <span className="text-xs text-gray-400">Synced to Booking Engine &amp; OTAs</span>
-        </div>
-
-        <div className="divide-y divide-gray-100">
+      ) : (
+        /* Rate Plans List */
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {ratePlans.map((plan) => (
-            <div key={plan.id} className="p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-gray-50/60 transition-colors">
+            <div
+              key={plan.id}
+              className="bg-white border border-gray-200 rounded-xl p-5 shadow-2xs hover:border-indigo-300 transition-all flex flex-col justify-between"
+            >
               <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-gray-900">{plan.name}</span>
-                  <Badge variant="outline" className="font-mono text-[10px]">
-                    {plan.code}
-                  </Badge>
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <div>
+                    <h3 className="text-base font-bold text-gray-900">{plan.name}</h3>
+                    <span className="font-mono text-[10px] text-gray-400 font-semibold">{plan.code}</span>
+                  </div>
                   {plan.isDefault && (
                     <Badge variant="purple" className="text-[10px]">
-                      Default BAR
+                      Primary Rate Plan
                     </Badge>
                   )}
                 </div>
-                <p className="text-xs text-gray-600 mt-1">
-                  Meal Plan: <strong>{plan.mealPlan}</strong> &bull; Policy: {plan.cancellation}
-                </p>
+
+                <div className="space-y-1.5 py-3 border-t border-gray-100 text-xs text-gray-600">
+                  <p>
+                    <strong className="text-gray-900">Meal Plan:</strong> {plan.mealPlan}
+                  </p>
+                  <p>
+                    <strong className="text-gray-900">Cancellation:</strong> {plan.cancellation}
+                  </p>
+                </div>
               </div>
 
-              <div className="flex items-center gap-4">
-                <div className="text-right">
-                  <span className="text-xs text-gray-400 block text-right">Pricing Multiplier</span>
-                  <span className="font-mono font-bold text-sm text-indigo-600">{plan.multiplier}</span>
-                </div>
-                <Button size="sm" variant="outline" className="h-8 text-xs">
-                  Edit Plan
-                </Button>
+              <div className="pt-3 border-t border-gray-100 flex items-center justify-between">
+                <Badge variant={plan.active ? 'success' : 'secondary'}>
+                  {plan.active ? 'Active' : 'Inactive'}
+                </Badge>
               </div>
             </div>
           ))}
         </div>
-      </div>
+      )}
     </div>
   )
 }
-
