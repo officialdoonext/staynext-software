@@ -18,25 +18,28 @@ interface UserMenuProps {
   user?: {
     id?: string
     email?: string
-    user_metadata?: {
-      full_name?: string
-      role?: string
-    }
+    user_metadata?: Record<string, any>
   }
 }
 
 export default function UserMenu({ user }: UserMenuProps) {
   const router = useRouter()
-  const fullName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Hotel Manager'
-  const email = user?.email || 'manager@staynext.com'
+  const fullName =
+    user?.user_metadata?.username ||
+    user?.user_metadata?.property_name ||
+    user?.user_metadata?.full_name ||
+    user?.email?.split('@')[0] ||
+    'Property Admin'
+  const email = user?.email || 'admin@property.com'
   const role = user?.user_metadata?.role || 'Hotel Owner'
 
   const initials = fullName
     .split(' ')
-    .map((n) => n[0])
+    .filter(Boolean)
+    .map((n: string) => n[0])
     .join('')
     .substring(0, 2)
-    .toUpperCase()
+    .toUpperCase() || 'PA'
 
   const handleSignOut = async () => {
     try {
@@ -46,6 +49,7 @@ export default function UserMenu({ user }: UserMenuProps) {
       // Ignored if offline
     }
     router.push('/login')
+    router.refresh()
   }
 
   return (

@@ -1,29 +1,30 @@
 import { Metadata } from "next"
-import RegisterForm from "@/components/forms/RegisterForm"
-import Link from "next/link"
+import AuthForm from "@/components/forms/AuthForm"
 import { Building2 } from "lucide-react"
+import { Suspense } from "react"
 
-export const metadata: Metadata = { title: "Create Account" }
+export const metadata: Metadata = {
+  title: "Register Property | StayNext Hotel Management",
+}
 
 export default function RegisterPage() {
   return (
-    <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-8">
-      <div className="text-center mb-8">
-        <div className="flex justify-center mb-4">
-          <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center">
+    <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 sm:p-8 max-w-md w-full mx-auto">
+      <div className="text-center mb-6">
+        <div className="flex justify-center mb-3">
+          <div className="w-12 h-12 bg-indigo-600 rounded-xl flex items-center justify-center shadow-md shadow-indigo-100">
             <Building2 className="h-6 w-6 text-white" />
           </div>
         </div>
-        <h1 className="text-2xl font-semibold text-gray-900">Create your account</h1>
-        <p className="text-gray-500 text-sm mt-1">Start managing your property with StayNext</p>
+        <h1 className="text-xl font-bold text-gray-900">Register New Property</h1>
+        <p className="text-gray-500 text-xs mt-1">
+          Create a tenant organization for your hotel, lodge, or resort
+        </p>
       </div>
-      <RegisterForm />
-      <div className="mt-6 text-center text-sm text-gray-500">
-        Already have an account?{" "}
-        <Link href="/login" className="text-indigo-600 hover:text-indigo-700 font-medium">
-          Sign in
-        </Link>
-      </div>
+
+      <Suspense fallback={<div className="h-48 flex items-center justify-center text-xs text-gray-400">Loading registration...</div>}>
+        <AuthForm initialTab="signup" />
+      </Suspense>
     </div>
   )
 }

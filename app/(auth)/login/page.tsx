@@ -1,34 +1,30 @@
 import { Metadata } from "next"
-import LoginForm from "@/components/forms/LoginForm"
-import Link from "next/link"
+import AuthForm from "@/components/forms/AuthForm"
 import { Building2 } from "lucide-react"
+import { Suspense } from "react"
 
-export const metadata: Metadata = { title: "Login" }
+export const metadata: Metadata = {
+  title: "Multi-Tenant Access | StayNext Hotel Management",
+}
 
 export default function LoginPage() {
   return (
-    <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-8">
-      <div className="text-center mb-8">
-        <div className="flex justify-center mb-4">
-          <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center">
+    <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 sm:p-8 max-w-md w-full mx-auto">
+      <div className="text-center mb-6">
+        <div className="flex justify-center mb-3">
+          <div className="w-12 h-12 bg-indigo-600 rounded-xl flex items-center justify-center shadow-md shadow-indigo-100">
             <Building2 className="h-6 w-6 text-white" />
           </div>
         </div>
-        <h1 className="text-2xl font-semibold text-gray-900">Welcome back</h1>
-        <p className="text-gray-500 text-sm mt-1">Sign in to StayNext</p>
+        <h1 className="text-xl font-bold text-gray-900">StayNext Multi-Tenant Portal</h1>
+        <p className="text-gray-500 text-xs mt-1">
+          Sign in to your property or register a new hospitality tenant
+        </p>
       </div>
-      <LoginForm />
-      <div className="mt-6 text-center text-sm text-gray-500">
-        <Link href="/forgot-password" className="text-indigo-600 hover:text-indigo-700 font-medium">
-          Forgot your password?
-        </Link>
-      </div>
-      <div className="mt-4 text-center text-sm text-gray-500">
-        Don&apos;t have an account?{" "}
-        <Link href="/register" className="text-indigo-600 hover:text-indigo-700 font-medium">
-          Sign up
-        </Link>
-      </div>
+
+      <Suspense fallback={<div className="h-48 flex items-center justify-center text-xs text-gray-400">Loading portal...</div>}>
+        <AuthForm initialTab="signin" />
+      </Suspense>
     </div>
   )
 }

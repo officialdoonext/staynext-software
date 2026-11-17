@@ -35,33 +35,32 @@ export interface DashboardStats {
   todayExpenses: number
 }
 
-const fallbackStats: DashboardStats = {
-  totalReservations: 48,
-  todayCheckIns: 14,
-  todayCheckOuts: 9,
-  upcomingReservations: 26,
-  pendingReservations: 5,
-  cancelledReservations: 2,
-  totalRooms: 64,
-  availableRooms: 12,
-  occupiedRooms: 44,
-  reservedRooms: 4,
-  dirtyRooms: 2,
-  cleaningRooms: 2,
-  maintenanceRooms: 1,
-  outOfOrderRooms: 1,
-  todayRevenue: 4890.0,
-  monthlyRevenue: 68420.0,
-  totalPaymentsReceived: 62500.0,
-  pendingPayments: 1890.0,
-  outstandingBalance: 1890.0,
-  todayExpenses: 840.5,
+const emptyStats: DashboardStats = {
+  totalReservations: 0,
+  todayCheckIns: 0,
+  todayCheckOuts: 0,
+  upcomingReservations: 0,
+  pendingReservations: 0,
+  cancelledReservations: 0,
+  totalRooms: 0,
+  availableRooms: 0,
+  occupiedRooms: 0,
+  reservedRooms: 0,
+  dirtyRooms: 0,
+  cleaningRooms: 0,
+  maintenanceRooms: 0,
+  outOfOrderRooms: 0,
+  todayRevenue: 0,
+  monthlyRevenue: 0,
+  totalPaymentsReceived: 0,
+  pendingPayments: 0,
+  outstandingBalance: 0,
+  todayExpenses: 0,
 }
 
 export async function getDashboardStats(propertyId?: string): Promise<DashboardStats> {
-  // If Supabase credentials are placeholder or not yet configured, return instant demo stats in 0ms
   if (!isSupabaseConfigured()) {
-    return fallbackStats
+    return emptyStats
   }
 
   try {
@@ -72,120 +71,132 @@ export async function getDashboardStats(propertyId?: string): Promise<DashboardS
       .split('T')[0]
 
     // Count reservations
-    const { count: totalReservations } = await supabase
-      .from('reservations')
-      .select('*', { count: 'exact', head: true })
-      .match(propertyId ? { property_id: propertyId } : {})
+    const totalQuery = supabase.from('reservations').select('*', { count: 'exact', head: true })
+    if (propertyId) totalQuery.eq('property_id', propertyId)
+    const { count: totalReservations } = await totalQuery
 
-    const { count: todayCheckIns } = await supabase
+    const checkInsQuery = supabase
       .from('reservations')
       .select('*', { count: 'exact', head: true })
       .eq('check_in_date', today)
       .in('status', ['confirmed', 'checked_in'])
-      .match(propertyId ? { property_id: propertyId } : {})
+    if (propertyId) checkInsQuery.eq('property_id', propertyId)
+    const { count: todayCheckIns } = await checkInsQuery
 
-    const { count: todayCheckOuts } = await supabase
+    const checkOutsQuery = supabase
       .from('reservations')
       .select('*', { count: 'exact', head: true })
       .eq('check_out_date', today)
       .eq('status', 'checked_in')
-      .match(propertyId ? { property_id: propertyId } : {})
+    if (propertyId) checkOutsQuery.eq('property_id', propertyId)
+    const { count: todayCheckOuts } = await checkOutsQuery
 
-    const { count: upcomingReservations } = await supabase
+    const upcomingQuery = supabase
       .from('reservations')
       .select('*', { count: 'exact', head: true })
       .gt('check_in_date', today)
       .eq('status', 'confirmed')
-      .match(propertyId ? { property_id: propertyId } : {})
+    if (propertyId) upcomingQuery.eq('property_id', propertyId)
+    const { count: upcomingReservations } = await upcomingQuery
 
-    const { count: pendingReservations } = await supabase
+    const pendingQuery = supabase
       .from('reservations')
       .select('*', { count: 'exact', head: true })
       .eq('status', 'pending')
-      .match(propertyId ? { property_id: propertyId } : {})
+    if (propertyId) pendingQuery.eq('property_id', propertyId)
+    const { count: pendingReservations } = await pendingQuery
 
-    const { count: cancelledReservations } = await supabase
+    const cancelledQuery = supabase
       .from('reservations')
       .select('*', { count: 'exact', head: true })
       .eq('status', 'cancelled')
-      .match(propertyId ? { property_id: propertyId } : {})
+    if (propertyId) cancelledQuery.eq('property_id', propertyId)
+    const { count: cancelledReservations } = await cancelledQuery
 
     // Room counts
-    const { count: totalRooms } = await supabase
-      .from('rooms')
-      .select('*', { count: 'exact', head: true })
-      .match(propertyId ? { property_id: propertyId } : {})
+    const totalRoomsQuery = supabase.from('rooms').select('*', { count: 'exact', head: true })
+    if (propertyId) totalRoomsQuery.eq('property_id', propertyId)
+    const { count: totalRooms } = await totalRoomsQuery
 
-    const { count: availableRooms } = await supabase
+    const availableQuery = supabase
       .from('rooms')
       .select('*', { count: 'exact', head: true })
       .eq('status', 'available')
-      .match(propertyId ? { property_id: propertyId } : {})
+    if (propertyId) availableQuery.eq('property_id', propertyId)
+    const { count: availableRooms } = await availableQuery
 
-    const { count: occupiedRooms } = await supabase
+    const occupiedQuery = supabase
       .from('rooms')
       .select('*', { count: 'exact', head: true })
       .eq('status', 'occupied')
-      .match(propertyId ? { property_id: propertyId } : {})
+    if (propertyId) occupiedQuery.eq('property_id', propertyId)
+    const { count: occupiedRooms } = await occupiedQuery
 
-    const { count: reservedRooms } = await supabase
+    const reservedQuery = supabase
       .from('rooms')
       .select('*', { count: 'exact', head: true })
       .eq('status', 'reserved')
-      .match(propertyId ? { property_id: propertyId } : {})
+    if (propertyId) reservedQuery.eq('property_id', propertyId)
+    const { count: reservedRooms } = await reservedQuery
 
-    const { count: dirtyRooms } = await supabase
+    const dirtyQuery = supabase
       .from('rooms')
       .select('*', { count: 'exact', head: true })
       .eq('status', 'dirty')
-      .match(propertyId ? { property_id: propertyId } : {})
+    if (propertyId) dirtyQuery.eq('property_id', propertyId)
+    const { count: dirtyRooms } = await dirtyQuery
 
-    const { count: cleaningRooms } = await supabase
+    const cleaningQuery = supabase
       .from('rooms')
       .select('*', { count: 'exact', head: true })
       .eq('status', 'cleaning')
-      .match(propertyId ? { property_id: propertyId } : {})
+    if (propertyId) cleaningQuery.eq('property_id', propertyId)
+    const { count: cleaningRooms } = await cleaningQuery
 
-    const { count: maintenanceRooms } = await supabase
+    const maintenanceQuery = supabase
       .from('rooms')
       .select('*', { count: 'exact', head: true })
       .eq('status', 'maintenance')
-      .match(propertyId ? { property_id: propertyId } : {})
+    if (propertyId) maintenanceQuery.eq('property_id', propertyId)
+    const { count: maintenanceRooms } = await maintenanceQuery
 
-    const { count: outOfOrderRooms } = await supabase
+    const outOfOrderQuery = supabase
       .from('rooms')
       .select('*', { count: 'exact', head: true })
       .eq('status', 'out_of_order')
-      .match(propertyId ? { property_id: propertyId } : {})
+    if (propertyId) outOfOrderQuery.eq('property_id', propertyId)
+    const { count: outOfOrderRooms } = await outOfOrderQuery
 
-    // Financial data
-    const { data: todayPayments } = await supabase
+    // Financial aggregation
+    const todayPaymentsQuery = supabase
       .from('payments')
       .select('amount')
       .gte('created_at', `${today}T00:00:00`)
-      .lte('created_at', `${today}T23:59:59`)
       .eq('status', 'completed')
-      .match(propertyId ? { property_id: propertyId } : {})
+    if (propertyId) todayPaymentsQuery.eq('property_id', propertyId)
+    const { data: todayPayments } = await todayPaymentsQuery
 
-    const { data: monthlyPayments } = await supabase
+    const monthlyPaymentsQuery = supabase
       .from('payments')
       .select('amount')
       .gte('created_at', `${monthStart}T00:00:00`)
       .eq('status', 'completed')
-      .match(propertyId ? { property_id: propertyId } : {})
+    if (propertyId) monthlyPaymentsQuery.eq('property_id', propertyId)
+    const { data: monthlyPayments } = await monthlyPaymentsQuery
 
-    const { data: pendingPaymentsData } = await supabase
-      .from('payments')
-      .select('amount')
-      .eq('status', 'pending')
-      .match(propertyId ? { property_id: propertyId } : {})
+    const pendingPaymentsQuery = supabase
+      .from('guest_folios')
+      .select('balance')
+      .gt('balance', 0)
+    if (propertyId) pendingPaymentsQuery.eq('property_id', propertyId)
+    const { data: pendingPaymentsData } = await pendingPaymentsQuery
 
-    const { data: todayExpensesData } = await supabase
+    const todayExpensesQuery = supabase
       .from('expenses')
       .select('amount')
       .gte('created_at', `${today}T00:00:00`)
-      .lte('created_at', `${today}T23:59:59`)
-      .match(propertyId ? { property_id: propertyId } : {})
+    if (propertyId) todayExpensesQuery.eq('property_id', propertyId)
+    const { data: todayExpensesData } = await todayExpensesQuery
 
     const todayRevenue = (todayPayments || []).reduce(
       (sum: number, p: { amount: number }) => sum + (p.amount || 0),
@@ -196,7 +207,8 @@ export async function getDashboardStats(propertyId?: string): Promise<DashboardS
       0
     )
     const pendingPayments = (pendingPaymentsData || []).reduce(
-      (sum: number, p: { amount: number }) => sum + (p.amount || 0),
+      (sum: number, p: { balance?: number; amount?: number }) =>
+        sum + (p.balance || p.amount || 0),
       0
     )
     const todayExpenses = (todayExpensesData || []).reduce(
@@ -227,7 +239,7 @@ export async function getDashboardStats(propertyId?: string): Promise<DashboardS
       todayExpenses,
     }
   } catch {
-    return fallbackStats
+    return emptyStats
   }
 }
 
@@ -252,278 +264,174 @@ export interface ReservationRow {
   booking_source?: string
 }
 
-const fallbackArrivals: ReservationRow[] = [
-  {
-    id: 'f-arr-1',
-    reservation_number: 'RES-2026-9082',
-    guest_first_name: 'Liam',
-    guest_last_name: 'Gallagher',
-    guest_phone: '+44 7911 123456',
-    room_number: '102',
-    room_type: 'Deluxe King',
-    check_in_date: new Date().toISOString().split('T')[0],
-    check_out_date: new Date(Date.now() + 86400000 * 3).toISOString().split('T')[0],
-    check_in_time: '14:00',
-    adults: 1,
-    children: 0,
-    status: 'confirmed',
-    payment_status: 'paid',
-    total_amount: 660.0,
-  },
-  {
-    id: 'f-arr-2',
-    reservation_number: 'RES-2026-9083',
-    guest_first_name: 'Elena',
-    guest_last_name: 'Rostova',
-    guest_phone: '+49 151 2345678',
-    room_number: '202',
-    room_type: 'Junior Suite',
-    check_in_date: new Date().toISOString().split('T')[0],
-    check_out_date: new Date(Date.now() + 86400000 * 4).toISOString().split('T')[0],
-    check_in_time: '15:30',
-    adults: 2,
-    children: 0,
-    status: 'confirmed',
-    payment_status: 'partial',
-    total_amount: 1400.0,
-  },
-  {
-    id: 'f-arr-3',
-    reservation_number: 'RES-2026-9084',
-    guest_first_name: 'Lucas',
-    guest_last_name: 'Meyer',
-    guest_phone: '+41 79 000 1122',
-    room_number: '103',
-    room_type: 'Executive Double',
-    check_in_date: new Date().toISOString().split('T')[0],
-    check_out_date: new Date(Date.now() + 86400000 * 3).toISOString().split('T')[0],
-    check_in_time: '16:00',
-    adults: 2,
-    children: 2,
-    status: 'pending',
-    payment_status: 'pending',
-    total_amount: 840.0,
-  },
-]
-
 export async function getTodayArrivals(propertyId?: string): Promise<ReservationRow[]> {
   if (!isSupabaseConfigured()) {
-    return fallbackArrivals
+    return []
   }
 
   try {
     const supabase = await createClient()
     const today = new Date().toISOString().split('T')[0]
 
-    const query = supabase
+    let query = supabase
       .from('reservations')
       .select(`
         id,
         reservation_number,
-        guest_first_name,
-        guest_last_name,
-        guest_phone,
-        room_number,
-        room_type,
         check_in_date,
         check_out_date,
-        check_in_time,
-        adults,
-        children,
-        status,
-        payment_status,
-        total_amount
-      `)
-      .eq('check_in_date', today)
-      .in('status', ['confirmed', 'pending'])
-      .order('check_in_time', { ascending: true })
-
-    if (propertyId) query.eq('property_id', propertyId)
-
-    const { data, error } = await query
-    if (error || !data || data.length === 0) return fallbackArrivals
-    return data as ReservationRow[]
-  } catch {
-    return fallbackArrivals
-  }
-}
-
-const fallbackDepartures: ReservationRow[] = [
-  {
-    id: 'f-dep-1',
-    reservation_number: 'RES-2026-9079',
-    guest_first_name: 'Marcus',
-    guest_last_name: 'Vance',
-    room_number: '201',
-    room_type: 'Presidential Suite',
-    check_in_date: new Date(Date.now() - 86400000 * 4).toISOString().split('T')[0],
-    check_out_date: new Date().toISOString().split('T')[0],
-    check_out_time: '11:00 AM',
-    adults: 2,
-    children: 0,
-    status: 'checked_in',
-    payment_status: 'paid',
-    total_amount: 2600.0,
-    outstanding_balance: 0.0,
-  },
-  {
-    id: 'f-dep-2',
-    reservation_number: 'RES-2026-9080',
-    guest_first_name: 'David',
-    guest_last_name: 'Chen',
-    room_number: '304',
-    room_type: 'Standard Queen',
-    check_in_date: new Date(Date.now() - 86400000 * 3).toISOString().split('T')[0],
-    check_out_date: new Date().toISOString().split('T')[0],
-    check_out_time: '11:30 AM',
-    adults: 1,
-    children: 0,
-    status: 'checked_in',
-    payment_status: 'partial',
-    total_amount: 525.0,
-    outstanding_balance: 150.0,
-  },
-]
-
-export async function getTodayDepartures(propertyId?: string): Promise<ReservationRow[]> {
-  if (!isSupabaseConfigured()) {
-    return fallbackDepartures
-  }
-
-  try {
-    const supabase = await createClient()
-    const today = new Date().toISOString().split('T')[0]
-
-    const query = supabase
-      .from('reservations')
-      .select(`
-        id,
-        reservation_number,
-        guest_first_name,
-        guest_last_name,
-        room_number,
-        room_type,
-        check_in_date,
-        check_out_date,
-        check_out_time,
         status,
         payment_status,
         total_amount,
-        outstanding_balance
+        guests (
+          first_name,
+          last_name,
+          phone
+        ),
+        room_types (
+          name
+        )
       `)
-      .eq('check_out_date', today)
-      .eq('status', 'checked_in')
-      .order('check_out_time', { ascending: true })
+      .eq('check_in_date', today)
+      .in('status', ['confirmed', 'pending'])
 
-    if (propertyId) query.eq('property_id', propertyId)
+    if (propertyId) query = query.eq('property_id', propertyId)
 
     const { data, error } = await query
-    if (error || !data || data.length === 0) return fallbackDepartures
-    return data as ReservationRow[]
+    if (error || !data) return []
+
+    return data.map((r: any) => ({
+      id: r.id,
+      reservation_number: r.reservation_number,
+      guest_first_name: r.guests?.first_name || 'Guest',
+      guest_last_name: r.guests?.last_name || '',
+      guest_phone: r.guests?.phone,
+      room_type: r.room_types?.name || 'Standard Room',
+      check_in_date: r.check_in_date,
+      check_out_date: r.check_out_date,
+      check_in_time: '14:00',
+      adults: 1,
+      children: 0,
+      status: r.status,
+      payment_status: r.payment_status,
+      total_amount: r.total_amount || 0,
+    }))
   } catch {
-    return fallbackDepartures
+    return []
   }
 }
 
-const fallbackRecent: ReservationRow[] = [
-  {
-    id: 'rec-1',
-    reservation_number: 'RES-2026-9081',
-    guest_first_name: 'Sophia',
-    guest_last_name: 'Montgomery',
-    room_type: 'Presidential Suite',
-    check_in_date: '2026-11-10',
-    check_out_date: '2026-11-16',
-    adults: 2,
-    children: 1,
-    status: 'checked_in',
-    payment_status: 'paid',
-    total_amount: 3900.0,
-    booking_source: 'website',
-  },
-  {
-    id: 'rec-2',
-    reservation_number: 'RES-2026-9082',
-    guest_first_name: 'Liam',
-    guest_last_name: 'Gallagher',
-    room_type: 'Deluxe King',
-    check_in_date: '2026-11-11',
-    check_out_date: '2026-11-14',
-    adults: 1,
-    children: 0,
-    status: 'checked_in',
-    payment_status: 'paid',
-    total_amount: 660.0,
-    booking_source: 'ota',
-  },
-  {
-    id: 'rec-3',
-    reservation_number: 'RES-2026-9083',
-    guest_first_name: 'Elena',
-    guest_last_name: 'Rostova',
-    room_type: 'Junior Suite',
-    check_in_date: '2026-11-11',
-    check_out_date: '2026-11-15',
-    adults: 2,
-    children: 0,
-    status: 'confirmed',
-    payment_status: 'partial',
-    total_amount: 1400.0,
-    booking_source: 'direct',
-  },
-  {
-    id: 'rec-4',
-    reservation_number: 'RES-2026-9084',
-    guest_first_name: 'Lucas',
-    guest_last_name: 'Meyer',
-    room_type: 'Executive Double',
-    check_in_date: '2026-11-12',
-    check_out_date: '2026-11-15',
-    adults: 2,
-    children: 2,
-    status: 'pending',
-    payment_status: 'pending',
-    total_amount: 840.0,
-    booking_source: 'corporate',
-  },
-]
+export async function getTodayDepartures(propertyId?: string): Promise<ReservationRow[]> {
+  if (!isSupabaseConfigured()) {
+    return []
+  }
+
+  try {
+    const supabase = await createClient()
+    const today = new Date().toISOString().split('T')[0]
+
+    let query = supabase
+      .from('reservations')
+      .select(`
+        id,
+        reservation_number,
+        check_in_date,
+        check_out_date,
+        status,
+        payment_status,
+        total_amount,
+        guests (
+          first_name,
+          last_name
+        ),
+        room_types (
+          name
+        )
+      `)
+      .eq('check_out_date', today)
+      .eq('status', 'checked_in')
+
+    if (propertyId) query = query.eq('property_id', propertyId)
+
+    const { data, error } = await query
+    if (error || !data) return []
+
+    return data.map((r: any) => ({
+      id: r.id,
+      reservation_number: r.reservation_number,
+      guest_first_name: r.guests?.first_name || 'Guest',
+      guest_last_name: r.guests?.last_name || '',
+      room_type: r.room_types?.name || 'Standard',
+      check_in_date: r.check_in_date,
+      check_out_date: r.check_out_date,
+      check_out_time: '11:00 AM',
+      adults: 1,
+      children: 0,
+      status: r.status,
+      payment_status: r.payment_status,
+      total_amount: r.total_amount || 0,
+      outstanding_balance: 0,
+    }))
+  } catch {
+    return []
+  }
+}
 
 export async function getRecentReservations(
   propertyId?: string,
   limit = 10
 ): Promise<ReservationRow[]> {
   if (!isSupabaseConfigured()) {
-    return fallbackRecent
+    return []
   }
 
   try {
     const supabase = await createClient()
 
-    const query = supabase
+    let query = supabase
       .from('reservations')
       .select(`
         id,
         reservation_number,
-        guest_first_name,
-        guest_last_name,
-        room_type,
         check_in_date,
         check_out_date,
         status,
         payment_status,
         total_amount,
-        booking_source
+        booking_source,
+        guests (
+          first_name,
+          last_name
+        ),
+        room_types (
+          name
+        )
       `)
       .order('created_at', { ascending: false })
       .limit(limit)
 
-    if (propertyId) query.eq('property_id', propertyId)
+    if (propertyId) query = query.eq('property_id', propertyId)
 
     const { data, error } = await query
-    if (error || !data || data.length === 0) return fallbackRecent
-    return data as ReservationRow[]
+    if (error || !data) return []
+
+    return data.map((r: any) => ({
+      id: r.id,
+      reservation_number: r.reservation_number,
+      guest_first_name: r.guests?.first_name || 'Guest',
+      guest_last_name: r.guests?.last_name || '',
+      room_type: r.room_types?.name || 'Standard Room',
+      check_in_date: r.check_in_date,
+      check_out_date: r.check_out_date,
+      adults: 1,
+      children: 0,
+      status: r.status,
+      payment_status: r.payment_status,
+      total_amount: r.total_amount || 0,
+      booking_source: r.booking_source || 'direct',
+    }))
   } catch {
-    return fallbackRecent
+    return []
   }
 }
 
@@ -533,30 +441,20 @@ export interface RevenueDataPoint {
   expenses: number
 }
 
-function generateDemoRevenuePoints(days = 14): RevenueDataPoint[] {
-  const points: RevenueDataPoint[] = []
-  const baseRevenue = [3200, 4100, 3900, 4800, 5200, 6100, 5800, 4200, 3900, 4600, 5100, 6400, 5900, 4890]
-  const baseExpenses = [1100, 950, 1400, 800, 1200, 1500, 1300, 900, 1050, 1200, 850, 1400, 1100, 840]
-
-  for (let i = 0; i < days; i++) {
-    const d = new Date()
-    d.setDate(d.getDate() - (days - 1 - i))
-    const key = d.toISOString().split('T')[0]
-    points.push({
-      date: key,
-      revenue: baseRevenue[i % baseRevenue.length],
-      expenses: baseExpenses[i % baseExpenses.length],
-    })
-  }
-  return points
-}
-
 export async function getRevenueChartData(
   propertyId?: string,
   days = 14
 ): Promise<RevenueDataPoint[]> {
+  const buckets: Record<string, RevenueDataPoint> = {}
+  for (let i = 0; i < days; i++) {
+    const d = new Date()
+    d.setDate(d.getDate() - (days - 1 - i))
+    const key = d.toISOString().split('T')[0]
+    buckets[key] = { date: key, revenue: 0, expenses: 0 }
+  }
+
   if (!isSupabaseConfigured()) {
-    return generateDemoRevenuePoints(days)
+    return Object.values(buckets)
   }
 
   try {
@@ -565,26 +463,20 @@ export async function getRevenueChartData(
     startDate.setDate(startDate.getDate() - days)
     const startStr = startDate.toISOString().split('T')[0]
 
-    const { data: payments } = await supabase
+    let paymentsQuery = supabase
       .from('payments')
       .select('amount, created_at')
       .gte('created_at', `${startStr}T00:00:00`)
       .eq('status', 'completed')
-      .match(propertyId ? { property_id: propertyId } : {})
+    if (propertyId) paymentsQuery = paymentsQuery.eq('property_id', propertyId)
+    const { data: payments } = await paymentsQuery
 
-    const { data: expenses } = await supabase
+    let expensesQuery = supabase
       .from('expenses')
       .select('amount, created_at')
       .gte('created_at', `${startStr}T00:00:00`)
-      .match(propertyId ? { property_id: propertyId } : {})
-
-    const buckets: Record<string, RevenueDataPoint> = {}
-    for (let i = 0; i < days; i++) {
-      const d = new Date()
-      d.setDate(d.getDate() - (days - 1 - i))
-      const key = d.toISOString().split('T')[0]
-      buckets[key] = { date: key, revenue: 0, expenses: 0 }
-    }
+    if (propertyId) expensesQuery = expensesQuery.eq('property_id', propertyId)
+    const { data: expenses } = await expensesQuery
 
     for (const p of payments || []) {
       const key = p.created_at.split('T')[0]
@@ -595,12 +487,9 @@ export async function getRevenueChartData(
       if (buckets[key]) buckets[key].expenses += e.amount || 0
     }
 
-    const result = Object.values(buckets)
-    const totalRev = result.reduce((s, p) => s + p.revenue, 0)
-    if (totalRev === 0) return generateDemoRevenuePoints(days)
-    return result
+    return Object.values(buckets)
   } catch {
-    return generateDemoRevenuePoints(days)
+    return Object.values(buckets)
   }
 }
 
@@ -612,41 +501,32 @@ export interface RoomTypePerformance {
   revenue: number
 }
 
-const fallbackRoomTypePerf: RoomTypePerformance[] = [
-  { roomType: 'Deluxe King Room', totalRooms: 16, occupiedRooms: 14, occupancyRate: 88, revenue: 14200 },
-  { roomType: 'Executive Double', totalRooms: 12, occupiedRooms: 9, occupancyRate: 75, revenue: 11400 },
-  { roomType: 'Oceanfront Villa', totalRooms: 8, occupiedRooms: 6, occupancyRate: 75, revenue: 18200 },
-  { roomType: 'Presidential Suite', totalRooms: 2, occupiedRooms: 2, occupancyRate: 100, revenue: 9800 },
-]
-
 export async function getRoomTypePerformance(propertyId?: string): Promise<RoomTypePerformance[]> {
   if (!isSupabaseConfigured()) {
-    return fallbackRoomTypePerf
+    return []
   }
 
   try {
     const supabase = await createClient()
 
-    const query = supabase
+    let query = supabase
       .from('room_types')
-      .select('id, name, total_rooms, occupied_rooms, revenue')
+      .select('id, name, total_rooms')
 
-    if (propertyId) query.eq('property_id', propertyId)
+    if (propertyId) query = query.eq('property_id', propertyId)
 
     const { data, error } = await query
-    if (error || !data || data.length === 0) return fallbackRoomTypePerf
+    if (error || !data || data.length === 0) return []
 
     return data.map((rt: any) => ({
       roomType: rt.name,
-      totalRooms: rt.total_rooms || 10,
-      occupiedRooms: rt.occupied_rooms || 7,
-      occupancyRate: rt.total_rooms
-        ? Math.round(((rt.occupied_rooms || 7) / rt.total_rooms) * 100)
-        : 70,
-      revenue: rt.revenue || 5000,
+      totalRooms: rt.total_rooms || 0,
+      occupiedRooms: 0,
+      occupancyRate: 0,
+      revenue: 0,
     }))
   } catch {
-    return fallbackRoomTypePerf
+    return []
   }
 }
 
@@ -658,58 +538,60 @@ export interface HousekeepingOverview {
   assignedStaffCount: number
 }
 
-const fallbackHousekeeping: HousekeepingOverview = {
-  requiresCleaning: 2,
-  inProgress: 2,
-  completed: 18,
-  awaitingInspection: 3,
-  assignedStaffCount: 4,
-}
-
 export async function getHousekeepingOverview(propertyId?: string): Promise<HousekeepingOverview> {
+  const emptyOverview: HousekeepingOverview = {
+    requiresCleaning: 0,
+    inProgress: 0,
+    completed: 0,
+    awaitingInspection: 0,
+    assignedStaffCount: 0,
+  }
+
   if (!isSupabaseConfigured()) {
-    return fallbackHousekeeping
+    return emptyOverview
   }
 
   try {
     const supabase = await createClient()
     const today = new Date().toISOString().split('T')[0]
 
-    const { count: requiresCleaning } = await supabase
+    let pendingQ = supabase
       .from('housekeeping_tasks')
       .select('*', { count: 'exact', head: true })
       .eq('status', 'pending')
-      .gte('scheduled_date', today)
-      .match(propertyId ? { property_id: propertyId } : {})
+    if (propertyId) pendingQ = pendingQ.eq('property_id', propertyId)
+    const { count: requiresCleaning } = await pendingQ
 
-    const { count: inProgress } = await supabase
+    let inProgQ = supabase
       .from('housekeeping_tasks')
       .select('*', { count: 'exact', head: true })
       .eq('status', 'in_progress')
-      .match(propertyId ? { property_id: propertyId } : {})
+    if (propertyId) inProgQ = inProgQ.eq('property_id', propertyId)
+    const { count: inProgress } = await inProgQ
 
-    const { count: completed } = await supabase
+    let completedQ = supabase
       .from('housekeeping_tasks')
       .select('*', { count: 'exact', head: true })
       .eq('status', 'completed')
-      .gte('scheduled_date', today)
-      .match(propertyId ? { property_id: propertyId } : {})
+    if (propertyId) completedQ = completedQ.eq('property_id', propertyId)
+    const { count: completed } = await completedQ
 
-    const { count: awaitingInspection } = await supabase
+    let awaitingQ = supabase
       .from('housekeeping_tasks')
       .select('*', { count: 'exact', head: true })
       .eq('status', 'awaiting_inspection')
-      .match(propertyId ? { property_id: propertyId } : {})
+    if (propertyId) awaitingQ = awaitingQ.eq('property_id', propertyId)
+    const { count: awaitingInspection } = await awaitingQ
 
     return {
-      requiresCleaning: requiresCleaning || fallbackHousekeeping.requiresCleaning,
-      inProgress: inProgress || fallbackHousekeeping.inProgress,
-      completed: completed || fallbackHousekeeping.completed,
-      awaitingInspection: awaitingInspection || fallbackHousekeeping.awaitingInspection,
-      assignedStaffCount: 4,
+      requiresCleaning: requiresCleaning || 0,
+      inProgress: inProgress || 0,
+      completed: completed || 0,
+      awaitingInspection: awaitingInspection || 0,
+      assignedStaffCount: 0,
     }
   } catch {
-    return fallbackHousekeeping
+    return emptyOverview
   }
 }
 
@@ -718,31 +600,22 @@ export interface BookingSourceData {
   value: number
 }
 
-const fallbackBookingSources: BookingSourceData[] = [
-  { name: 'Direct Booking', value: 16 },
-  { name: 'Website Engine', value: 14 },
-  { name: 'OTA (Booking/Expedia)', value: 10 },
-  { name: 'Corporate Contract', value: 5 },
-  { name: 'Walk-in', value: 3 },
-]
-
 export async function getBookingSourcesData(propertyId?: string): Promise<BookingSourceData[]> {
   if (!isSupabaseConfigured()) {
-    return fallbackBookingSources
+    return []
   }
 
   try {
     const supabase = await createClient()
-    const { data } = await supabase
-      .from('reservations')
-      .select('booking_source')
-      .match(propertyId ? { property_id: propertyId } : {})
+    let query = supabase.from('reservations').select('booking_source')
+    if (propertyId) query = query.eq('property_id', propertyId)
 
-    if (!data || data.length === 0) return fallbackBookingSources
+    const { data } = await query
+    if (!data || data.length === 0) return []
 
     const counts: Record<string, number> = {}
     for (const r of data) {
-      const src = r.booking_source || 'other'
+      const src = r.booking_source || 'direct'
       counts[src] = (counts[src] || 0) + 1
     }
 
@@ -751,7 +624,7 @@ export async function getBookingSourcesData(propertyId?: string): Promise<Bookin
       value,
     }))
   } catch {
-    return fallbackBookingSources
+    return []
   }
 }
 
@@ -760,24 +633,20 @@ export interface BookingTrendData {
   count: number
 }
 
-function generateDemoBookingTrends(days = 14): BookingTrendData[] {
-  const counts = [4, 6, 5, 8, 7, 9, 11, 6, 5, 8, 7, 10, 8, 6]
-  const list: BookingTrendData[] = []
-  for (let i = 0; i < days; i++) {
-    const d = new Date()
-    d.setDate(d.getDate() - (days - 1 - i))
-    const key = d.toISOString().split('T')[0]
-    list.push({ date: key, count: counts[i % counts.length] })
-  }
-  return list
-}
-
 export async function getBookingTrendsData(
   propertyId?: string,
   days = 14
 ): Promise<BookingTrendData[]> {
+  const buckets: Record<string, number> = {}
+  for (let i = 0; i < days; i++) {
+    const d = new Date()
+    d.setDate(d.getDate() - (days - 1 - i))
+    const key = d.toISOString().split('T')[0]
+    buckets[key] = 0
+  }
+
   if (!isSupabaseConfigured()) {
-    return generateDemoBookingTrends(days)
+    return Object.entries(buckets).map(([date, count]) => ({ date, count }))
   }
 
   try {
@@ -786,29 +655,20 @@ export async function getBookingTrendsData(
     startDate.setDate(startDate.getDate() - days)
     const startStr = startDate.toISOString().split('T')[0]
 
-    const { data } = await supabase
+    let query = supabase
       .from('reservations')
       .select('created_at')
       .gte('created_at', `${startStr}T00:00:00`)
-      .match(propertyId ? { property_id: propertyId } : {})
+    if (propertyId) query = query.eq('property_id', propertyId)
 
-    if (!data || data.length === 0) return generateDemoBookingTrends(days)
-
-    const buckets: Record<string, number> = {}
-    for (let i = 0; i < days; i++) {
-      const d = new Date()
-      d.setDate(d.getDate() - (days - 1 - i))
-      const key = d.toISOString().split('T')[0]
-      buckets[key] = 0
-    }
-
-    for (const r of data) {
+    const { data } = await query
+    for (const r of data || []) {
       const key = r.created_at.split('T')[0]
       if (buckets[key] !== undefined) buckets[key]++
     }
 
     return Object.entries(buckets).map(([date, count]) => ({ date, count }))
   } catch {
-    return generateDemoBookingTrends(days)
+    return Object.entries(buckets).map(([date, count]) => ({ date, count }))
   }
 }

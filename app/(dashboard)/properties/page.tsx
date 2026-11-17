@@ -4,64 +4,25 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import Link from 'next/link'
+import { createClient } from '@/lib/supabase/server'
 
 export const metadata = { title: 'Property Management | StayNext' }
 
-const demoProperties = [
-  {
-    id: 'prop-1',
-    name: 'Grand Horizon Resort & Spa',
-    type: 'Resort',
-    address: '8400 Oceanview Blvd, Palm Beach, FL 33480',
-    phone: '+1 (561) 555-0199',
-    email: 'info@grandhorizonresort.com',
-    currency: 'USD',
-    timezone: 'America/New_York',
-    checkInTime: '15:00',
-    checkOutTime: '11:00',
-    totalRooms: 64,
-    occupiedRooms: 48,
-    buildingsCount: 3,
-    floorsCount: 4,
-    status: 'active',
-  },
-  {
-    id: 'prop-2',
-    name: 'City Center Business Hotel',
-    type: 'Hotel',
-    address: '120 Financial Plaza, Chicago, IL 60601',
-    phone: '+1 (312) 555-0144',
-    email: 'contact@citycenterhotel.com',
-    currency: 'USD',
-    timezone: 'America/Chicago',
-    checkInTime: '14:00',
-    checkOutTime: '12:00',
-    totalRooms: 42,
-    occupiedRooms: 36,
-    buildingsCount: 1,
-    floorsCount: 8,
-    status: 'active',
-  },
-  {
-    id: 'prop-3',
-    name: 'Skyline Service Suites',
-    type: 'Service Apartment',
-    address: '450 Highland Avenue, Austin, TX 78701',
-    phone: '+1 (512) 555-0182',
-    email: 'stay@skylinesuites.com',
-    currency: 'USD',
-    timezone: 'America/Chicago',
-    checkInTime: '15:00',
-    checkOutTime: '11:00',
-    totalRooms: 20,
-    occupiedRooms: 18,
-    buildingsCount: 1,
-    floorsCount: 5,
-    status: 'active',
-  },
-]
+export default async function PropertiesPage() {
+  const supabase = await createClient()
 
-export default function PropertiesPage() {
+  let properties: any[] = []
+  try {
+    const { data } = await supabase
+      .from('properties')
+      .select('*')
+      .order('created_at', { ascending: false })
+
+    if (data) {
+      properties = data
+    }
+  } catch {}
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Page Header */}
@@ -75,18 +36,37 @@ export default function PropertiesPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs h-9 font-semibold">
-            <Plus className="h-4 w-4 mr-1.5" />
-            Add Property
-          </Button>
+          <Link href="/properties/new">
+            <Button className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs h-9 font-semibold">
+              <Plus className="h-4 w-4 mr-1.5" />
+              Add Property
+            </Button>
+          </Link>
         </div>
       </div>
 
-      {/* Grid of properties */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {demoProperties.map((prop) => {
-          const occupancy = Math.round((prop.occupiedRooms / prop.totalRooms) * 100)
-          return (
+      {properties.length === 0 ? (
+        <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center max-w-lg mx-auto my-12">
+          <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+            <Building2 className="h-6 w-6" />
+          </div>
+          <h3 className="text-base font-bold text-gray-900">No Properties Found</h3>
+          <p className="text-xs text-gray-500 mt-1 max-w-sm mx-auto">
+            Your tenant organization does not have any active property branches registered yet.
+          </p>
+          <div className="mt-6">
+            <Link href="/properties/new">
+              <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium">
+                <Plus className="h-4 w-4 mr-1.5" />
+                Register First Property
+              </Button>
+            </Link>
+          </div>
+        </div>
+      ) : (
+        /* Grid of properties */
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {properties.map((prop) => (
             <Card key={prop.id} className="border-gray-200 shadow-sm hover:border-indigo-300 transition-all flex flex-col justify-between">
               <CardHeader className="pb-3 border-b border-gray-100">
                 <div className="flex items-start justify-between gap-2">
@@ -97,11 +77,13 @@ export default function PropertiesPage() {
                     <div>
                       <CardTitle className="text-base font-semibold">{prop.name}</CardTitle>
                       <Badge variant="purple" className="mt-1 text-[10px]">
-                        {prop.type}
+                        {prop.property_type || 'Hotel'}
                       </Badge>
                     </div>
                   </div>
-                  <Badge variant="success">Active</Badge>
+                  <Badge variant={prop.is_active ? 'success' : 'secondary'}>
+                    {prop.is_active ? 'Active' : 'Inactive'}
+                  </Badge>
                 </div>
               </CardHeader>
 
@@ -109,56 +91,35 @@ export default function PropertiesPage() {
                 <div className="space-y-2 text-xs text-gray-600">
                   <div className="flex items-start gap-2">
                     <MapPin className="h-3.5 w-3.5 text-gray-400 shrink-0 mt-0.5" />
-                    <span className="line-clamp-1">{prop.address}</span>
+                    <span className="line-clamp-1">{prop.address || 'Address not set'}, {prop.city}</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Phone className="h-3.5 w-3.5 text-gray-400 shrink-0" />
-                    <span>{prop.phone}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Mail className="h-3.5 w-3.5 text-gray-400 shrink-0" />
-                    <span>{prop.email}</span>
-                  </div>
+                  {prop.phone && (
+                    <div className="flex items-center gap-2">
+                      <Phone className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+                      <span>{prop.phone}</span>
+                    </div>
+                  )}
+                  {prop.email && (
+                    <div className="flex items-center gap-2">
+                      <Mail className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+                      <span>{prop.email}</span>
+                    </div>
+                  )}
                 </div>
 
-                <div className="grid grid-cols-3 gap-2 pt-3 border-t border-gray-100 text-center">
-                  <div className="p-2 bg-gray-50 rounded">
-                    <p className="text-[10px] text-gray-400 font-medium">Rooms</p>
-                    <p className="text-sm font-bold text-gray-900 mt-0.5">{prop.totalRooms}</p>
-                  </div>
-                  <div className="p-2 bg-gray-50 rounded">
-                    <p className="text-[10px] text-gray-400 font-medium">Occupancy</p>
-                    <p className="text-sm font-bold text-indigo-600 mt-0.5">{occupancy}%</p>
-                  </div>
-                  <div className="p-2 bg-gray-50 rounded">
-                    <p className="text-[10px] text-gray-400 font-medium">Buildings</p>
-                    <p className="text-sm font-bold text-gray-900 mt-0.5">{prop.buildingsCount}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between text-[11px] text-gray-500 bg-gray-50 p-2.5 rounded border border-gray-100">
-                  <span>Check-in: <strong>{prop.checkInTime}</strong></span>
-                  <span>Check-out: <strong>{prop.checkOutTime}</strong></span>
-                  <span>Currency: <strong>{prop.currency}</strong></span>
+                <div className="pt-3 border-t border-gray-100 flex items-center justify-between text-xs">
+                  <span className="text-gray-400 font-medium">Currency: {prop.currency || 'INR'}</span>
+                  <Link href={`/properties/${prop.id}/settings`}>
+                    <Button variant="ghost" size="sm" className="h-7 text-xs text-indigo-600 hover:text-indigo-700 p-0 font-medium">
+                      Configure &rarr;
+                    </Button>
+                  </Link>
                 </div>
               </CardContent>
-
-              <div className="p-4 border-t border-gray-100 flex items-center justify-between gap-2 bg-gray-50/50 rounded-b-lg">
-                <Link href={`/properties/settings?id=${prop.id}`} className="text-xs font-semibold text-gray-600 hover:text-gray-900 flex items-center gap-1">
-                  <Settings className="h-3.5 w-3.5" />
-                  <span>Configure</span>
-                </Link>
-                <Link href={`/rooms?propertyId=${prop.id}`}>
-                  <Button size="sm" variant="outline" className="text-xs h-8">
-                    View Rooms
-                  </Button>
-                </Link>
-              </div>
             </Card>
-          )
-        })}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
-

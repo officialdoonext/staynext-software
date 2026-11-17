@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Building2, Check, ChevronsUpDown } from 'lucide-react'
 import {
   DropdownMenu,
@@ -10,6 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 
 interface Property {
@@ -18,15 +19,56 @@ interface Property {
   type: string
 }
 
-const defaultProperties: Property[] = [
-  { id: 'all', name: 'All Properties', type: 'Overview' },
-  { id: 'prop-1', name: 'Grand Horizon Resort & Spa', type: 'Resort' },
-  { id: 'prop-2', name: 'City Center Business Hotel', type: 'Hotel' },
-  { id: 'prop-3', name: 'Skyline Service Suites', type: 'Service Apartment' },
-]
-
 export default function PropertySelector() {
-  const [selected, setSelected] = useState<Property>(defaultProperties[0])
+  const [properties, setProperties] = useState<Property[]>([])
+  const [selected, setSelected] = useState<Property>({
+    id: 'primary',
+    name: 'Loading Property...',
+    type: 'Hotel',
+  })
+
+  useEffect(() => {
+    async function loadProperties() {
+      try {
+        const supabase = createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+
+        // 1. Fetch properties assigned to this tenant
+        const { data, error } = await supabase
+          .from('properties')
+          .select('id, name, property_type')
+
+        if (!error && data && data.length > 0) {
+          const list: Property[] = data.map((p) => ({
+            id: p.id,
+            name: p.name,
+            type: p.property_type || 'Hotel',
+          }))
+          setProperties(list)
+          setSelected(list[0])
+          return
+        }
+
+        // Fallback to user metadata property name if database has no entries
+        const propName = user?.user_metadata?.property_name || 'My Property'
+        const defaultProp: Property = {
+          id: 'primary',
+          name: propName,
+          type: 'Primary Property',
+        }
+        setProperties([defaultProp])
+        setSelected(defaultProp)
+      } catch {
+        setSelected({
+          id: 'primary',
+          name: 'My Property',
+          type: 'Hotel',
+        })
+      }
+    }
+
+    loadProperties()
+  }, [])
 
   return (
     <DropdownMenu>
@@ -36,31 +78,41 @@ export default function PropertySelector() {
           <span className="max-w-[130px] sm:max-w-[180px] truncate text-left">
             {selected.name}
           </span>
-          <ChevronsUpDown className="h-3 w-3 text-gray-400 shrink-0 ml-1" />
+          {properties.length > 1 && (
+            <ChevronsUpDown className="h-3 w-3 text-gray-400 shrink-0 ml-1" />
+          )}
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-64">
-        <DropdownMenuLabel>Select Active Property</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        {defaultProperties.map((property) => (
-          <DropdownMenuItem
-            key={property.id}
-            onClick={() => setSelected(property)}
-            className="flex items-center justify-between py-2 cursor-pointer"
-          >
-            <div className="flex flex-col">
-              <span className={cn("text-xs font-medium", selected.id === property.id ? "text-indigo-600 font-semibold" : "text-gray-800")}>
-                {property.name}
-              </span>
-              <span className="text-[10px] text-gray-400">{property.type}</span>
-            </div>
-            {selected.id === property.id && (
-              <Check className="h-3.5 w-3.5 text-indigo-600 shrink-0" />
-            )}
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
+      {properties.length > 1 && (
+        <DropdownMenuContent align="start" className="w-64">
+          <DropdownMenuLabel>Select Active Property</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          {properties.map((property) => (
+            <DropdownMenuItem
+              key={property.id}
+              onClick={() => setSelected(property)}
+              className="flex items-center justify-between py-2 cursor-pointer"
+            >
+              <div className="flex flex-col">
+                <span
+                  className={cn(
+                    'text-xs font-medium',
+                    selected.id === property.id
+                      ? 'text-indigo-600 font-semibold'
+                      : 'text-gray-800'
+                  )}
+                >
+                  {property.name}
+                </span>
+                <span className="text-[10px] text-gray-400">{property.type}</span>
+              </div>
+              {selected.id === property.id && (
+                <Check className="h-3.5 w-3.5 text-indigo-600 shrink-0" />
+              )}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      )}
     </DropdownMenu>
   )
 }
-
