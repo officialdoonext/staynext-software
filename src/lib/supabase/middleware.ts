@@ -10,7 +10,13 @@ export async function updateSession(request: NextRequest) {
   const { pathname } = request.nextUrl
   const authPaths = ['/login', '/register', '/forgot-password', '/reset-password']
   const isAuthPath = authPaths.some((p) => pathname.startsWith(p))
+  const isPublicGuestPath = pathname.startsWith('/guest')
   const isOnboardingPath = pathname.startsWith('/onboarding')
+
+  // If public guest self-service portal, allow access without staff auth
+  if (isPublicGuestPath) {
+    return supabaseResponse
+  }
 
   // If Supabase credentials are not configured yet
   if (!supabaseUrl || !supabaseAnonKey || supabaseUrl.includes('placeholder')) {

@@ -1,0 +1,432 @@
+'use client'
+
+import React, { useState } from 'react'
+import Link from 'next/link'
+import {
+  Hotel,
+  Receipt,
+  ShieldCheck,
+  Bell,
+  Cpu,
+  Users,
+  Save,
+  CheckCircle2,
+  Calendar,
+  Globe,
+  Clock,
+  Building,
+  Mail,
+  Phone,
+  MapPin,
+} from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+import { PropertySettingsData, updatePropertySettings } from '@/services/settings.service'
+import { toast } from 'sonner'
+
+interface GeneralSettingsClientProps {
+  initialProperty: PropertySettingsData | null
+}
+
+export function GeneralSettingsClient({ initialProperty }: GeneralSettingsClientProps) {
+  const [property, setProperty] = useState<PropertySettingsData | null>(initialProperty)
+  const [isSaving, setIsSaving] = useState(false)
+
+  // Form states
+  const [name, setName] = useState(property?.name || '')
+  const [propertyType, setPropertyType] = useState(property?.propertyType || 'hotel')
+  const [phone, setPhone] = useState(property?.phone || '')
+  const [email, setEmail] = useState(property?.email || '')
+  const [website, setWebsite] = useState(property?.website || '')
+  const [address, setAddress] = useState(property?.address || '')
+  const [city, setCity] = useState(property?.city || '')
+  const [state, setState] = useState(property?.state || '')
+  const [country, setCountry] = useState(property?.country || 'India')
+  const [postalCode, setPostalCode] = useState(property?.postalCode || '')
+  const [currency, setCurrency] = useState(property?.currency || 'INR')
+  const [timezone, setTimezone] = useState(property?.timezone || 'Asia/Kolkata')
+  const [checkInTime, setCheckInTime] = useState(property?.checkInTime || '14:00')
+  const [checkOutTime, setCheckOutTime] = useState(property?.checkOutTime || '11:00')
+  const [description, setDescription] = useState(property?.description || '')
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!property?.id) {
+      toast.error('No active property loaded')
+      return
+    }
+
+    setIsSaving(true)
+    const res = await updatePropertySettings(property.id, {
+      name,
+      propertyType,
+      phone,
+      email,
+      website,
+      address,
+      city,
+      state,
+      country,
+      postalCode,
+      currency,
+      timezone,
+      checkInTime,
+      checkOutTime,
+      description,
+    })
+    setIsSaving(false)
+
+    if (res.success) {
+      toast.success('Property settings saved successfully to Supabase')
+    } else {
+      toast.error(res.error || 'Failed to save settings')
+    }
+  }
+
+  return (
+    <div className="space-y-6 max-w-7xl mx-auto pb-16 font-sora">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-gray-200">
+        <div>
+          <h1 className="text-2xl font-medium tracking-tight text-gray-900">
+            Property &amp; Tenant Settings
+          </h1>
+          <p className="text-xs text-gray-500 mt-1">
+            Configure multi-property legal profile, operating hours, local currency, tax rules, and team RBAC.
+          </p>
+        </div>
+        {property?.tenant && (
+          <div className="flex items-center gap-2">
+            <Badge
+              variant={property.tenant.isActive ? 'success' : 'outline'}
+              className="text-[11px] rounded-sm px-2.5 py-0.5"
+            >
+              Tenant: {property.tenant.status.toUpperCase()}
+            </Badge>
+            <Badge className="bg-[#5e2b9d] text-white text-[11px] rounded-sm px-2.5 py-0.5">
+              Plan: {property.tenant.subscriptionPlan.toUpperCase()}
+            </Badge>
+          </div>
+        )}
+      </div>
+
+      {/* Sub-Settings Quick Nav Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Link href="/settings/billing" className="block group">
+          <Card className="border-gray-200 shadow-2xs hover:border-[#5e2b9d] transition-all rounded-md cursor-pointer h-full">
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <div className="p-2 bg-[#f7f2fd] text-[#5e2b9d] rounded-md">
+                  <Receipt className="h-4 w-4" />
+                </div>
+                <Badge variant="outline" className="text-[10px] rounded-sm">
+                  SAC 9963
+                </Badge>
+              </div>
+              <CardTitle className="text-sm font-medium mt-2 group-hover:text-[#5e2b9d]">
+                Taxes &amp; Statutory Rates
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-xs text-gray-500">
+              Configure room GST, restaurant GST, and sequential tax invoice numbering.
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/settings/integrations" className="block group">
+          <Card className="border-gray-200 shadow-2xs hover:border-[#5e2b9d] transition-all rounded-md cursor-pointer h-full">
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <div className="p-2 bg-[#f7f2fd] text-[#5e2b9d] rounded-md">
+                  <Cpu className="h-4 w-4" />
+                </div>
+                <Badge variant="purple" className="text-[10px] rounded-sm">
+                  Active
+                </Badge>
+              </div>
+              <CardTitle className="text-sm font-medium mt-2 group-hover:text-[#5e2b9d]">
+                Third-Party Gateways
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-xs text-gray-500">
+              Manage Razorpay, Stripe, WhatsApp Cloud API, and RFID Door Locks.
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/settings/notifications" className="block group">
+          <Card className="border-gray-200 shadow-2xs hover:border-[#5e2b9d] transition-all rounded-md cursor-pointer h-full">
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <div className="p-2 bg-[#f7f2fd] text-[#5e2b9d] rounded-md">
+                  <Bell className="h-4 w-4" />
+                </div>
+                <span className="text-[10px] text-emerald-600 font-medium">Realtime</span>
+              </div>
+              <CardTitle className="text-sm font-medium mt-2 group-hover:text-[#5e2b9d]">
+                Notifications &amp; Triggers
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-xs text-gray-500">
+              Automated booking confirmations, WhatsApp invoices, and emergency staff alerts.
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/settings/users" className="block group">
+          <Card className="border-gray-200 shadow-2xs hover:border-[#5e2b9d] transition-all rounded-md cursor-pointer h-full">
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <div className="p-2 bg-[#f7f2fd] text-[#5e2b9d] rounded-md">
+                  <Users className="h-4 w-4" />
+                </div>
+                <Badge variant="outline" className="text-[10px] rounded-sm">
+                  RBAC
+                </Badge>
+              </div>
+              <CardTitle className="text-sm font-medium mt-2 group-hover:text-[#5e2b9d]">
+                Team Users &amp; Permissions
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-xs text-gray-500">
+              Role permissions for Front Desk, Housekeeping, Accountants, and GMs.
+            </CardContent>
+          </Card>
+        </Link>
+      </div>
+
+      {/* Main Settings Form */}
+      <form onSubmit={handleSave} className="space-y-6">
+        <Card className="border-gray-200 shadow-2xs rounded-md">
+          <CardHeader className="border-b border-gray-100 pb-3">
+            <div className="flex items-center gap-2">
+              <Building className="h-4 w-4 text-[#5e2b9d]" />
+              <CardTitle className="text-sm font-medium text-gray-900">
+                Property Profile &amp; Legal Entity Information
+              </CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="p-6 space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  Property Name *
+                </label>
+                <Input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                  className="text-xs rounded-md"
+                  placeholder="e.g. Grand Vista Resort &amp; Spa"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  Property Classification
+                </label>
+                <select
+                  value={propertyType}
+                  onChange={(e) => setPropertyType(e.target.value)}
+                  className="w-full h-9 px-3 border border-gray-300 rounded-md text-xs bg-white focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
+                >
+                  <option value="hotel">Boutique / City Hotel</option>
+                  <option value="resort">Luxury Beach / Mountain Resort</option>
+                  <option value="villa">Private Villa / Luxury Homestay</option>
+                  <option value="lodge">Eco Lodge / Safari Retreat</option>
+                  <option value="service_apartment">Serviced Apartments</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  Contact Phone Number
+                </label>
+                <Input
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="text-xs rounded-md"
+                  placeholder="+91 98765 43210"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  Official Email Address
+                </label>
+                <Input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="text-xs rounded-md"
+                  placeholder="reservations@hotel.com"
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  Street Address
+                </label>
+                <Input
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  className="text-xs rounded-md"
+                  placeholder="124 Marina Beach Road"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  City
+                </label>
+                <Input
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  className="text-xs rounded-md"
+                  placeholder="Goa"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  State / Province
+                </label>
+                <Input
+                  value={state}
+                  onChange={(e) => setState(e.target.value)}
+                  className="text-xs rounded-md"
+                  placeholder="Goa"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  Country
+                </label>
+                <Input
+                  value={country}
+                  onChange={(e) => setCountry(e.target.value)}
+                  className="text-xs rounded-md"
+                  placeholder="India"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  Postal / ZIP Code
+                </label>
+                <Input
+                  value={postalCode}
+                  onChange={(e) => setPostalCode(e.target.value)}
+                  className="text-xs rounded-md"
+                  placeholder="403001"
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Operating Hours & Localization */}
+        <Card className="border-gray-200 shadow-2xs rounded-md">
+          <CardHeader className="border-b border-gray-100 pb-3">
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4 text-[#5e2b9d]" />
+              <CardTitle className="text-sm font-medium text-gray-900">
+                Operating Policies &amp; Localization
+              </CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  Base Accounting Currency
+                </label>
+                <select
+                  value={currency}
+                  onChange={(e) => setCurrency(e.target.value)}
+                  className="w-full h-9 px-3 border border-gray-300 rounded-md text-xs bg-white focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
+                >
+                  <option value="INR">INR (₹) - Indian Rupee</option>
+                  <option value="USD">USD ($) - US Dollar</option>
+                  <option value="EUR">EUR (€) - Euro</option>
+                  <option value="GBP">GBP (£) - British Pound</option>
+                  <option value="AED">AED (د.إ) - UAE Dirham</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  Timezone
+                </label>
+                <select
+                  value={timezone}
+                  onChange={(e) => setTimezone(e.target.value)}
+                  className="w-full h-9 px-3 border border-gray-300 rounded-md text-xs bg-white focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
+                >
+                  <option value="Asia/Kolkata">Asia/Kolkata (IST +5:30)</option>
+                  <option value="Asia/Dubai">Asia/Dubai (GST +4:00)</option>
+                  <option value="UTC">UTC (Universal Coordinated)</option>
+                  <option value="America/New_York">America/New_York (EST -5:00)</option>
+                  <option value="Europe/London">Europe/London (GMT +0:00)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  Standard Check-in Time
+                </label>
+                <Input
+                  type="time"
+                  value={checkInTime}
+                  onChange={(e) => setCheckInTime(e.target.value)}
+                  className="text-xs rounded-md"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  Standard Check-out Time
+                </label>
+                <Input
+                  type="time"
+                  value={checkOutTime}
+                  onChange={(e) => setCheckOutTime(e.target.value)}
+                  className="text-xs rounded-md"
+                />
+              </div>
+            </div>
+
+            <div className="mt-4">
+              <label className="block text-xs font-medium text-gray-700 mb-1">
+                Property Overview / Description
+              </label>
+              <Textarea
+                rows={3}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Highlight property amenities, location advantages, and hospitality experience..."
+                className="text-xs rounded-md"
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Action button */}
+        <div className="flex items-center justify-end">
+          <Button
+            type="submit"
+            disabled={isSaving}
+            className="bg-[#5e2b9d] hover:bg-[#4d2282] text-white text-xs h-9 font-medium px-6 cursor-pointer rounded-md shadow-2xs"
+          >
+            <Save className="h-4 w-4 mr-1.5" />
+            {isSaving ? 'Saving to Supabase...' : 'Save Changes'}
+          </Button>
+        </div>
+      </form>
+    </div>
+  )
+}
