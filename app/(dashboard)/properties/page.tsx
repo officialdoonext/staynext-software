@@ -1,11 +1,20 @@
 import React from 'react'
-import { getProperties } from '@/services/property.service'
+import { getProperties, getTenantPropertyStats } from '@/services/property.service'
 import PropertiesListClient from '@/components/properties/PropertiesListClient'
 
+export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Property Management | StayNext' }
 
 export default async function PropertiesPage() {
-  const properties = await getProperties()
+  const [properties, propertyStats] = await Promise.all([
+    getProperties(),
+    getTenantPropertyStats(),
+  ])
 
-  return <PropertiesListClient initialProperties={properties} />
+  return (
+    <PropertiesListClient
+      initialProperties={properties}
+      propertyStats={propertyStats}
+    />
+  )
 }

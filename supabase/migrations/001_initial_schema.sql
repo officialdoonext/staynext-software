@@ -1,7 +1,7 @@
 -- ====================================================================
 -- STAYNEXT HOTEL, LODGE & RESORT MANAGEMENT SAAS
 -- COMPLETE POSTGRESQL SCHEMA FOR SUPABASE
--- MIGRATION: 001_initial_schema.sql
+-- MIGRATION: 001_initial_schema.sql (BULLETPROOF & IDEMPOTENT)
 -- ====================================================================
 
 -- Enable required extensions
@@ -9,79 +9,126 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "btree_gist";
 
 -- ====================================================================
--- 1. CUSTOM ENUMS
+-- 1. CUSTOM ENUMS (SAFE & IDEMPOTENT)
 -- ====================================================================
 
-CREATE TYPE property_type AS ENUM (
-  'hotel',
-  'lodge',
-  'resort',
-  'guest_house',
-  'service_apartment'
-);
+DO $$ BEGIN
+  CREATE TYPE property_type AS ENUM (
+    'hotel',
+    'lodge',
+    'resort',
+    'guest_house',
+    'service_apartment'
+  );
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
-CREATE TYPE room_status AS ENUM (
-  'available',
-  'occupied',
-  'reserved',
-  'dirty',
-  'cleaning',
-  'maintenance',
-  'out_of_order'
-);
+DO $$ BEGIN
+  CREATE TYPE room_status AS ENUM (
+    'available',
+    'occupied',
+    'reserved',
+    'dirty',
+    'cleaning',
+    'maintenance',
+    'out_of_order'
+  );
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
-CREATE TYPE reservation_status AS ENUM (
-  'pending',
-  'confirmed',
-  'checked_in',
-  'checked_out',
-  'cancelled',
-  'no_show'
-);
+DO $$ BEGIN
+  CREATE TYPE reservation_status AS ENUM (
+    'pending',
+    'confirmed',
+    'checked_in',
+    'checked_out',
+    'cancelled',
+    'no_show'
+  );
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
-CREATE TYPE payment_status AS ENUM (
-  'pending',
-  'partial',
-  'paid',
-  'refunded',
-  'failed'
-);
+DO $$ BEGIN
+  CREATE TYPE payment_status AS ENUM (
+    'pending',
+    'partial',
+    'paid',
+    'refunded',
+    'failed'
+  );
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
-CREATE TYPE booking_source AS ENUM (
-  'direct',
-  'walk_in',
-  'website',
-  'phone',
-  'travel_agent',
-  'ota',
-  'other'
-);
+DO $$ BEGIN
+  CREATE TYPE booking_source AS ENUM (
+    'direct',
+    'walk_in',
+    'website',
+    'phone',
+    'travel_agent',
+    'ota',
+    'other'
+  );
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
-CREATE TYPE user_role AS ENUM (
-  'hotel_owner',
-  'property_manager',
-  'general_manager',
-  'receptionist',
-  'accountant',
-  'housekeeping_manager',
-  'housekeeping_staff',
-  'maintenance_staff',
-  'restaurant_manager',
-  'custom'
-);
+DO $$ BEGIN
+  CREATE TYPE user_role AS ENUM (
+    'hotel_owner',
+    'property_manager',
+    'general_manager',
+    'receptionist',
+    'accountant',
+    'housekeeping_manager',
+    'housekeeping_staff',
+    'maintenance_staff',
+    'restaurant_manager',
+    'custom'
+  );
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
-CREATE TYPE meal_plan AS ENUM (
-  'ep', -- European Plan (Room Only)
-  'cp', -- Continental Plan (Breakfast Included)
-  'map', -- Modified American Plan (Half Board: Breakfast + Dinner)
-  'ap', -- American Plan (Full Board: All Meals)
-  'ai'  -- All Inclusive
-);
+DO $$ BEGIN
+  CREATE TYPE meal_plan AS ENUM (
+    'ep', -- European Plan (Room Only)
+    'cp', -- Continental Plan (Breakfast Included)
+    'map', -- Modified American Plan (Half Board: Breakfast + Dinner)
+    'ap', -- American Plan (Full Board: All Meals)
+    'ai'  -- All Inclusive
+  );
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
-CREATE TYPE task_priority AS ENUM ('low', 'medium', 'high', 'urgent');
-CREATE TYPE housekeeping_status AS ENUM ('pending', 'in_progress', 'completed', 'awaiting_inspection', 'skipped');
-CREATE TYPE maintenance_status AS ENUM ('open', 'in_progress', 'on_hold', 'resolved', 'closed');
-CREATE TYPE expense_status AS ENUM ('pending', 'approved', 'rejected', 'paid');
+DO $$ BEGIN
+  CREATE TYPE task_priority AS ENUM ('low', 'medium', 'high', 'urgent');
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE housekeeping_status AS ENUM ('pending', 'in_progress', 'completed', 'awaiting_inspection', 'skipped');
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE maintenance_status AS ENUM ('open', 'in_progress', 'on_hold', 'resolved', 'closed');
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE expense_status AS ENUM ('pending', 'approved', 'rejected', 'paid');
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
 -- ====================================================================
 -- 2. TRIGGER HELPER FOR updated_at
@@ -99,7 +146,7 @@ $$ LANGUAGE plpgsql;
 -- 3. TENANTS (Multi-Tenant Organization Core)
 -- ====================================================================
 
-CREATE TABLE tenants (
+CREATE TABLE IF NOT EXISTS tenants (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name VARCHAR(255) NOT NULL,
   email VARCHAR(255) UNIQUE NOT NULL,
@@ -107,7 +154,10 @@ CREATE TABLE tenants (
   address TEXT,
   city VARCHAR(100),
   country VARCHAR(100),
-  subscription_plan VARCHAR(50) NOT NULL DEFAULT 'trial',
+  username VARCHAR(100),
+  status VARCHAR(50) DEFAULT 'inactive',
+  allowed_properties_count INT NOT NULL DEFAULT 1,
+  subscription_plan VARCHAR(50) NOT NULL DEFAULT 'starter',
   subscription_expires_at TIMESTAMPTZ,
   is_active BOOLEAN NOT NULL DEFAULT true,
   settings JSONB DEFAULT '{}',
@@ -115,6 +165,12 @@ CREATE TABLE tenants (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- Ensure column exists if table was previously created
+ALTER TABLE tenants ADD COLUMN IF NOT EXISTS allowed_properties_count INT NOT NULL DEFAULT 1;
+ALTER TABLE tenants ADD COLUMN IF NOT EXISTS username VARCHAR(100);
+ALTER TABLE tenants ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'inactive';
+
+DROP TRIGGER IF EXISTS trg_tenants_updated_at ON tenants;
 CREATE TRIGGER trg_tenants_updated_at BEFORE UPDATE ON tenants
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
@@ -122,7 +178,7 @@ CREATE TRIGGER trg_tenants_updated_at BEFORE UPDATE ON tenants
 -- 4. TENANT USERS (User <-> Tenant Mapping & Global Role)
 -- ====================================================================
 
-CREATE TABLE tenant_users (
+CREATE TABLE IF NOT EXISTS tenant_users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -134,14 +190,14 @@ CREATE TABLE tenant_users (
   UNIQUE(tenant_id, user_id)
 );
 
-CREATE INDEX idx_tenant_users_tenant ON tenant_users(tenant_id);
-CREATE INDEX idx_tenant_users_user ON tenant_users(user_id);
+CREATE INDEX IF NOT EXISTS idx_tenant_users_tenant ON tenant_users(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_tenant_users_user ON tenant_users(user_id);
 
 -- ====================================================================
 -- 5. PROPERTIES
 -- ====================================================================
 
-CREATE TABLE properties (
+CREATE TABLE IF NOT EXISTS properties (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   name VARCHAR(255) NOT NULL,
@@ -154,24 +210,69 @@ CREATE TABLE properties (
   phone VARCHAR(50),
   email VARCHAR(255),
   website VARCHAR(255),
-  currency VARCHAR(10) NOT NULL DEFAULT 'USD',
-  timezone VARCHAR(100) NOT NULL DEFAULT 'UTC',
+  currency VARCHAR(10) NOT NULL DEFAULT 'INR',
+  timezone VARCHAR(100) NOT NULL DEFAULT 'Asia/Kolkata',
   check_in_time TIME NOT NULL DEFAULT '14:00',
   check_out_time TIME NOT NULL DEFAULT '11:00',
   logo_url TEXT,
   description TEXT,
+  gstin VARCHAR(50),
+  pan_number VARCHAR(50),
+  business_reg_no VARCHAR(100),
+  star_rating INT DEFAULT 3,
+  invoice_prefix VARCHAR(20) DEFAULT 'INV',
+  receipt_prefix VARCHAR(20) DEFAULT 'REC',
+  terms_and_conditions TEXT,
+  cancellation_policy TEXT,
   is_active BOOLEAN NOT NULL DEFAULT true,
   settings JSONB DEFAULT '{}',
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_properties_tenant ON properties(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_properties_tenant ON properties(tenant_id);
+
+DROP TRIGGER IF EXISTS trg_properties_updated_at ON properties;
 CREATE TRIGGER trg_properties_updated_at BEFORE UPDATE ON properties
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
+-- Enforce tenant allowed_properties_count
+CREATE OR REPLACE FUNCTION check_tenant_property_limit()
+RETURNS TRIGGER AS $$
+DECLARE
+  v_allowed INT;
+  v_current INT;
+BEGIN
+  -- Get allowed properties count for the tenant (default 1 if null)
+  SELECT COALESCE(allowed_properties_count, 1) INTO v_allowed
+  FROM tenants
+  WHERE id = NEW.tenant_id;
+
+  IF v_allowed IS NULL THEN
+    v_allowed := 1;
+  END IF;
+
+  -- Count existing properties for this tenant
+  SELECT COUNT(*) INTO v_current
+  FROM properties
+  WHERE tenant_id = NEW.tenant_id;
+
+  IF v_current >= v_allowed THEN
+    RAISE EXCEPTION 'Property limit reached. Your tenant subscription allows a maximum of % property(ies). Current active count: %', v_allowed, v_current;
+  END IF;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_check_tenant_property_limit ON properties;
+CREATE TRIGGER trg_check_tenant_property_limit
+  BEFORE INSERT ON properties
+  FOR EACH ROW
+  EXECUTE FUNCTION check_tenant_property_limit();
+
 -- User access rights per individual property
-CREATE TABLE property_users (
+CREATE TABLE IF NOT EXISTS property_users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   property_id UUID NOT NULL REFERENCES properties(id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -181,13 +282,13 @@ CREATE TABLE property_users (
   UNIQUE(property_id, user_id)
 );
 
-CREATE INDEX idx_property_users_prop_user ON property_users(property_id, user_id);
+CREATE INDEX IF NOT EXISTS idx_property_users_prop_user ON property_users(property_id, user_id);
 
 -- ====================================================================
 -- 6. BUILDINGS & FLOORS
 -- ====================================================================
 
-CREATE TABLE buildings (
+CREATE TABLE IF NOT EXISTS buildings (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   property_id UUID NOT NULL REFERENCES properties(id) ON DELETE CASCADE,
   name VARCHAR(255) NOT NULL,
@@ -197,9 +298,9 @@ CREATE TABLE buildings (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_buildings_property ON buildings(property_id);
+CREATE INDEX IF NOT EXISTS idx_buildings_property ON buildings(property_id);
 
-CREATE TABLE floors (
+CREATE TABLE IF NOT EXISTS floors (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   property_id UUID NOT NULL REFERENCES properties(id) ON DELETE CASCADE,
   building_id UUID REFERENCES buildings(id) ON DELETE SET NULL,
@@ -209,13 +310,13 @@ CREATE TABLE floors (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_floors_property ON floors(property_id);
+CREATE INDEX IF NOT EXISTS idx_floors_property ON floors(property_id);
 
 -- ====================================================================
 -- 7. ROOM TYPES & AMENITIES
 -- ====================================================================
 
-CREATE TABLE room_types (
+CREATE TABLE IF NOT EXISTS room_types (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   property_id UUID NOT NULL REFERENCES properties(id) ON DELETE CASCADE,
   name VARCHAR(255) NOT NULL,
@@ -233,11 +334,13 @@ CREATE TABLE room_types (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_room_types_property ON room_types(property_id);
+CREATE INDEX IF NOT EXISTS idx_room_types_property ON room_types(property_id);
+
+DROP TRIGGER IF EXISTS trg_room_types_updated_at ON room_types;
 CREATE TRIGGER trg_room_types_updated_at BEFORE UPDATE ON room_types
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
-CREATE TABLE room_amenities (
+CREATE TABLE IF NOT EXISTS room_amenities (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name VARCHAR(100) NOT NULL UNIQUE,
   icon VARCHAR(50),
@@ -245,7 +348,7 @@ CREATE TABLE room_amenities (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE TABLE room_type_amenities (
+CREATE TABLE IF NOT EXISTS room_type_amenities (
   room_type_id UUID NOT NULL REFERENCES room_types(id) ON DELETE CASCADE,
   amenity_id UUID NOT NULL REFERENCES room_amenities(id) ON DELETE CASCADE,
   PRIMARY KEY (room_type_id, amenity_id)
@@ -255,7 +358,7 @@ CREATE TABLE room_type_amenities (
 -- 8. ROOMS INVENTORY
 -- ====================================================================
 
-CREATE TABLE rooms (
+CREATE TABLE IF NOT EXISTS rooms (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   property_id UUID NOT NULL REFERENCES properties(id) ON DELETE CASCADE,
   room_number VARCHAR(20) NOT NULL,
@@ -271,9 +374,11 @@ CREATE TABLE rooms (
   UNIQUE(property_id, room_number)
 );
 
-CREATE INDEX idx_rooms_property ON rooms(property_id);
-CREATE INDEX idx_rooms_status ON rooms(status);
-CREATE INDEX idx_rooms_type ON rooms(room_type_id);
+CREATE INDEX IF NOT EXISTS idx_rooms_property ON rooms(property_id);
+CREATE INDEX IF NOT EXISTS idx_rooms_status ON rooms(status);
+CREATE INDEX IF NOT EXISTS idx_rooms_type ON rooms(room_type_id);
+
+DROP TRIGGER IF EXISTS trg_rooms_updated_at ON rooms;
 CREATE TRIGGER trg_rooms_updated_at BEFORE UPDATE ON rooms
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
@@ -281,7 +386,7 @@ CREATE TRIGGER trg_rooms_updated_at BEFORE UPDATE ON rooms
 -- 9. GUESTS CRM
 -- ====================================================================
 
-CREATE TABLE guests (
+CREATE TABLE IF NOT EXISTS guests (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   first_name VARCHAR(100) NOT NULL,
@@ -307,10 +412,12 @@ CREATE TABLE guests (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_guests_tenant ON guests(tenant_id);
-CREATE INDEX idx_guests_name ON guests(last_name, first_name);
-CREATE INDEX idx_guests_phone ON guests(phone);
-CREATE INDEX idx_guests_email ON guests(email);
+CREATE INDEX IF NOT EXISTS idx_guests_tenant ON guests(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_guests_name ON guests(last_name, first_name);
+CREATE INDEX IF NOT EXISTS idx_guests_phone ON guests(phone);
+CREATE INDEX IF NOT EXISTS idx_guests_email ON guests(email);
+
+DROP TRIGGER IF EXISTS trg_guests_updated_at ON guests;
 CREATE TRIGGER trg_guests_updated_at BEFORE UPDATE ON guests
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
@@ -318,7 +425,7 @@ CREATE TRIGGER trg_guests_updated_at BEFORE UPDATE ON guests
 -- 10. RATE PLANS & ROOM RATES
 -- ====================================================================
 
-CREATE TABLE rate_plans (
+CREATE TABLE IF NOT EXISTS rate_plans (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   property_id UUID NOT NULL REFERENCES properties(id) ON DELETE CASCADE,
   name VARCHAR(255) NOT NULL,
@@ -332,9 +439,9 @@ CREATE TABLE rate_plans (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_rate_plans_property ON rate_plans(property_id);
+CREATE INDEX IF NOT EXISTS idx_rate_plans_property ON rate_plans(property_id);
 
-CREATE TABLE room_rates (
+CREATE TABLE IF NOT EXISTS room_rates (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   property_id UUID NOT NULL REFERENCES properties(id) ON DELETE CASCADE,
   room_type_id UUID NOT NULL REFERENCES room_types(id) ON DELETE CASCADE,
@@ -348,13 +455,13 @@ CREATE TABLE room_rates (
   UNIQUE(room_type_id, rate_plan_id, rate_date)
 );
 
-CREATE INDEX idx_room_rates_lookup ON room_rates(room_type_id, rate_date);
+CREATE INDEX IF NOT EXISTS idx_room_rates_lookup ON room_rates(room_type_id, rate_date);
 
 -- ====================================================================
 -- 11. RESERVATIONS
 -- ====================================================================
 
-CREATE TABLE reservations (
+CREATE TABLE IF NOT EXISTS reservations (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   reservation_number VARCHAR(50) UNIQUE NOT NULL,
   property_id UUID NOT NULL REFERENCES properties(id) ON DELETE RESTRICT,
@@ -383,10 +490,12 @@ CREATE TABLE reservations (
   CONSTRAINT check_dates CHECK (check_out_date > check_in_date)
 );
 
-CREATE INDEX idx_reservations_prop ON reservations(property_id);
-CREATE INDEX idx_reservations_guest ON reservations(guest_id);
-CREATE INDEX idx_reservations_status ON reservations(status);
-CREATE INDEX idx_reservations_dates ON reservations(check_in_date, check_out_date);
+CREATE INDEX IF NOT EXISTS idx_reservations_prop ON reservations(property_id);
+CREATE INDEX IF NOT EXISTS idx_reservations_guest ON reservations(guest_id);
+CREATE INDEX IF NOT EXISTS idx_reservations_status ON reservations(status);
+CREATE INDEX IF NOT EXISTS idx_reservations_dates ON reservations(check_in_date, check_out_date);
+
+DROP TRIGGER IF EXISTS trg_reservations_updated_at ON reservations;
 CREATE TRIGGER trg_reservations_updated_at BEFORE UPDATE ON reservations
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
@@ -396,7 +505,7 @@ CREATE TRIGGER trg_reservations_updated_at BEFORE UPDATE ON reservations
 -- Using PostgreSQL daterange with check-in inclusive [ and check-out exclusive )
 -- ====================================================================
 
-CREATE TABLE reservation_rooms (
+CREATE TABLE IF NOT EXISTS reservation_rooms (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   reservation_id UUID NOT NULL REFERENCES reservations(id) ON DELETE CASCADE,
   room_id UUID NOT NULL REFERENCES rooms(id) ON DELETE RESTRICT,
@@ -414,10 +523,10 @@ CREATE TABLE reservation_rooms (
   ) WHERE (is_active = true)
 );
 
-CREATE INDEX idx_res_rooms_room ON reservation_rooms(room_id);
-CREATE INDEX idx_res_rooms_res ON reservation_rooms(reservation_id);
+CREATE INDEX IF NOT EXISTS idx_res_rooms_room ON reservation_rooms(room_id);
+CREATE INDEX IF NOT EXISTS idx_res_rooms_res ON reservation_rooms(reservation_id);
 
-CREATE TABLE reservation_guests (
+CREATE TABLE IF NOT EXISTS reservation_guests (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   reservation_id UUID NOT NULL REFERENCES reservations(id) ON DELETE CASCADE,
   guest_id UUID NOT NULL REFERENCES guests(id) ON DELETE RESTRICT,
@@ -430,7 +539,7 @@ CREATE TABLE reservation_guests (
 -- 13. GUEST FOLIOS, CHARGES & PAYMENTS
 -- ====================================================================
 
-CREATE TABLE guest_folios (
+CREATE TABLE IF NOT EXISTS guest_folios (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   reservation_id UUID NOT NULL REFERENCES reservations(id) ON DELETE RESTRICT,
   property_id UUID NOT NULL REFERENCES properties(id) ON DELETE RESTRICT,
@@ -445,12 +554,14 @@ CREATE TABLE guest_folios (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_folios_res ON guest_folios(reservation_id);
-CREATE INDEX idx_folios_prop ON guest_folios(property_id);
+CREATE INDEX IF NOT EXISTS idx_folios_res ON guest_folios(reservation_id);
+CREATE INDEX IF NOT EXISTS idx_folios_prop ON guest_folios(property_id);
+
+DROP TRIGGER IF EXISTS trg_folios_updated_at ON guest_folios;
 CREATE TRIGGER trg_folios_updated_at BEFORE UPDATE ON guest_folios
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
-CREATE TABLE folio_items (
+CREATE TABLE IF NOT EXISTS folio_items (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   folio_id UUID NOT NULL REFERENCES guest_folios(id) ON DELETE CASCADE,
   description VARCHAR(255) NOT NULL,
@@ -464,9 +575,9 @@ CREATE TABLE folio_items (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_folio_items_folio ON folio_items(folio_id);
+CREATE INDEX IF NOT EXISTS idx_folio_items_folio ON folio_items(folio_id);
 
-CREATE TABLE payments (
+CREATE TABLE IF NOT EXISTS payments (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   folio_id UUID REFERENCES guest_folios(id) ON DELETE SET NULL,
   reservation_id UUID REFERENCES reservations(id) ON DELETE SET NULL,
@@ -481,12 +592,12 @@ CREATE TABLE payments (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_payments_res ON payments(reservation_id);
-CREATE INDEX idx_payments_prop ON payments(property_id);
-CREATE INDEX idx_payments_folio ON payments(folio_id);
-CREATE INDEX idx_payments_date ON payments(created_at);
+CREATE INDEX IF NOT EXISTS idx_payments_res ON payments(reservation_id);
+CREATE INDEX IF NOT EXISTS idx_payments_prop ON payments(property_id);
+CREATE INDEX IF NOT EXISTS idx_payments_folio ON payments(folio_id);
+CREATE INDEX IF NOT EXISTS idx_payments_date ON payments(created_at);
 
-CREATE TABLE invoices (
+CREATE TABLE IF NOT EXISTS invoices (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   invoice_number VARCHAR(50) UNIQUE NOT NULL,
   folio_id UUID REFERENCES guest_folios(id) ON DELETE SET NULL,
@@ -504,14 +615,14 @@ CREATE TABLE invoices (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_invoices_prop ON invoices(property_id);
-CREATE INDEX idx_invoices_guest ON invoices(guest_id);
+CREATE INDEX IF NOT EXISTS idx_invoices_prop ON invoices(property_id);
+CREATE INDEX IF NOT EXISTS idx_invoices_guest ON invoices(guest_id);
 
 -- ====================================================================
 -- 14. HOUSEKEEPING TASKS & WORKFLOWS
 -- ====================================================================
 
-CREATE TABLE housekeeping_tasks (
+CREATE TABLE IF NOT EXISTS housekeeping_tasks (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   property_id UUID NOT NULL REFERENCES properties(id) ON DELETE CASCADE,
   room_id UUID NOT NULL REFERENCES rooms(id) ON DELETE CASCADE,
@@ -529,9 +640,11 @@ CREATE TABLE housekeeping_tasks (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_hk_tasks_prop ON housekeeping_tasks(property_id);
-CREATE INDEX idx_hk_tasks_room ON housekeeping_tasks(room_id);
-CREATE INDEX idx_hk_tasks_status ON housekeeping_tasks(status);
+CREATE INDEX IF NOT EXISTS idx_hk_tasks_prop ON housekeeping_tasks(property_id);
+CREATE INDEX IF NOT EXISTS idx_hk_tasks_room ON housekeeping_tasks(room_id);
+CREATE INDEX IF NOT EXISTS idx_hk_tasks_status ON housekeeping_tasks(status);
+
+DROP TRIGGER IF EXISTS trg_hk_tasks_updated_at ON housekeeping_tasks;
 CREATE TRIGGER trg_hk_tasks_updated_at BEFORE UPDATE ON housekeeping_tasks
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
@@ -539,7 +652,7 @@ CREATE TRIGGER trg_hk_tasks_updated_at BEFORE UPDATE ON housekeeping_tasks
 -- 15. MAINTENANCE REQUESTS
 -- ====================================================================
 
-CREATE TABLE maintenance_requests (
+CREATE TABLE IF NOT EXISTS maintenance_requests (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   property_id UUID NOT NULL REFERENCES properties(id) ON DELETE CASCADE,
   room_id UUID REFERENCES rooms(id) ON DELETE SET NULL,
@@ -558,8 +671,10 @@ CREATE TABLE maintenance_requests (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_maintenance_prop ON maintenance_requests(property_id);
-CREATE INDEX idx_maintenance_status ON maintenance_requests(status);
+CREATE INDEX IF NOT EXISTS idx_maintenance_prop ON maintenance_requests(property_id);
+CREATE INDEX IF NOT EXISTS idx_maintenance_status ON maintenance_requests(status);
+
+DROP TRIGGER IF EXISTS trg_maintenance_updated_at ON maintenance_requests;
 CREATE TRIGGER trg_maintenance_updated_at BEFORE UPDATE ON maintenance_requests
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
@@ -567,7 +682,7 @@ CREATE TRIGGER trg_maintenance_updated_at BEFORE UPDATE ON maintenance_requests
 -- 16. DEPARTMENTS & EMPLOYEES
 -- ====================================================================
 
-CREATE TABLE departments (
+CREATE TABLE IF NOT EXISTS departments (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   property_id UUID NOT NULL REFERENCES properties(id) ON DELETE CASCADE,
   name VARCHAR(100) NOT NULL,
@@ -575,7 +690,7 @@ CREATE TABLE departments (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE TABLE employees (
+CREATE TABLE IF NOT EXISTS employees (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   property_id UUID REFERENCES properties(id) ON DELETE SET NULL,
@@ -593,7 +708,9 @@ CREATE TABLE employees (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_employees_tenant ON employees(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_employees_tenant ON employees(tenant_id);
+
+DROP TRIGGER IF EXISTS trg_employees_updated_at ON employees;
 CREATE TRIGGER trg_employees_updated_at BEFORE UPDATE ON employees
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
@@ -601,7 +718,7 @@ CREATE TRIGGER trg_employees_updated_at BEFORE UPDATE ON employees
 -- 17. EXPENSES & CATEGORIES
 -- ====================================================================
 
-CREATE TABLE expense_categories (
+CREATE TABLE IF NOT EXISTS expense_categories (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   property_id UUID NOT NULL REFERENCES properties(id) ON DELETE CASCADE,
   name VARCHAR(100) NOT NULL,
@@ -609,7 +726,7 @@ CREATE TABLE expense_categories (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE TABLE expenses (
+CREATE TABLE IF NOT EXISTS expenses (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   property_id UUID NOT NULL REFERENCES properties(id) ON DELETE CASCADE,
   category_id UUID REFERENCES expense_categories(id) ON DELETE SET NULL,
@@ -620,13 +737,15 @@ CREATE TABLE expenses (
   vendor_name VARCHAR(255),
   receipt_url TEXT,
   status expense_status NOT NULL DEFAULT 'approved',
-  created_by UUID NOT NULL REFERENCES auth.users(id),
+  created_by UUID REFERENCES auth.users(id),
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_expenses_prop ON expenses(property_id);
-CREATE INDEX idx_expenses_date ON expenses(expense_date);
+CREATE INDEX IF NOT EXISTS idx_expenses_prop ON expenses(property_id);
+CREATE INDEX IF NOT EXISTS idx_expenses_date ON expenses(expense_date);
+
+DROP TRIGGER IF EXISTS trg_expenses_updated_at ON expenses;
 CREATE TRIGGER trg_expenses_updated_at BEFORE UPDATE ON expenses
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
@@ -634,7 +753,7 @@ CREATE TRIGGER trg_expenses_updated_at BEFORE UPDATE ON expenses
 -- 18. NOTIFICATIONS & AUDIT LOGS
 -- ====================================================================
 
-CREATE TABLE notifications (
+CREATE TABLE IF NOT EXISTS notifications (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -647,9 +766,9 @@ CREATE TABLE notifications (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_notifications_user ON notifications(user_id, is_read);
+CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id, is_read);
 
-CREATE TABLE audit_logs (
+CREATE TABLE IF NOT EXISTS audit_logs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE,
   user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
@@ -662,7 +781,7 @@ CREATE TABLE audit_logs (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_audit_logs_tenant ON audit_logs(tenant_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_tenant ON audit_logs(tenant_id, created_at DESC);
 
 -- ====================================================================
 -- 19. ROW LEVEL SECURITY (RLS) POLICIES
@@ -700,50 +819,103 @@ ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
 -- Helper security definer functions
 CREATE OR REPLACE FUNCTION get_user_tenant_id()
 RETURNS UUID AS $$
-  SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid() AND is_active = true LIMIT 1;
+  SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid() LIMIT 1;
 $$ LANGUAGE SQL STABLE SECURITY DEFINER;
 
 CREATE OR REPLACE FUNCTION user_has_property_access(p_property_id UUID)
 RETURNS BOOLEAN AS $$
   SELECT EXISTS (
     SELECT 1 FROM property_users 
-    WHERE user_id = auth.uid() AND property_id = p_property_id AND is_active = true
+    WHERE user_id = auth.uid() AND property_id = p_property_id
   ) OR EXISTS (
     SELECT 1 FROM tenant_users tu
     JOIN properties p ON p.tenant_id = tu.tenant_id
     WHERE tu.user_id = auth.uid() AND p.id = p_property_id 
-    AND tu.is_active = true AND tu.role IN ('hotel_owner', 'property_manager', 'general_manager')
+    AND tu.role IN ('hotel_owner', 'property_manager', 'general_manager')
   );
 $$ LANGUAGE SQL STABLE SECURITY DEFINER;
 
--- RLS policies
+-- Safe Dropping & Creation of RLS policies
+DROP POLICY IF EXISTS "Tenants isolation" ON tenants;
 CREATE POLICY "Tenants isolation" ON tenants FOR ALL USING (id = get_user_tenant_id());
+
+DROP POLICY IF EXISTS "Tenant users isolation" ON tenant_users;
 CREATE POLICY "Tenant users isolation" ON tenant_users FOR ALL USING (tenant_id = get_user_tenant_id());
+
+DROP POLICY IF EXISTS "Properties isolation" ON properties;
 CREATE POLICY "Properties isolation" ON properties FOR ALL USING (tenant_id = get_user_tenant_id());
+
+DROP POLICY IF EXISTS "Property users isolation" ON property_users;
 CREATE POLICY "Property users isolation" ON property_users FOR ALL USING (user_has_property_access(property_id));
+
+DROP POLICY IF EXISTS "Rooms isolation" ON rooms;
 CREATE POLICY "Rooms isolation" ON rooms FOR ALL USING (user_has_property_access(property_id));
+
+DROP POLICY IF EXISTS "Room types isolation" ON room_types;
 CREATE POLICY "Room types isolation" ON room_types FOR ALL USING (user_has_property_access(property_id));
+
+DROP POLICY IF EXISTS "Guests isolation" ON guests;
 CREATE POLICY "Guests isolation" ON guests FOR ALL USING (tenant_id = get_user_tenant_id());
+
+DROP POLICY IF EXISTS "Reservations isolation" ON reservations;
 CREATE POLICY "Reservations isolation" ON reservations FOR ALL USING (user_has_property_access(property_id));
+
+DROP POLICY IF EXISTS "Reservation rooms isolation" ON reservation_rooms;
 CREATE POLICY "Reservation rooms isolation" ON reservation_rooms FOR ALL USING (
   EXISTS (SELECT 1 FROM reservations r WHERE r.id = reservation_id AND user_has_property_access(r.property_id))
 );
+
+DROP POLICY IF EXISTS "Guest folios isolation" ON guest_folios;
 CREATE POLICY "Guest folios isolation" ON guest_folios FOR ALL USING (user_has_property_access(property_id));
+
+DROP POLICY IF EXISTS "Folio items isolation" ON folio_items;
 CREATE POLICY "Folio items isolation" ON folio_items FOR ALL USING (
   EXISTS (SELECT 1 FROM guest_folios gf WHERE gf.id = folio_id AND user_has_property_access(gf.property_id))
 );
+
+DROP POLICY IF EXISTS "Payments isolation" ON payments;
 CREATE POLICY "Payments isolation" ON payments FOR ALL USING (user_has_property_access(property_id));
+
+DROP POLICY IF EXISTS "Invoices isolation" ON invoices;
 CREATE POLICY "Invoices isolation" ON invoices FOR ALL USING (user_has_property_access(property_id));
+
+DROP POLICY IF EXISTS "Housekeeping isolation" ON housekeeping_tasks;
 CREATE POLICY "Housekeeping isolation" ON housekeeping_tasks FOR ALL USING (user_has_property_access(property_id));
+
+DROP POLICY IF EXISTS "Maintenance isolation" ON maintenance_requests;
 CREATE POLICY "Maintenance isolation" ON maintenance_requests FOR ALL USING (user_has_property_access(property_id));
+
+DROP POLICY IF EXISTS "Departments isolation" ON departments;
+CREATE POLICY "Departments isolation" ON departments FOR ALL USING (user_has_property_access(property_id));
+
+DROP POLICY IF EXISTS "Employees isolation" ON employees;
 CREATE POLICY "Employees isolation" ON employees FOR ALL USING (tenant_id = get_user_tenant_id());
+
+DROP POLICY IF EXISTS "Expense categories isolation" ON expense_categories;
+CREATE POLICY "Expense categories isolation" ON expense_categories FOR ALL USING (user_has_property_access(property_id));
+
+DROP POLICY IF EXISTS "Expenses isolation" ON expenses;
 CREATE POLICY "Expenses isolation" ON expenses FOR ALL USING (user_has_property_access(property_id));
+
+DROP POLICY IF EXISTS "Notifications isolation" ON notifications;
 CREATE POLICY "Notifications isolation" ON notifications FOR ALL USING (user_id = auth.uid());
+
+DROP POLICY IF EXISTS "Audit logs isolation" ON audit_logs;
 CREATE POLICY "Audit logs isolation" ON audit_logs FOR ALL USING (tenant_id = get_user_tenant_id());
+
+DROP POLICY IF EXISTS "Room amenities public" ON room_amenities;
 CREATE POLICY "Room amenities public" ON room_amenities FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Buildings isolation" ON buildings;
 CREATE POLICY "Buildings isolation" ON buildings FOR ALL USING (user_has_property_access(property_id));
+
+DROP POLICY IF EXISTS "Floors isolation" ON floors;
 CREATE POLICY "Floors isolation" ON floors FOR ALL USING (user_has_property_access(property_id));
+
+DROP POLICY IF EXISTS "Rate plans isolation" ON rate_plans;
 CREATE POLICY "Rate plans isolation" ON rate_plans FOR ALL USING (user_has_property_access(property_id));
+
+DROP POLICY IF EXISTS "Room rates isolation" ON room_rates;
 CREATE POLICY "Room rates isolation" ON room_rates FOR ALL USING (user_has_property_access(property_id));
 
 -- ====================================================================
@@ -799,4 +971,3 @@ BEGIN
   );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
-

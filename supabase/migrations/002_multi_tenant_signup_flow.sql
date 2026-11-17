@@ -6,6 +6,7 @@
 -- 1. Extend tenants table with username and status columns
 ALTER TABLE public.tenants ADD COLUMN IF NOT EXISTS username VARCHAR(100);
 ALTER TABLE public.tenants ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'inactive';
+ALTER TABLE public.tenants ADD COLUMN IF NOT EXISTS allowed_properties_count INT NOT NULL DEFAULT 1;
 
 -- 2. Ensure RLS helper function allows authenticated user to read their own tenant
 -- even when inactive (required so /onboarding can display tenant profile)
@@ -61,6 +62,7 @@ BEGIN
       country,
       username,
       status,
+      allowed_properties_count,
       subscription_plan,
       subscription_expires_at,
       is_active,
@@ -75,6 +77,7 @@ BEGIN
       COALESCE(NULLIF(p_country, ''), 'India'),
       COALESCE(p_username, split_part(p_email, '@', 1)),
       'inactive',
+      1,
       'starter',
       v_yesterday,
       false,

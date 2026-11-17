@@ -73,6 +73,59 @@ export interface FacilityItem {
   notes?: string
 }
 
+export interface TenantPropertyStats {
+  currentCount: number
+  allowedCount: number
+  canAdd: boolean
+  plan: string
+}
+
+/**
+ * Get tenant property limit and current count
+ */
+export async function getTenantPropertyStats(): Promise<TenantPropertyStats> {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { currentCount: 0, allowedCount: 1, canAdd: false, plan: 'starter' }
+
+    const { data: tenantUser } = await supabase
+      .from('tenant_users')
+      .select('tenant_id')
+      .eq('user_id', user.id)
+      .limit(1)
+      .maybeSingle()
+
+    const tenantId = tenantUser?.tenant_id
+    if (!tenantId) return { currentCount: 0, allowedCount: 1, canAdd: false, plan: 'starter' }
+
+    const { data: tenant } = await supabase
+      .from('tenants')
+      .select('allowed_properties_count, subscription_plan')
+      .eq('id', tenantId)
+      .maybeSingle()
+
+    const allowedCount = tenant?.allowed_properties_count ?? 1
+    const plan = tenant?.subscription_plan ?? 'starter'
+
+    const { count: currentCount } = await supabase
+      .from('properties')
+      .select('*', { count: 'exact', head: true })
+      .eq('tenant_id', tenantId)
+
+    const curr = currentCount ?? 0
+    return {
+      currentCount: curr,
+      allowedCount,
+      canAdd: curr < allowedCount,
+      plan,
+    }
+  } catch (err) {
+    console.error('getTenantPropertyStats error:', err)
+    return { currentCount: 0, allowedCount: 1, canAdd: true, plan: 'starter' }
+  }
+}
+
 /**
  * Fetch all properties for the authenticated tenant with room counts
  */
@@ -193,6 +246,27 @@ export async function createProperty(payload: Partial<PropertyItem>): Promise<{ 
 
     const tenantId = tenantUser?.tenant_id
     if (!tenantId) throw new Error('No tenant associated with user')
+
+    // Verify allowed properties limit before inserting
+    const { data: tenant } = await supabase
+      .from('tenants')
+      .select('allowed_properties_count')
+      .eq('id', tenantId)
+      .maybeSingle()
+
+    const allowedCount = tenant?.allowed_properties_count ?? 1
+
+    const { count: currentCount } = await supabase
+      .from('properties')
+      .select('*', { count: 'exact', head: true })
+      .eq('tenant_id', tenantId)
+
+    if ((currentCount ?? 0) >= allowedCount) {
+      return {
+        success: false,
+        error: `Property limit reached. Your subscription plan allows a maximum of ${allowedCount} property(ies) (currently active: ${currentCount}). Please upgrade your plan to register additional properties.`,
+      }
+    }
 
     const insertPayload = {
       tenant_id: tenantId,

@@ -31,6 +31,7 @@ export interface PropertySettingsData {
     phone?: string
     subscriptionPlan: string
     subscriptionExpiresAt: string
+    allowedPropertiesCount: number
     isActive: boolean
     status: string
   }
@@ -129,6 +130,7 @@ export async function getPropertySettings(propId?: string): Promise<PropertySett
             phone: t.phone,
             subscriptionPlan: t.subscription_plan || 'starter',
             subscriptionExpiresAt: t.subscription_expires_at || '',
+            allowedPropertiesCount: Number(t.allowed_properties_count || 1),
             isActive: Boolean(t.is_active),
             status: t.status || 'inactive',
           }

@@ -183,7 +183,7 @@ export function TaxesAndBillingClient({
                   StayNext Enterprise PMS &bull; {property?.name}
                 </h2>
                 <p className="text-xs text-gray-600 mt-1">
-                  Tenant status: <span className="font-semibold">{tenant.status}</span> &bull; Cloud Database: Supabase PostgreSQL RLS Isolated
+                  Tenant status: <span className="font-semibold">{tenant.status}</span> &bull; Allowed Properties: <span className="font-semibold text-[#5e2b9d]">{tenant.allowedPropertiesCount}</span> &bull; Cloud Database: Supabase PostgreSQL RLS Isolated
                 </p>
               </div>
               <div className="text-left sm:text-right">

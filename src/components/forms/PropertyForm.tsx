@@ -19,14 +19,15 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
-import { createProperty, updateProperty, PropertyItem } from '@/services/property.service'
+import { createProperty, updateProperty, PropertyItem, TenantPropertyStats } from '@/services/property.service'
 
 interface PropertyFormProps {
   initialData?: PropertyItem
   isEdit?: boolean
+  propertyStats?: TenantPropertyStats
 }
 
-export default function PropertyForm({ initialData, isEdit = false }: PropertyFormProps) {
+export default function PropertyForm({ initialData, isEdit = false, propertyStats }: PropertyFormProps) {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<'basic' | 'contact' | 'business' | 'policies'>('basic')
   const [loading, setLoading] = useState(false)
@@ -133,6 +134,19 @@ export default function PropertyForm({ initialData, isEdit = false }: PropertyFo
           </div>
         </div>
       </div>
+
+      {/* Property Limit Banner */}
+      {!isEdit && propertyStats && !propertyStats.canAdd && (
+        <div className="bg-amber-50 border border-amber-200 rounded-md p-4 text-xs text-amber-900 flex items-start gap-3">
+          <AlertCircle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+          <div>
+            <p className="font-medium text-amber-950">Property Limit Reached</p>
+            <p className="mt-0.5 text-amber-800">
+              Your organization plan allows up to <strong className="font-semibold">{propertyStats.allowedCount}</strong> property(ies). You currently have <strong className="font-semibold">{propertyStats.currentCount}</strong> registered property(ies). Please contact your administrator or upgrade your subscription plan to add more properties.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="flex border-b border-gray-200 gap-2 overflow-x-auto pb-px">
@@ -676,8 +690,8 @@ export default function PropertyForm({ initialData, isEdit = false }: PropertyFo
             ) : (
               <Button
                 type="submit"
-                disabled={loading}
-                className="bg-[#5e2b9d] hover:bg-[#4d2282] text-white font-medium text-xs h-9 rounded-md cursor-pointer"
+                disabled={loading || (!isEdit && propertyStats && !propertyStats.canAdd)}
+                className="bg-[#5e2b9d] hover:bg-[#4d2282] text-white font-medium text-xs h-9 rounded-md cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? (
                   <>

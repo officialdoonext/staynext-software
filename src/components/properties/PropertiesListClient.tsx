@@ -22,13 +22,14 @@ import {
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
-import { PropertyItem, togglePropertyStatus } from '@/services/property.service'
+import { PropertyItem, togglePropertyStatus, TenantPropertyStats } from '@/services/property.service'
 
 interface PropertiesListClientProps {
   initialProperties: PropertyItem[]
+  propertyStats?: TenantPropertyStats
 }
 
-export default function PropertiesListClient({ initialProperties }: PropertiesListClientProps) {
+export default function PropertiesListClient({ initialProperties, propertyStats }: PropertiesListClientProps) {
   const [properties, setProperties] = useState<PropertyItem[]>(initialProperties)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedType, setSelectedType] = useState('all')
@@ -93,9 +94,19 @@ export default function PropertiesListClient({ initialProperties }: PropertiesLi
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-gray-200">
         <div>
-          <h1 className="text-xl font-medium tracking-tight text-gray-900">
-            Property Portfolio
-          </h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-medium tracking-tight text-gray-900">
+              Property Portfolio
+            </h1>
+            {propertyStats && (
+              <Badge
+                variant={propertyStats.canAdd ? 'outline' : 'warning'}
+                className="text-[11px] rounded-sm font-mono px-2 py-0.5"
+              >
+                Allowed: {propertyStats.currentCount} / {propertyStats.allowedCount}
+              </Badge>
+            )}
+          </div>
           <p className="text-xs text-gray-500 mt-1">
             Manage your hotel branches, buildings, floors, facilities, and property settings.
           </p>
@@ -110,12 +121,23 @@ export default function PropertiesListClient({ initialProperties }: PropertiesLi
             <Download className="h-3.5 w-3.5 mr-1.5 text-gray-500" />
             Export CSV
           </Button>
-          <Link href="/properties/new">
-            <Button className="bg-[#5e2b9d] hover:bg-[#4d2282] text-white text-xs h-9 font-medium rounded-md cursor-pointer">
+          {propertyStats && !propertyStats.canAdd ? (
+            <Button
+              disabled
+              title={`Your subscription plan allows a maximum of ${propertyStats.allowedCount} property(ies)`}
+              className="bg-gray-100 text-gray-400 text-xs h-9 font-medium rounded-md cursor-not-allowed border border-gray-200"
+            >
               <Plus className="h-4 w-4 mr-1.5" />
-              Add Property
+              Limit Reached ({propertyStats.allowedCount}/{propertyStats.allowedCount})
             </Button>
-          </Link>
+          ) : (
+            <Link href="/properties/new">
+              <Button className="bg-[#5e2b9d] hover:bg-[#4d2282] text-white text-xs h-9 font-medium rounded-md cursor-pointer">
+                <Plus className="h-4 w-4 mr-1.5" />
+                Add Property
+              </Button>
+            </Link>
+          )}
         </div>
       </div>
 
