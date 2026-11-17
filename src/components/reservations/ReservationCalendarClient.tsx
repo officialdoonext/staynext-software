@@ -20,7 +20,9 @@ import {
   Search,
   Filter,
   ArrowDownLeft,
-  ArrowUpRight
+  ArrowUpRight,
+  Phone,
+  Mail
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -54,6 +56,11 @@ export default function ReservationCalendarClient({
   const [assignSuccess, setAssignSuccess] = useState<string>('')
   const [selectedBookingDetails, setSelectedBookingDetails] = useState<ReservationDetail | null>(null)
   const [searchFilter, setSearchFilter] = useState<string>('')
+  const [hoveredBooking, setHoveredBooking] = useState<{
+    res: ReservationDetail
+    span: NonNullable<ReturnType<typeof getReservationSpan>>
+    rect: DOMRect
+  } | null>(null)
 
   // Format local Date object to YYYY-MM-DD string without UTC shift
   const toDateString = (d: Date) => {
@@ -113,57 +120,94 @@ export default function ReservationCalendarClient({
     d1.getMonth() === d2.getMonth() &&
     d1.getDate() === d2.getDate()
 
-  // Determine date role & timing for a reservation on a given calendar day
-  const getBookingDayInfo = (day: Date, res: ReservationDetail) => {
-    const d = toDateString(day)
-    const ci = (res.check_in_date || '').slice(0, 10)
-    const co = (res.check_out_date || '').slice(0, 10)
-    if (!ci || !co) return null
+  // Calculate continuous span for Microsoft Teams-style single card
+  const getReservationSpan = (res: ReservationDetail) => {
+    const ciStr = (res.check_in_date || '').slice(0, 10)
+    const coStr = (res.check_out_date || '').slice(0, 10)
+    if (!ciStr || !coStr) return null
 
-    const inTime = formatTimeString(res.check_in_time)
-    const outTime = formatTimeString(res.check_out_time)
+    const windowStart = days[0]
+    const windowStartStr = toDateString(windowStart)
+    const windowEndStr = toDateString(days[days.length - 1])
 
-    // Same-day (day use)
-    if (ci === co && d === ci) {
-      return {
-        type: 'day_use' as const,
-        label: `${inTime} - ${outTime}`,
-        shortLabel: `${inTime} → ${outTime}`,
-        timingSummary: `${inTime} → ${outTime}`,
+    // If completely outside the visible window, do not render
+    if (coStr < windowStartStr || ciStr > windowEndStr) {
+      return null
+    }
+
+    const totalDays = days.length
+    const msPerDay = 1000 * 60 * 60 * 24
+    const checkInDate = fromDateString(ciStr)
+    const checkOutDate = fromDateString(coStr)
+
+    // Calculate exact integer day difference relative to windowStart
+    const startDiff = Math.round((checkInDate.getTime() - windowStart.getTime()) / msPerDay)
+    const endDiff = Math.round((checkOutDate.getTime() - windowStart.getTime()) / msPerDay)
+
+    if (endDiff < 0 || startDiff >= totalDays) {
+      return null
+    }
+
+    const startsBefore = startDiff < 0
+    const endsAfter = endDiff >= totalDays
+    const isSameDayBooking = ciStr === coStr
+
+    const clampedStart = Math.max(0, startDiff)
+    const clampedEnd = Math.min(totalDays - 1, endDiff)
+
+    // Check-in afternoon offset (~2:00 PM / 52% into check-in day)
+    // Check-out morning offset (~11:00 AM / 48% into check-out day)
+    // This allows back-to-back bookings on the same day without overlapping
+    const startFraction = startsBefore ? 0.0 : isSameDayBooking ? 0.08 : 0.52
+    const endFraction = endsAfter ? 1.0 : isSameDayBooking ? 0.92 : 0.48
+
+    const startPos = clampedStart + startFraction
+    const endPos = clampedEnd + endFraction
+
+    const left = (startPos / totalDays) * 100
+    const rawWidth = ((endPos - startPos) / totalDays) * 100
+    // Guarantee minimum readable width
+    const minWidth = isSameDayBooking ? (100 / totalDays) * 0.8 : (100 / totalDays) * 0.9
+    const width = Math.max(minWidth, Math.min(100 - left, rawWidth))
+
+    return {
+      left,
+      width,
+      startsBefore,
+      endsAfter,
+      isSameDayBooking,
+      inTime: formatTimeString(res.check_in_time),
+      outTime: formatTimeString(res.check_out_time),
+    }
+  }
+
+  // Assign visual lanes for overlapping unallocated bookings so they stack cleanly
+  const assignUnallocatedLanes = (bookings: ReservationDetail[]) => {
+    const activeInWindow = bookings
+      .map((b) => ({ res: b, span: getReservationSpan(b) }))
+      .filter((item): item is { res: ReservationDetail; span: NonNullable<ReturnType<typeof getReservationSpan>> } => item.span !== null)
+
+    const sorted = activeInWindow.sort((a, b) => a.res.check_in_date.localeCompare(b.res.check_in_date))
+    const lanes: { endStr: string }[] = []
+    const positioned: { res: ReservationDetail; span: NonNullable<ReturnType<typeof getReservationSpan>>; lane: number }[] = []
+
+    for (const item of sorted) {
+      let placed = false
+      for (let l = 0; l < lanes.length; l++) {
+        if (item.res.check_in_date >= lanes[l].endStr) {
+          lanes[l].endStr = item.res.check_out_date
+          positioned.push({ ...item, lane: l })
+          placed = true
+          break
+        }
+      }
+      if (!placed) {
+        lanes.push({ endStr: item.res.check_out_date })
+        positioned.push({ ...item, lane: lanes.length - 1 })
       }
     }
 
-    // Check-in / Arrival Day
-    if (d === ci) {
-      return {
-        type: 'arrival' as const,
-        label: `In: ${inTime}`,
-        shortLabel: inTime,
-        timingSummary: `Arrives at ${inTime}`,
-      }
-    }
-
-    // Check-out / Departure Day
-    if (d === co) {
-      return {
-        type: 'departure' as const,
-        label: `Out: ${outTime}`,
-        shortLabel: outTime,
-        timingSummary: `Departs at ${outTime}`,
-      }
-    }
-
-    // In-between / Ongoing Stay
-    if (d > ci && d < co) {
-      return {
-        type: 'stay' as const,
-        label: `Stay (Full Day)`,
-        shortLabel: `Stay`,
-        timingSummary: `${inTime} → ${outTime}`,
-      }
-    }
-
-    return null
+    return { positioned, totalLanes: Math.max(1, lanes.length) }
   }
 
   const handleConfirmAssignment = async () => {
@@ -193,6 +237,8 @@ export default function ReservationCalendarClient({
     (res) => !res.room_id && res.status !== 'cancelled'
   )
 
+  const { positioned: unallocatedPositioned, totalLanes: unallocatedLanes } = assignUnallocatedLanes(unassignedReservations)
+
   const filteredReservations = reservations.filter((r) => {
     if (!searchFilter) return true
     const term = searchFilter.toLowerCase()
@@ -206,6 +252,9 @@ export default function ReservationCalendarClient({
   })
 
   const weekTitle = `${days[0]?.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – ${days[days.length - 1]?.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
+
+  // Column min-width based on window days count
+  const columnMinWidth = windowDays === 7 ? 'min-w-[130px]' : windowDays === 14 ? 'min-w-[100px]' : 'min-w-[80px]'
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-16 font-sans">
@@ -222,7 +271,7 @@ export default function ReservationCalendarClient({
               Stay Matrix &amp; Timeline View
             </h1>
             <p className="text-xs text-gray-500 mt-0.5">
-              Visual room occupancy, check-in &amp; check-out timetable, and guest stay tracking for {initialProp.name}.
+              Continuous Microsoft Teams-style booking cards, occupancy spans, and daily turnover schedule.
             </p>
           </div>
         </div>
@@ -329,19 +378,15 @@ export default function ReservationCalendarClient({
 
           <div className="hidden md:flex items-center gap-3 text-[11px] text-gray-600 pl-2 border-l border-gray-200">
             <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-              <span>Arrival (In)</span>
+              <span className="w-2.5 h-2.5 rounded bg-emerald-600" />
+              <span>Confirmed</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#5e2b9d]" />
-              <span>Stay</span>
+              <span className="w-2.5 h-2.5 rounded bg-[#5e2b9d]" />
+              <span>Checked In</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-blue-500" />
-              <span>Departure (Out)</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+              <span className="w-2.5 h-2.5 rounded bg-amber-500" />
               <span>Unassigned</span>
             </div>
           </div>
@@ -351,10 +396,10 @@ export default function ReservationCalendarClient({
       {/* Main Calendar Matrix Table */}
       <div className="bg-white rounded-md border border-gray-200 shadow-2xs overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse min-w-[750px]">
+          <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-200">
-                <th className="p-3 w-48 font-medium text-gray-600 text-[11px] sticky left-0 bg-gray-50 z-20 border-r border-gray-200">
+                <th className="p-3 w-48 font-medium text-gray-600 text-[11px] sticky left-0 bg-gray-50 z-30 border-r border-gray-200 shadow-xs">
                   Room
                 </th>
                 {days.map((d, idx) => {
@@ -362,7 +407,7 @@ export default function ReservationCalendarClient({
                   return (
                     <th
                       key={idx}
-                      className={`p-2.5 text-center border-r border-gray-200 min-w-[110px] ${
+                      className={`p-2.5 text-center border-r border-gray-200 ${columnMinWidth} ${
                         isToday ? 'bg-[#f7f2fd] text-[#5e2b9d]' : 'text-gray-600'
                       }`}
                     >
@@ -380,57 +425,60 @@ export default function ReservationCalendarClient({
             <tbody className="divide-y divide-gray-100">
               {/* SECTION: Unassigned / Pending Room Allocation Row */}
               {unassignedReservations.length > 0 && (
-                <tr className="bg-amber-50/40 hover:bg-amber-50/70 border-b border-amber-200 transition-colors">
-                  <td className="p-3 font-medium text-amber-900 sticky left-0 bg-amber-50 z-10 border-r border-amber-200">
+                <tr className="bg-amber-50/30 hover:bg-amber-50/50 border-b border-amber-200 transition-colors">
+                  <td className="w-48 p-3 font-medium text-amber-900 sticky left-0 bg-amber-50 z-20 border-r border-amber-200 shadow-xs align-top">
                     <div className="flex items-center gap-1.5">
                       <AlertCircle className="h-3.5 w-3.5 text-amber-600 shrink-0" />
                       <span className="font-semibold text-xs">Unallocated ({unassignedReservations.length})</span>
                     </div>
-                    <div className="text-[10px] text-amber-700 mt-0.5">Assign room number</div>
+                    <div className="text-[10px] text-amber-700 mt-0.5">Click card to assign room</div>
                   </td>
 
-                  {days.map((day, dIdx) => {
-                    const matches = unassignedReservations
-                      .map((res) => {
-                        const info = getBookingDayInfo(day, res)
-                        return info ? { res, info } : null
-                      })
-                      .filter(Boolean) as { res: ReservationDetail; info: NonNullable<ReturnType<typeof getBookingDayInfo>> }[]
+                  <td colSpan={days.length} className="p-0 relative" style={{ height: `${Math.max(54, unallocatedLanes * 46 + 10)}px` }}>
+                    {/* Background Day Cells */}
+                    <div
+                      className="absolute inset-0 grid h-full"
+                      style={{ gridTemplateColumns: `repeat(${days.length}, minmax(0, 1fr))` }}
+                    >
+                      {days.map((day, idx) => {
+                        const isToday = isSameDay(day, new Date())
+                        return (
+                          <div
+                            key={idx}
+                            className={`h-full border-r border-amber-100 ${isToday ? 'bg-amber-100/30' : ''}`}
+                          />
+                        )
+                      })}
+                    </div>
 
-                    const isToday = isSameDay(day, new Date())
-
-                    return (
-                      <td
-                        key={dIdx}
-                        className={`p-1 border-r border-amber-100 text-center align-middle ${
-                          isToday ? 'bg-amber-100/40' : ''
-                        }`}
-                      >
-                        {matches.length > 0 ? (
-                          <div className="space-y-1">
-                            {matches.map(({ res, info }) => (
-                              <div
-                                key={res.id}
-                                onClick={() => setAssigningRes(res)}
-                                className="p-1 rounded text-[10px] font-medium truncate shadow-2xs bg-amber-500 hover:bg-amber-600 text-white cursor-pointer transition-all"
-                                title={`Click to assign room: ${res.guest_name} (#${res.reservation_number}) | ${info.timingSummary}`}
-                              >
-                                <span className="font-bold block truncate">{res.guest_name}</span>
-                                <div className="text-[9px] opacity-90 flex items-center justify-center gap-1">
-                                  <Clock className="h-2.5 w-2.5" />
-                                  <span>{info.shortLabel}</span>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <div className="h-7 flex items-center justify-center text-amber-300 text-[10px]">
-                            —
-                          </div>
-                        )}
-                      </td>
-                    )
-                  })}
+                    {/* Continuous Single Spanned Cards for Unallocated Bookings */}
+                    <div className="absolute inset-0 pointer-events-none">
+                      {unallocatedPositioned.map(({ res, span, lane }) => (
+                        <div
+                          key={res.id}
+                          style={{
+                            left: `${span.left}%`,
+                            width: `${span.width}%`,
+                            top: `${lane * 46 + 6}px`,
+                            height: '36px',
+                          }}
+                          onMouseEnter={(e) => {
+                            setHoveredBooking({ res, span, rect: e.currentTarget.getBoundingClientRect() })
+                          }}
+                          onMouseLeave={() => setHoveredBooking(null)}
+                          onClick={() => {
+                            setHoveredBooking(null)
+                            setAssigningRes(res)
+                          }}
+                          className="absolute pointer-events-auto rounded-md shadow-xs hover:shadow-md cursor-pointer transition-all border border-amber-600 bg-gradient-to-r from-amber-500 via-amber-500 to-amber-600 text-white z-10 flex items-center justify-center px-3 overflow-hidden hover:brightness-105"
+                        >
+                          <span className="font-medium text-xs truncate select-none tracking-tight">
+                            {res.guest_name}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </td>
                 </tr>
               )}
 
@@ -448,80 +496,83 @@ export default function ReservationCalendarClient({
                     (res) => res.room_id === room.id && res.status !== 'cancelled'
                   )
 
+                  // Active spans for this room
+                  const activeSpans = roomReservations
+                    .map((res) => ({ res, span: getReservationSpan(res) }))
+                    .filter((item): item is { res: ReservationDetail; span: NonNullable<ReturnType<typeof getReservationSpan>> } => item.span !== null)
+
                   return (
-                    <tr key={room.id} className="hover:bg-gray-50/60 transition-colors">
-                      <td className="p-3 font-semibold text-gray-900 sticky left-0 bg-white z-10 border-r border-gray-200">
+                    <tr key={room.id} className="hover:bg-gray-50/50 transition-colors">
+                      {/* Room Label (Sticky Left) */}
+                      <td className="w-48 p-3 font-semibold text-gray-900 sticky left-0 bg-white z-20 border-r border-gray-200 shadow-xs align-middle">
                         <div className="flex items-center gap-1.5">
                           <DoorOpen className="h-3.5 w-3.5 text-[#5e2b9d] shrink-0" />
-                          <span>Room {room.room_number}</span>
+                          <span className="font-semibold text-xs">Room {room.room_number}</span>
                         </div>
                         <div className="text-[10px] text-gray-400 font-normal pl-5">
                           {room.room_type_name}
                         </div>
                       </td>
 
-                      {days.map((day, dIdx) => {
-                        const dayEvents = roomReservations
-                          .map((res) => {
-                            const info = getBookingDayInfo(day, res)
-                            return info ? { res, info } : null
-                          })
-                          .filter(Boolean) as { res: ReservationDetail; info: NonNullable<ReturnType<typeof getBookingDayInfo>> }[]
-
-                        const isToday = isSameDay(day, new Date())
-
-                        return (
-                          <td
-                            key={dIdx}
-                            className={`p-1 border-r border-gray-100 text-center align-middle ${
-                              isToday ? 'bg-[#f7f2fd]/30' : ''
-                            }`}
-                          >
-                            {dayEvents.length > 0 ? (
-                              <div className="space-y-1">
-                                {dayEvents.map(({ res, info }) => {
-                                  // Color code by event type: Arrival (emerald), Departure (blue), Stay (purple), Day-Use (indigo)
-                                  let bgClass = 'bg-[#5e2b9d] text-white'
-                                  let icon = <Clock className="h-2.5 w-2.5 shrink-0" />
-
-                                  if (info.type === 'arrival') {
-                                    bgClass = 'bg-emerald-600 text-white'
-                                    icon = <ArrowDownLeft className="h-2.5 w-2.5 shrink-0" />
-                                  } else if (info.type === 'departure') {
-                                    bgClass = 'bg-blue-600 text-white'
-                                    icon = <ArrowUpRight className="h-2.5 w-2.5 shrink-0" />
-                                  } else if (info.type === 'day_use') {
-                                    bgClass = 'bg-indigo-600 text-white'
-                                  }
-
-                                  return (
-                                    <div
-                                      key={res.id + info.type}
-                                      onClick={() => setSelectedBookingDetails(res)}
-                                      className={`p-1 rounded text-[10px] font-medium shadow-2xs cursor-pointer hover:opacity-90 transition-opacity ${bgClass}`}
-                                      title={`${res.guest_name} (#${res.reservation_number}) | ${info.timingSummary}`}
-                                    >
-                                      <span className="font-semibold block truncate leading-tight">{res.guest_name}</span>
-                                      <div className="text-[9px] opacity-90 flex items-center justify-center gap-1 mt-0.5">
-                                        {icon}
-                                        <span className="truncate">{info.label}</span>
-                                      </div>
-                                    </div>
-                                  )
-                                })}
+                      {/* Day Grid Area with Spanning Cards */}
+                      <td colSpan={days.length} className="p-0 relative h-16">
+                        {/* Background Day Cells */}
+                        <div
+                          className="absolute inset-0 grid h-full"
+                          style={{ gridTemplateColumns: `repeat(${days.length}, minmax(0, 1fr))` }}
+                        >
+                          {days.map((day, idx) => {
+                            const isToday = isSameDay(day, new Date())
+                            return (
+                              <div
+                                key={idx}
+                                className={`h-full border-r border-gray-100 flex items-center justify-center ${
+                                  isToday ? 'bg-[#f7f2fd]/25' : ''
+                                }`}
+                              >
+                                {room.status === 'maintenance' || room.status === 'blocked' ? (
+                                  <span className="text-[10px] text-red-500 font-medium opacity-60">Blocked</span>
+                                ) : (
+                                  <span className="text-gray-200 text-[10px] select-none">—</span>
+                                )}
                               </div>
-                            ) : room.status === 'maintenance' || room.status === 'blocked' ? (
-                              <div className="p-1 rounded text-[10px] bg-red-50 text-red-700 border border-red-200">
-                                Blocked
+                            )
+                          })}
+                        </div>
+
+                        {/* Continuous Microsoft Teams-Style Single Card per Booking */}
+                        <div className="absolute inset-0 pointer-events-none">
+                          {activeSpans.map(({ res, span }) => {
+                            const isCheckedIn = res.status === 'checked_in'
+                            const bgClasses = isCheckedIn
+                              ? 'bg-gradient-to-r from-[#5e2b9d] via-[#6d32b5] to-[#793ebd] text-white border-[#4d2282]'
+                              : 'bg-gradient-to-r from-emerald-600 via-emerald-600 to-emerald-500 text-white border-emerald-700'
+
+                            return (
+                              <div
+                                key={res.id}
+                                style={{
+                                  left: `${span.left}%`,
+                                  width: `${span.width}%`,
+                                }}
+                                onMouseEnter={(e) => {
+                                  setHoveredBooking({ res, span, rect: e.currentTarget.getBoundingClientRect() })
+                                }}
+                                onMouseLeave={() => setHoveredBooking(null)}
+                                onClick={() => {
+                                  setHoveredBooking(null)
+                                  setSelectedBookingDetails(res)
+                                }}
+                                className={`absolute top-2.5 bottom-2.5 pointer-events-auto rounded-md shadow-xs hover:shadow-md cursor-pointer transition-all border ${bgClasses} z-10 flex items-center justify-center px-3 overflow-hidden hover:brightness-105`}
+                              >
+                                <span className="font-medium text-xs truncate select-none tracking-tight">
+                                  {res.guest_name}
+                                </span>
                               </div>
-                            ) : (
-                              <div className="h-8 rounded hover:bg-gray-100/60 flex items-center justify-center text-gray-300 text-[10px]">
-                                —
-                              </div>
-                            )}
-                          </td>
-                        )
-                      })}
+                            )
+                          })}
+                        </div>
+                      </td>
                     </tr>
                   )
                 })
@@ -530,6 +581,136 @@ export default function ReservationCalendarClient({
           </table>
         </div>
       </div>
+
+      {/* FLOATING HOVER POPOVER CARD */}
+      {hoveredBooking && typeof window !== 'undefined' && (() => {
+        const { res, span, rect } = hoveredBooking
+        const popoverWidth = 320
+
+        let left = rect.left + rect.width / 2 - popoverWidth / 2
+        if (left < 12) left = 12
+        if (left + popoverWidth > window.innerWidth - 12) {
+          left = window.innerWidth - popoverWidth - 12
+        }
+
+        const spaceAbove = rect.top
+        const placeBelow = spaceAbove < 300
+
+        const isCheckedIn = res.status === 'checked_in'
+        const isConfirmed = res.status === 'confirmed'
+        const isUnassigned = !res.room_id
+
+        return (
+          <div
+            style={{
+              left: `${left}px`,
+              ...(placeBelow
+                ? { top: `${rect.bottom + 8}px` }
+                : { bottom: `${window.innerHeight - rect.top + 8}px` }),
+            }}
+            className="fixed z-50 pointer-events-none w-[320px] bg-white rounded-md border border-gray-200 shadow-2xl p-4 space-y-3 text-xs text-gray-700 animate-in fade-in duration-150"
+          >
+            {/* Header */}
+            <div className="flex items-start justify-between gap-2 border-b border-gray-100 pb-2.5">
+              <div className="min-w-0">
+                <div className="font-semibold text-sm text-gray-900 truncate">
+                  {res.guest_name}
+                </div>
+                <div className="text-[11px] text-gray-500 font-mono mt-0.5">
+                  #{res.reservation_number}
+                </div>
+              </div>
+              <Badge
+                className={`text-[10px] shrink-0 font-medium rounded capitalize ${
+                  isUnassigned
+                    ? 'bg-amber-500 text-white'
+                    : isCheckedIn
+                    ? 'bg-[#5e2b9d] text-white'
+                    : isConfirmed
+                    ? 'bg-emerald-600 text-white'
+                    : 'bg-gray-100 text-gray-700'
+                }`}
+              >
+                {isUnassigned ? 'Unallocated' : res.status?.replace('_', ' ')}
+              </Badge>
+            </div>
+
+            {/* Grid details */}
+            <div className="space-y-2">
+              {/* Room / Allocation */}
+              <div className="flex items-center gap-2">
+                <DoorOpen className="h-3.5 w-3.5 text-[#5e2b9d] shrink-0" />
+                <div className="truncate flex-1">
+                  {res.room_number ? (
+                    <span className="font-semibold text-gray-900">
+                      Room {res.room_number} <span className="text-gray-500 font-normal">({res.room_type_name})</span>
+                    </span>
+                  ) : (
+                    <span className="font-semibold text-amber-700">
+                      Unallocated <span className="text-gray-500 font-normal">({res.room_type_name})</span>
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Schedule & Timing */}
+              <div className="flex items-start gap-2">
+                <Clock className="h-3.5 w-3.5 text-gray-400 shrink-0 mt-0.5" />
+                <div className="flex-1 space-y-0.5">
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Check-In:</span>
+                    <span className="font-medium text-gray-900">
+                      {formatDate(res.check_in_date)} at {span.inTime}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Check-Out:</span>
+                    <span className="font-medium text-gray-900">
+                      {formatDate(res.check_out_date)} at {span.outTime}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-[11px] text-gray-500 pt-0.5">
+                    <span>Duration:</span>
+                    <span className="font-medium text-[#5e2b9d]">{res.nights} Night{res.nights > 1 ? 's' : ''} stay</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Guest Contact */}
+              {(res.guest_phone || res.guest_email) && (
+                <div className="flex items-center gap-2 pt-1 border-t border-gray-100 text-[11px] text-gray-600">
+                  {res.guest_phone && (
+                    <div className="flex items-center gap-1 truncate">
+                      <Phone className="h-3 w-3 text-gray-400 shrink-0" />
+                      <span>{res.guest_phone}</span>
+                    </div>
+                  )}
+                  {res.guest_email && (
+                    <div className="flex items-center gap-1 truncate ml-auto">
+                      <Mail className="h-3 w-3 text-gray-400 shrink-0" />
+                      <span className="truncate max-w-[130px]">{res.guest_email}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Financials */}
+              <div className="flex items-center justify-between pt-1 border-t border-gray-100 font-medium">
+                <span className="text-gray-500">Total:</span>
+                <span className="text-gray-900 font-semibold">{formatCurrency(res.total_amount)}</span>
+                <span className="text-gray-400">|</span>
+                <span className="text-gray-500">Paid:</span>
+                <span className="text-emerald-600">{formatCurrency(res.paid_amount)}</span>
+              </div>
+            </div>
+
+            {/* Footer Tip */}
+            <div className="pt-2 border-t border-gray-100 text-[10px] text-center text-gray-400 font-medium">
+              {isUnassigned ? '⚡ Click card to assign room' : '💡 Click card to view details & actions'}
+            </div>
+          </div>
+        )
+      })()}
 
       {/* QUICK ASSIGN ROOM MODAL */}
       {assigningRes && (
@@ -555,7 +736,7 @@ export default function ReservationCalendarClient({
             <div className="space-y-3 text-xs">
               <div className="bg-gray-50 p-2.5 rounded-md border border-gray-100 space-y-1">
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Requested Room Type:</span>
+                  <span className="text-gray-500">Requested Category:</span>
                   <span className="font-semibold text-gray-900">{assigningRes.room_type_name}</span>
                 </div>
                 <div className="flex justify-between">
