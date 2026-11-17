@@ -171,7 +171,8 @@ export default function RoomQRCodesClient({
   })
 
   const printItems = qrItems.filter((q) =>
-    selectedRoomIdsForPrint.length === 0 || selectedRoomIdsForPrint.includes(q.room_id)
+    (selectedRoomIdsForPrint.length === 0 || selectedRoomIdsForPrint.includes(q.room_id)) &&
+    Boolean(q.qr_code_data_url && q.qr_code_data_url.trim() !== '')
   )
 
   return (
@@ -479,11 +480,17 @@ export default function RoomQRCodesClient({
             </div>
 
             <div className="p-4 bg-white border border-gray-200 rounded-md inline-block shadow-2xs">
-              <img
-                src={previewItem.qr_code_data_url}
-                alt={`Room ${previewItem.room_number}`}
-                className="w-56 h-56 mx-auto object-contain"
-              />
+              {previewItem.qr_code_data_url ? (
+                <img
+                  src={previewItem.qr_code_data_url}
+                  alt={`Room ${previewItem.room_number}`}
+                  className="w-56 h-56 mx-auto object-contain"
+                />
+              ) : (
+                <div className="w-56 h-56 flex items-center justify-center text-xs text-gray-400 bg-gray-50 border border-dashed border-gray-200 rounded">
+                  QR Not Generated
+                </div>
+              )}
             </div>
 
             <div className="space-y-1">
@@ -555,11 +562,17 @@ export default function RoomQRCodesClient({
                   </div>
 
                   <div className="my-4 p-2 bg-white border border-gray-300 rounded-md">
-                    <img
-                      src={item.qr_code_data_url}
-                      alt={`QR Room ${item.room_number}`}
-                      className="w-40 h-40 object-contain mx-auto"
-                    />
+                    {item.qr_code_data_url ? (
+                      <img
+                        src={item.qr_code_data_url}
+                        alt={`QR Room ${item.room_number}`}
+                        className="w-40 h-40 object-contain mx-auto"
+                      />
+                    ) : (
+                      <div className="w-40 h-40 flex items-center justify-center text-xs text-gray-400 bg-gray-50">
+                        No QR Code
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-1">
@@ -585,11 +598,17 @@ export default function RoomQRCodesClient({
                   </div>
 
                   <div className="my-3">
-                    <img
-                      src={item.qr_code_data_url}
-                      alt={`QR Room ${item.room_number}`}
-                      className="w-36 h-36 object-contain mx-auto"
-                    />
+                    {item.qr_code_data_url ? (
+                      <img
+                        src={item.qr_code_data_url}
+                        alt={`QR Room ${item.room_number}`}
+                        className="w-36 h-36 object-contain mx-auto"
+                      />
+                    ) : (
+                      <div className="w-36 h-36 flex items-center justify-center text-xs text-gray-400 bg-gray-50 mx-auto">
+                        No QR Code
+                      </div>
+                    )}
                   </div>
 
                   <div className="text-xs font-semibold text-gray-800">
@@ -603,11 +622,17 @@ export default function RoomQRCodesClient({
                 <>
                   <div className="text-xs font-bold text-[#5e2b9d]">{initialProp.name}</div>
                   <div className="text-sm font-bold text-gray-900 my-1">Room {item.room_number}</div>
-                  <img
-                    src={item.qr_code_data_url}
-                    alt={`QR Room ${item.room_number}`}
-                    className="w-28 h-28 object-contain my-2"
-                  />
+                  {item.qr_code_data_url ? (
+                    <img
+                      src={item.qr_code_data_url}
+                      alt={`QR Room ${item.room_number}`}
+                      className="w-28 h-28 object-contain my-2"
+                    />
+                  ) : (
+                    <div className="w-28 h-28 flex items-center justify-center text-xs text-gray-400 bg-gray-50 my-2 mx-auto">
+                      No QR Code
+                    </div>
+                  )}
                   <div className="text-[10px] text-gray-600">Scan for 24/7 Digital Concierge</div>
                 </>
               )}
@@ -625,11 +650,17 @@ export default function RoomQRCodesClient({
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
-                    <img
-                      src={item.qr_code_data_url}
-                      alt={`QR Room ${item.room_number}`}
-                      className="w-28 h-28 object-contain shrink-0"
-                    />
+                    {item.qr_code_data_url ? (
+                      <img
+                        src={item.qr_code_data_url}
+                        alt={`QR Room ${item.room_number}`}
+                        className="w-28 h-28 object-contain shrink-0"
+                      />
+                    ) : (
+                      <div className="w-28 h-28 flex items-center justify-center text-xs text-gray-400 bg-gray-50 shrink-0">
+                        No QR Code
+                      </div>
+                    )}
                     <div className="text-xs space-y-1 text-gray-700">
                       <div><strong>🍽 In-Room Dining:</strong> Breakfast, Lunch &amp; Dinner</div>
                       <div><strong>✨ Housekeeping:</strong> Linen &amp; Towels Refresh</div>

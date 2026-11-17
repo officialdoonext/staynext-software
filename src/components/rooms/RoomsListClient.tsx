@@ -19,7 +19,9 @@ import {
   Download,
   Ban,
   Clock,
-  ExternalLink
+  ExternalLink,
+  Building2,
+  Layers
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -185,11 +187,24 @@ export default function RoomsListClient({
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Link href="/rooms/qr-codes">
-            <Button variant="outline" size="sm" className="text-xs h-9 rounded-md cursor-pointer border-[#dfcef6] text-[#5e2b9d] hover:bg-[#f7f2fd]">
-              <QrCode className="h-3.5 w-3.5 mr-1.5" />
-              Room QR Codes
+        <div className="flex flex-wrap items-center gap-2">
+          <Link href="/rooms/buildings">
+            <Button variant="outline" size="sm" className="text-xs h-9 rounded-md cursor-pointer border-gray-200">
+              <Building2 className="h-3.5 w-3.5 mr-1.5 text-gray-500" />
+              Blocks &amp; Wings
+            </Button>
+          </Link>
+
+          <Link href="/rooms/floors">
+            <Button variant="outline" size="sm" className="text-xs h-9 rounded-md cursor-pointer border-gray-200">
+              <Layers className="h-3.5 w-3.5 mr-1.5 text-gray-500" />
+              Floors
+            </Button>
+          </Link>
+
+          <Link href="/rooms/types">
+            <Button variant="outline" size="sm" className="text-xs h-9 rounded-md cursor-pointer border-gray-200">
+              Room Categories
             </Button>
           </Link>
 
@@ -200,9 +215,10 @@ export default function RoomsListClient({
             </Button>
           </Link>
 
-          <Link href="/rooms/types">
-            <Button variant="outline" size="sm" className="text-xs h-9 rounded-md cursor-pointer border-gray-200">
-              Room Categories
+          <Link href="/rooms/qr-codes">
+            <Button variant="outline" size="sm" className="text-xs h-9 rounded-md cursor-pointer border-[#dfcef6] text-[#5e2b9d] hover:bg-[#f7f2fd]">
+              <QrCode className="h-3.5 w-3.5 mr-1.5" />
+              QR Codes
             </Button>
           </Link>
 

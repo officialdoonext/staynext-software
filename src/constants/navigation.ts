@@ -60,7 +60,11 @@ export const navigationSections: NavSection[] = [
         children: [
           { title: 'Room List', href: '/rooms' },
           { title: 'Room Types', href: '/rooms/types' },
+          { title: 'Building Blocks / Wings', href: '/rooms/buildings' },
+          { title: 'Floors', href: '/rooms/floors' },
           { title: 'Floor Plan', href: '/rooms/floor-plan' },
+          { title: 'Room Blocking', href: '/rooms/blocking' },
+          { title: 'Room QR Codes', href: '/rooms/qr-codes' },
         ],
       },
     ],

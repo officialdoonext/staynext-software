@@ -420,6 +420,7 @@ export async function createBuilding(payload: { property_id: string; name: strin
     if (error) throw error
 
     revalidatePath('/properties/buildings')
+    revalidatePath('/rooms/buildings')
     revalidatePath('/rooms')
     return { success: true, data }
   } catch (err: any) {
@@ -433,6 +434,8 @@ export async function updateBuilding(id: string, payload: Partial<BuildingItem>)
     const { error } = await supabase.from('buildings').update(payload).eq('id', id)
     if (error) throw error
     revalidatePath('/properties/buildings')
+    revalidatePath('/rooms/buildings')
+    revalidatePath('/rooms')
     return { success: true }
   } catch (err: any) {
     return { success: false, error: err.message }
@@ -445,6 +448,8 @@ export async function deleteBuilding(id: string): Promise<{ success: boolean; er
     const { error } = await supabase.from('buildings').delete().eq('id', id)
     if (error) throw error
     revalidatePath('/properties/buildings')
+    revalidatePath('/rooms/buildings')
+    revalidatePath('/rooms')
     return { success: true }
   } catch (err: any) {
     return { success: false, error: err.message }
@@ -509,6 +514,7 @@ export async function createFloor(payload: { property_id: string; building_id?: 
     if (error) throw error
 
     revalidatePath('/properties/floors')
+    revalidatePath('/rooms/floors')
     revalidatePath('/rooms')
     return { success: true, data }
   } catch (err: any) {
@@ -522,6 +528,8 @@ export async function updateFloor(id: string, payload: Partial<FloorItem>): Prom
     const { error } = await supabase.from('floors').update(payload).eq('id', id)
     if (error) throw error
     revalidatePath('/properties/floors')
+    revalidatePath('/rooms/floors')
+    revalidatePath('/rooms')
     return { success: true }
   } catch (err: any) {
     return { success: false, error: err.message }
@@ -534,6 +542,8 @@ export async function deleteFloor(id: string): Promise<{ success: boolean; error
     const { error } = await supabase.from('floors').delete().eq('id', id)
     if (error) throw error
     revalidatePath('/properties/floors')
+    revalidatePath('/rooms/floors')
+    revalidatePath('/rooms')
     return { success: true }
   } catch (err: any) {
     return { success: false, error: err.message }
