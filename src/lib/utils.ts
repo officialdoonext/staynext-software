@@ -39,6 +39,18 @@ export function calculateNights(checkIn: string, checkOut: string): number {
   return Math.ceil(diff / (1000 * 60 * 60 * 24))
 }
 
+export function formatTimeString(timeStr?: string): string {
+  if (!timeStr) return '12:00 PM'
+  const clean = timeStr.trim().slice(0, 5)
+  const parts = clean.split(':').map(Number)
+  if (parts.length < 2 || isNaN(parts[0]) || isNaN(parts[1])) return timeStr
+  const hour = parts[0]
+  const minute = String(parts[1]).padStart(2, '0')
+  const period = hour >= 12 ? 'PM' : 'AM'
+  const formattedHour = hour % 12 === 0 ? 12 : hour % 12
+  return `${formattedHour}:${minute} ${period}`
+}
+
 export function getStatusColor(status: string): string {
   const colorMap: Record<string, string> = {
     pending: 'bg-yellow-100 text-yellow-800',

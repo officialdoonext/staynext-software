@@ -32,7 +32,7 @@ import {
 } from '@/services/reservation.service'
 import { RoomItem, RoomTypeItem } from '@/services/room.service'
 import { PropertyItem } from '@/services/property.service'
-import { formatCurrency, formatDate } from '@/lib/utils'
+import { formatCurrency, formatDate, formatTimeString } from '@/lib/utils'
 
 interface ReservationsListClientProps {
   initialReservations: ReservationDetail[]
@@ -340,8 +340,10 @@ export default function ReservationsListClient({
                     <div className="text-[10px] text-gray-500">{res.guest_phone || res.guest_email}</div>
                   </td>
                   <td className="px-4 py-3 text-gray-600">
-                    <div>{formatDate(res.check_in_date)} &rarr; {formatDate(res.check_out_date)}</div>
-                    <div className="text-[10px] text-gray-400">
+                    <div className="font-medium text-gray-900">
+                      {formatDate(res.check_in_date)} {formatTimeString(res.check_in_time)} &rarr; {formatDate(res.check_out_date)} {formatTimeString(res.check_out_time)}
+                    </div>
+                    <div className="text-[10px] text-gray-400 mt-0.5">
                       {res.nights} {res.nights === 1 ? 'night' : 'nights'} • {res.num_adults}A, {res.num_children}C
                     </div>
                   </td>
@@ -433,7 +435,7 @@ export default function ReservationsListClient({
               <div className="bg-gray-50 p-2.5 rounded border border-gray-200 space-y-1">
                 <div>Booking: <strong>{checkInModalRes.reservation_number}</strong></div>
                 <div>Category: {checkInModalRes.room_type_name}</div>
-                <div>Nights: {checkInModalRes.nights} ({formatDate(checkInModalRes.check_in_date)} &rarr; {formatDate(checkInModalRes.check_out_date)})</div>
+                <div>Stay: {checkInModalRes.nights} Nights ({formatDate(checkInModalRes.check_in_date)} {formatTimeString(checkInModalRes.check_in_time)} &rarr; {formatDate(checkInModalRes.check_out_date)} {formatTimeString(checkInModalRes.check_out_time)})</div>
               </div>
 
               <div>

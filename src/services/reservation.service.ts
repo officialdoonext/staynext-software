@@ -19,7 +19,9 @@ export interface ReservationDetail {
   room_id?: string
   room_number?: string
   check_in_date: string
+  check_in_time?: string
   check_out_date: string
+  check_out_time?: string
   nights: number
   num_adults: number
   num_children: number
@@ -151,7 +153,9 @@ export async function getReservations(
       room_id: allocatedRoom?.id,
       room_number: allocatedRoom?.room_number,
       check_in_date: res.check_in_date,
+      check_in_time: res.check_in_time || '14:00',
       check_out_date: res.check_out_date,
+      check_out_time: res.check_out_time || '11:00',
       nights,
       num_adults: res.num_adults || 1,
       num_children: res.num_children || 0,
@@ -221,7 +225,9 @@ export async function getReservationById(reservationId: string): Promise<Reserva
     room_id: allocatedRoom?.id,
     room_number: allocatedRoom?.room_number,
     check_in_date: data.check_in_date,
+    check_in_time: data.check_in_time || '14:00',
     check_out_date: data.check_out_date,
+    check_out_time: data.check_out_time || '11:00',
     nights,
     num_adults: data.num_adults || 1,
     num_children: data.num_children || 0,
@@ -258,7 +264,9 @@ export async function createReservation(payload: {
   room_type_id: string
   room_id?: string
   check_in_date: string
+  check_in_time?: string
   check_out_date: string
+  check_out_time?: string
   num_adults: number
   num_children: number
   total_amount: number
@@ -353,7 +361,9 @@ export async function createReservation(payload: {
         guest_id: guestId,
         room_type_id: payload.room_type_id,
         check_in_date: payload.check_in_date,
+        check_in_time: payload.check_in_time || '14:00',
         check_out_date: payload.check_out_date,
+        check_out_time: payload.check_out_time || '11:00',
         num_adults: payload.num_adults || 1,
         num_children: payload.num_children || 0,
         total_amount: payload.total_amount,
@@ -405,7 +415,9 @@ export async function createReservation(payload: {
         reservation_id: reservation.id,
         room_id: allocatedRoomId,
         check_in_date: payload.check_in_date,
+        check_in_time: payload.check_in_time || '14:00',
         check_out_date: payload.check_out_date,
+        check_out_time: payload.check_out_time || '11:00',
         rate_per_night: payload.total_amount,
       })
 
@@ -568,7 +580,7 @@ export async function assignRoomToReservation(
     // 1. Fetch reservation
     const { data: res, error: resErr } = await supabase
       .from('reservations')
-      .select('id, property_id, check_in_date, check_out_date, total_amount')
+      .select('id, property_id, check_in_date, check_in_time, check_out_date, check_out_time, total_amount')
       .eq('id', reservationId)
       .single()
 
@@ -587,7 +599,9 @@ export async function assignRoomToReservation(
         .update({
           room_id: roomId,
           check_in_date: res.check_in_date,
+          check_in_time: res.check_in_time || '14:00',
           check_out_date: res.check_out_date,
+          check_out_time: res.check_out_time || '11:00',
           rate_per_night: res.total_amount,
           is_active: true,
         })
@@ -599,7 +613,9 @@ export async function assignRoomToReservation(
           reservation_id: reservationId,
           room_id: roomId,
           check_in_date: res.check_in_date,
+          check_in_time: res.check_in_time || '14:00',
           check_out_date: res.check_out_date,
+          check_out_time: res.check_out_time || '11:00',
           rate_per_night: res.total_amount,
           is_active: true,
         })

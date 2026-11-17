@@ -469,7 +469,9 @@ CREATE TABLE IF NOT EXISTS reservations (
   room_type_id UUID NOT NULL REFERENCES room_types(id) ON DELETE RESTRICT,
   rate_plan_id UUID REFERENCES rate_plans(id) ON DELETE SET NULL,
   check_in_date DATE NOT NULL,
+  check_in_time VARCHAR(20) DEFAULT '14:00',
   check_out_date DATE NOT NULL,
+  check_out_time VARCHAR(20) DEFAULT '11:00',
   num_adults INTEGER NOT NULL DEFAULT 1,
   num_children INTEGER NOT NULL DEFAULT 0,
   status reservation_status NOT NULL DEFAULT 'pending',
@@ -487,7 +489,7 @@ CREATE TABLE IF NOT EXISTS reservations (
   created_by UUID REFERENCES auth.users(id),
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  CONSTRAINT check_dates CHECK (check_out_date > check_in_date)
+  CONSTRAINT check_dates CHECK (check_out_date >= check_in_date)
 );
 
 CREATE INDEX IF NOT EXISTS idx_reservations_prop ON reservations(property_id);
@@ -510,12 +512,14 @@ CREATE TABLE IF NOT EXISTS reservation_rooms (
   reservation_id UUID NOT NULL REFERENCES reservations(id) ON DELETE CASCADE,
   room_id UUID NOT NULL REFERENCES rooms(id) ON DELETE RESTRICT,
   check_in_date DATE NOT NULL,
+  check_in_time VARCHAR(20) DEFAULT '14:00',
   check_out_date DATE NOT NULL,
+  check_out_time VARCHAR(20) DEFAULT '11:00',
   rate_per_night NUMERIC(10, 2) NOT NULL,
   stay_range DATERANGE GENERATED ALWAYS AS (daterange(check_in_date, check_out_date, '[)')) STORED,
   is_active BOOLEAN NOT NULL DEFAULT true,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  CONSTRAINT check_res_room_dates CHECK (check_out_date > check_in_date),
+  CONSTRAINT check_res_room_dates CHECK (check_out_date >= check_in_date),
   -- Database engine level conflict prevention:
   EXCLUDE USING gist (
     room_id WITH =,

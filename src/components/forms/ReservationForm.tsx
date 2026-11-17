@@ -23,7 +23,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { createReservation } from '@/services/reservation.service'
 import { RoomItem, RoomTypeItem } from '@/services/room.service'
 import { PropertyItem } from '@/services/property.service'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, formatTimeString } from '@/lib/utils'
 
 interface ReservationFormProps {
   property: PropertyItem
@@ -60,7 +60,9 @@ export default function ReservationForm({
     id_number: '',
     room_id: '',
     check_in_date: todayStr,
+    check_in_time: initialProp.check_in_time || '14:00',
     check_out_date: defaultEndStr,
+    check_out_time: initialProp.check_out_time || '11:00',
     num_adults: 2,
     num_children: 0,
     paid_amount: 0,
@@ -123,7 +125,9 @@ export default function ReservationForm({
         room_type_id: selectedRoomTypeId,
         room_id: formData.room_id || undefined,
         check_in_date: formData.check_in_date,
+        check_in_time: formData.check_in_time,
         check_out_date: formData.check_out_date,
+        check_out_time: formData.check_out_time,
         num_adults: Number(formData.num_adults),
         num_children: Number(formData.num_children),
         total_amount: totalAmount,
@@ -205,28 +209,123 @@ export default function ReservationForm({
           </CardHeader>
           <CardContent className="pt-4 space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Check-In Date *</label>
-                <input
-                  type="date"
-                  name="check_in_date"
-                  value={formData.check_in_date}
-                  onChange={handleChange}
-                  className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-                  required
-                />
+              {/* Check-In Date & Time */}
+              <div className="sm:col-span-2 space-y-1">
+                <label className="block text-xs font-medium text-gray-700">Check-In Schedule (Date &amp; Time) *</label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div>
+                    <input
+                      type="date"
+                      name="check_in_date"
+                      value={formData.check_in_date}
+                      onChange={handleChange}
+                      className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <input
+                      type="time"
+                      name="check_in_time"
+                      value={formData.check_in_time}
+                      onChange={handleChange}
+                      className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center gap-1.5 text-[10px] text-gray-500 pt-0.5">
+                  <span>Presets:</span>
+                  <button
+                    type="button"
+                    onClick={() => setFormData((p) => ({ ...p, check_in_time: '12:00' }))}
+                    className="text-[#5e2b9d] hover:underline cursor-pointer"
+                  >
+                    12:00 PM
+                  </button>
+                  <span>·</span>
+                  <button
+                    type="button"
+                    onClick={() => setFormData((p) => ({ ...p, check_in_time: '14:00' }))}
+                    className="text-[#5e2b9d] hover:underline cursor-pointer font-medium"
+                  >
+                    02:00 PM (Std)
+                  </button>
+                  <span>·</span>
+                  <button
+                    type="button"
+                    onClick={() => setFormData((p) => ({ ...p, check_in_time: '18:00' }))}
+                    className="text-[#5e2b9d] hover:underline cursor-pointer"
+                  >
+                    06:00 PM
+                  </button>
+                </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Check-Out Date *</label>
-                <input
-                  type="date"
-                  name="check_out_date"
-                  value={formData.check_out_date}
-                  onChange={handleChange}
-                  className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-                  required
-                />
+              {/* Check-Out Date & Time */}
+              <div className="sm:col-span-2 space-y-1">
+                <label className="block text-xs font-medium text-gray-700">Check-Out Schedule (Date &amp; Time) *</label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div>
+                    <input
+                      type="date"
+                      name="check_out_date"
+                      value={formData.check_out_date}
+                      onChange={handleChange}
+                      className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <input
+                      type="time"
+                      name="check_out_time"
+                      value={formData.check_out_time}
+                      onChange={handleChange}
+                      className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center gap-1.5 text-[10px] text-gray-500 pt-0.5">
+                  <span>Presets:</span>
+                  <button
+                    type="button"
+                    onClick={() => setFormData((p) => ({ ...p, check_out_time: '10:00' }))}
+                    className="text-[#5e2b9d] hover:underline cursor-pointer"
+                  >
+                    10:00 AM
+                  </button>
+                  <span>·</span>
+                  <button
+                    type="button"
+                    onClick={() => setFormData((p) => ({ ...p, check_out_time: '11:00' }))}
+                    className="text-[#5e2b9d] hover:underline cursor-pointer font-medium"
+                  >
+                    11:00 AM (Std)
+                  </button>
+                  <span>·</span>
+                  <button
+                    type="button"
+                    onClick={() => setFormData((p) => ({ ...p, check_out_time: '14:00' }))}
+                    className="text-[#5e2b9d] hover:underline cursor-pointer"
+                  >
+                    02:00 PM (Late)
+                  </button>
+                </div>
+              </div>
+
+              {/* Schedule Summary Banner */}
+              <div className="sm:col-span-4 bg-[#f7f2fd]/60 p-2.5 rounded-md border border-[#5e2b9d]/20 flex flex-wrap items-center justify-between text-xs text-[#5e2b9d]">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-3.5 w-3.5 shrink-0" />
+                  <span>
+                    <strong>Stay Duration:</strong> {nights} Night{nights > 1 ? 's' : ''} ({formatTimeString(formData.check_in_time)} on {formData.check_in_date} → {formatTimeString(formData.check_out_time)} on {formData.check_out_date})
+                  </span>
+                </div>
+                <span className="text-[11px] font-medium opacity-90">
+                  Daily turnover window: 11:00 AM - 02:00 PM
+                </span>
               </div>
 
               <div>

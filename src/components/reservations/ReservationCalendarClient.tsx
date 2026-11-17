@@ -18,7 +18,9 @@ import {
   CalendarRange,
   ExternalLink,
   Search,
-  Filter
+  Filter,
+  ArrowDownLeft,
+  ArrowUpRight
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -26,7 +28,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { RoomItem } from '@/services/room.service'
 import { ReservationDetail, assignRoomToReservation } from '@/services/reservation.service'
 import { PropertyItem } from '@/services/property.service'
-import { formatDate, formatCurrency } from '@/lib/utils'
+import { formatDate, formatCurrency, formatTimeString } from '@/lib/utils'
 
 interface ReservationCalendarClientProps {
   property: PropertyItem
@@ -111,14 +113,57 @@ export default function ReservationCalendarClient({
     d1.getMonth() === d2.getMonth() &&
     d1.getDate() === d2.getDate()
 
-  // Timezone-safe date span check
-  const isBetween = (day: Date, startStr?: string, endStr?: string) => {
+  // Determine date role & timing for a reservation on a given calendar day
+  const getBookingDayInfo = (day: Date, res: ReservationDetail) => {
     const d = toDateString(day)
-    const s = (startStr || '').slice(0, 10)
-    const e = (endStr || '').slice(0, 10)
-    if (!s || !e) return false
-    if (s === e) return d === s
-    return d >= s && d < e
+    const ci = (res.check_in_date || '').slice(0, 10)
+    const co = (res.check_out_date || '').slice(0, 10)
+    if (!ci || !co) return null
+
+    const inTime = formatTimeString(res.check_in_time)
+    const outTime = formatTimeString(res.check_out_time)
+
+    // Same-day (day use)
+    if (ci === co && d === ci) {
+      return {
+        type: 'day_use' as const,
+        label: `${inTime} - ${outTime}`,
+        shortLabel: `${inTime} → ${outTime}`,
+        timingSummary: `${inTime} → ${outTime}`,
+      }
+    }
+
+    // Check-in / Arrival Day
+    if (d === ci) {
+      return {
+        type: 'arrival' as const,
+        label: `In: ${inTime}`,
+        shortLabel: inTime,
+        timingSummary: `Arrives at ${inTime}`,
+      }
+    }
+
+    // Check-out / Departure Day
+    if (d === co) {
+      return {
+        type: 'departure' as const,
+        label: `Out: ${outTime}`,
+        shortLabel: outTime,
+        timingSummary: `Departs at ${outTime}`,
+      }
+    }
+
+    // In-between / Ongoing Stay
+    if (d > ci && d < co) {
+      return {
+        type: 'stay' as const,
+        label: `Stay (Full Day)`,
+        shortLabel: `Stay`,
+        timingSummary: `${inTime} → ${outTime}`,
+      }
+    }
+
+    return null
   }
 
   const handleConfirmAssignment = async () => {
@@ -177,7 +222,7 @@ export default function ReservationCalendarClient({
               Stay Matrix &amp; Timeline View
             </h1>
             <p className="text-xs text-gray-500 mt-0.5">
-              Visual room occupancy, turnover timetable, and active guest bookings across {initialProp.name}.
+              Visual room occupancy, check-in &amp; check-out timetable, and guest stay tracking for {initialProp.name}.
             </p>
           </div>
         </div>
@@ -284,12 +329,16 @@ export default function ReservationCalendarClient({
 
           <div className="hidden md:flex items-center gap-3 text-[11px] text-gray-600 pl-2 border-l border-gray-200">
             <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#5e2b9d]" />
-              <span>Checked In</span>
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+              <span>Arrival (In)</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-              <span>Confirmed</span>
+              <span className="w-2.5 h-2.5 rounded-full bg-[#5e2b9d]" />
+              <span>Stay</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-blue-500" />
+              <span>Departure (Out)</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
@@ -302,7 +351,7 @@ export default function ReservationCalendarClient({
       {/* Main Calendar Matrix Table */}
       <div className="bg-white rounded-md border border-gray-200 shadow-2xs overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse min-w-[700px]">
+          <table className="w-full text-left text-xs border-collapse min-w-[750px]">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-200">
                 <th className="p-3 w-48 font-medium text-gray-600 text-[11px] sticky left-0 bg-gray-50 z-20 border-r border-gray-200">
@@ -313,7 +362,7 @@ export default function ReservationCalendarClient({
                   return (
                     <th
                       key={idx}
-                      className={`p-2.5 text-center border-r border-gray-200 min-w-[95px] ${
+                      className={`p-2.5 text-center border-r border-gray-200 min-w-[110px] ${
                         isToday ? 'bg-[#f7f2fd] text-[#5e2b9d]' : 'text-gray-600'
                       }`}
                     >
@@ -341,9 +390,13 @@ export default function ReservationCalendarClient({
                   </td>
 
                   {days.map((day, dIdx) => {
-                    const matches = unassignedReservations.filter((res) =>
-                      isBetween(day, res.check_in_date, res.check_out_date)
-                    )
+                    const matches = unassignedReservations
+                      .map((res) => {
+                        const info = getBookingDayInfo(day, res)
+                        return info ? { res, info } : null
+                      })
+                      .filter(Boolean) as { res: ReservationDetail; info: NonNullable<ReturnType<typeof getBookingDayInfo>> }[]
+
                     const isToday = isSameDay(day, new Date())
 
                     return (
@@ -355,15 +408,18 @@ export default function ReservationCalendarClient({
                       >
                         {matches.length > 0 ? (
                           <div className="space-y-1">
-                            {matches.map((match) => (
+                            {matches.map(({ res, info }) => (
                               <div
-                                key={match.id}
-                                onClick={() => setAssigningRes(match)}
+                                key={res.id}
+                                onClick={() => setAssigningRes(res)}
                                 className="p-1 rounded text-[10px] font-medium truncate shadow-2xs bg-amber-500 hover:bg-amber-600 text-white cursor-pointer transition-all"
-                                title={`Click to assign room: ${match.guest_name} (#${match.reservation_number}) - ${match.room_type_name}`}
+                                title={`Click to assign room: ${res.guest_name} (#${res.reservation_number}) | ${info.timingSummary}`}
                               >
-                                <span className="font-bold block truncate">{match.guest_name}</span>
-                                <span className="text-[9px] opacity-90 block truncate">{match.room_type_name}</span>
+                                <span className="font-bold block truncate">{res.guest_name}</span>
+                                <div className="text-[9px] opacity-90 flex items-center justify-center gap-1">
+                                  <Clock className="h-2.5 w-2.5" />
+                                  <span>{info.shortLabel}</span>
+                                </div>
                               </div>
                             ))}
                           </div>
@@ -405,30 +461,54 @@ export default function ReservationCalendarClient({
                       </td>
 
                       {days.map((day, dIdx) => {
-                        const match = roomReservations.find((res) =>
-                          isBetween(day, res.check_in_date, res.check_out_date)
-                        )
+                        const dayEvents = roomReservations
+                          .map((res) => {
+                            const info = getBookingDayInfo(day, res)
+                            return info ? { res, info } : null
+                          })
+                          .filter(Boolean) as { res: ReservationDetail; info: NonNullable<ReturnType<typeof getBookingDayInfo>> }[]
+
                         const isToday = isSameDay(day, new Date())
 
                         return (
                           <td
                             key={dIdx}
-                            className={`p-1.5 border-r border-gray-100 text-center align-middle ${
+                            className={`p-1 border-r border-gray-100 text-center align-middle ${
                               isToday ? 'bg-[#f7f2fd]/30' : ''
                             }`}
                           >
-                            {match ? (
-                              <div
-                                onClick={() => setSelectedBookingDetails(match)}
-                                className={`p-1.5 rounded text-[10px] font-medium truncate shadow-2xs cursor-pointer hover:opacity-90 transition-opacity ${
-                                  match.status === 'checked_in'
-                                    ? 'bg-[#5e2b9d] text-white'
-                                    : 'bg-emerald-600 text-white'
-                                }`}
-                                title={`Click to view booking: ${match.guest_name} (#${match.reservation_number})`}
-                              >
-                                <span className="font-semibold block truncate">{match.guest_name}</span>
-                                <span className="text-[9px] opacity-85 block truncate">#{match.reservation_number}</span>
+                            {dayEvents.length > 0 ? (
+                              <div className="space-y-1">
+                                {dayEvents.map(({ res, info }) => {
+                                  // Color code by event type: Arrival (emerald), Departure (blue), Stay (purple), Day-Use (indigo)
+                                  let bgClass = 'bg-[#5e2b9d] text-white'
+                                  let icon = <Clock className="h-2.5 w-2.5 shrink-0" />
+
+                                  if (info.type === 'arrival') {
+                                    bgClass = 'bg-emerald-600 text-white'
+                                    icon = <ArrowDownLeft className="h-2.5 w-2.5 shrink-0" />
+                                  } else if (info.type === 'departure') {
+                                    bgClass = 'bg-blue-600 text-white'
+                                    icon = <ArrowUpRight className="h-2.5 w-2.5 shrink-0" />
+                                  } else if (info.type === 'day_use') {
+                                    bgClass = 'bg-indigo-600 text-white'
+                                  }
+
+                                  return (
+                                    <div
+                                      key={res.id + info.type}
+                                      onClick={() => setSelectedBookingDetails(res)}
+                                      className={`p-1 rounded text-[10px] font-medium shadow-2xs cursor-pointer hover:opacity-90 transition-opacity ${bgClass}`}
+                                      title={`${res.guest_name} (#${res.reservation_number}) | ${info.timingSummary}`}
+                                    >
+                                      <span className="font-semibold block truncate leading-tight">{res.guest_name}</span>
+                                      <div className="text-[9px] opacity-90 flex items-center justify-center gap-1 mt-0.5">
+                                        {icon}
+                                        <span className="truncate">{info.label}</span>
+                                      </div>
+                                    </div>
+                                  )
+                                })}
                               </div>
                             ) : room.status === 'maintenance' || room.status === 'blocked' ? (
                               <div className="p-1 rounded text-[10px] bg-red-50 text-red-700 border border-red-200">
@@ -479,9 +559,10 @@ export default function ReservationCalendarClient({
                   <span className="font-semibold text-gray-900">{assigningRes.room_type_name}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Stay Range:</span>
-                  <span className="font-semibold text-gray-900">
-                    {formatDate(assigningRes.check_in_date)} to {formatDate(assigningRes.check_out_date)} ({assigningRes.nights} Nights)
+                  <span className="text-gray-500">Stay Range &amp; Times:</span>
+                  <span className="font-semibold text-gray-900 text-right">
+                    {formatDate(assigningRes.check_in_date)} {formatTimeString(assigningRes.check_in_time)} <br />
+                    to {formatDate(assigningRes.check_out_date)} {formatTimeString(assigningRes.check_out_time)}
                   </span>
                 </div>
               </div>
@@ -548,7 +629,7 @@ export default function ReservationCalendarClient({
             <div className="flex items-start justify-between border-b border-gray-100 pb-3">
               <div>
                 <h3 className="text-sm font-semibold text-gray-900">
-                  Reservation Details
+                  Reservation Details &amp; Timetable
                 </h3>
                 <p className="text-xs text-gray-500 mt-0.5">
                   #{selectedBookingDetails.reservation_number}
@@ -582,10 +663,20 @@ export default function ReservationCalendarClient({
                 <span className="text-gray-900">{selectedBookingDetails.room_type_name}</span>
               </div>
               <div className="flex justify-between py-1 border-b border-gray-100">
-                <span className="text-gray-500">Stay Dates:</span>
+                <span className="text-gray-500">Check-In Schedule:</span>
                 <span className="text-gray-900 font-medium">
-                  {formatDate(selectedBookingDetails.check_in_date)} – {formatDate(selectedBookingDetails.check_out_date)} ({selectedBookingDetails.nights} Nights)
+                  {formatDate(selectedBookingDetails.check_in_date)} at {formatTimeString(selectedBookingDetails.check_in_time)}
                 </span>
+              </div>
+              <div className="flex justify-between py-1 border-b border-gray-100">
+                <span className="text-gray-500">Check-Out Schedule:</span>
+                <span className="text-gray-900 font-medium">
+                  {formatDate(selectedBookingDetails.check_out_date)} at {formatTimeString(selectedBookingDetails.check_out_time)}
+                </span>
+              </div>
+              <div className="flex justify-between py-1 border-b border-gray-100">
+                <span className="text-gray-500">Stay Duration:</span>
+                <span className="text-gray-900 font-medium">{selectedBookingDetails.nights} Night{selectedBookingDetails.nights > 1 ? 's' : ''}</span>
               </div>
               <div className="flex justify-between py-1 border-b border-gray-100">
                 <span className="text-gray-500">Financial Total:</span>
@@ -664,7 +755,7 @@ export default function ReservationCalendarClient({
                   <th className="p-3 font-medium">Reservation #</th>
                   <th className="p-3 font-medium">Guest</th>
                   <th className="p-3 font-medium">Room</th>
-                  <th className="p-3 font-medium">Stay Period</th>
+                  <th className="p-3 font-medium">Stay Period &amp; Timing</th>
                   <th className="p-3 font-medium">Status</th>
                   <th className="p-3 font-medium text-right">Actions</th>
                 </tr>
@@ -700,10 +791,13 @@ export default function ReservationCalendarClient({
                           <div className="text-[10px] text-gray-400 mt-0.5">{res.room_type_name}</div>
                         </td>
                         <td className="p-3 text-gray-700">
-                          <div>
-                            {formatDate(res.check_in_date)} – {formatDate(res.check_out_date)}
+                          <div className="flex items-center gap-1 font-medium text-gray-900">
+                            <Clock className="h-3 w-3 text-[#5e2b9d] shrink-0" />
+                            <span>{formatDate(res.check_in_date)} {formatTimeString(res.check_in_time)}</span>
                           </div>
-                          <div className="text-[10px] text-gray-400">{res.nights} Nights</div>
+                          <div className="text-[10px] text-gray-500 pl-4 mt-0.5">
+                            → {formatDate(res.check_out_date)} {formatTimeString(res.check_out_time)} ({res.nights} Nights)
+                          </div>
                         </td>
                         <td className="p-3">
                           <Badge

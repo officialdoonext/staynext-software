@@ -26,7 +26,9 @@ export async function createReservationAction(formData: FormData): Promise<Actio
     const roomTypeId = formData.get('roomTypeId') as string
     const roomId = formData.get('roomId') as string
     const checkInDate = formData.get('checkInDate') as string
+    const checkInTime = (formData.get('checkInTime') as string) || '14:00'
     const checkOutDate = formData.get('checkOutDate') as string
+    const checkOutTime = (formData.get('checkOutTime') as string) || '11:00'
     const numAdults = parseInt(formData.get('numAdults') as string) || 1
     const numChildren = parseInt(formData.get('numChildren') as string) || 0
     const totalAmount = parseFloat(formData.get('totalAmount') as string) || 0
@@ -110,7 +112,9 @@ export async function createReservationAction(formData: FormData): Promise<Actio
         guest_id: guestId,
         room_type_id: roomTypeId,
         check_in_date: checkInDate,
+        check_in_time: checkInTime,
         check_out_date: checkOutDate,
+        check_out_time: checkOutTime,
         num_adults: numAdults,
         num_children: numChildren,
         total_amount: totalAmount,
@@ -166,7 +170,9 @@ export async function createReservationAction(formData: FormData): Promise<Actio
         reservation_id: reservation.id,
         room_id: allocatedRoomId,
         check_in_date: checkInDate,
+        check_in_time: checkInTime,
         check_out_date: checkOutDate,
+        check_out_time: checkOutTime,
         rate_per_night: totalAmount,
       })
 
