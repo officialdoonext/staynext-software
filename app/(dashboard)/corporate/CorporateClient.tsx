@@ -473,3 +473,4 @@ export function CorporateClient({ initialAccounts, propertyId }: CorporateClient
     </div>
   )
 }
+

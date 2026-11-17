@@ -235,3 +235,4 @@ export function ReportsClient({ report, propertyId }: ReportsClientProps) {
     </div>
   )
 }
+

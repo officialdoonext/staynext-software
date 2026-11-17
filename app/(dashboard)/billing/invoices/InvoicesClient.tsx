@@ -235,3 +235,4 @@ export function InvoicesClient({ initialInvoices, propertyId }: InvoicesClientPr
     </div>
   )
 }
+

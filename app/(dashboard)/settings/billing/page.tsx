@@ -1,4 +1,4 @@
-﻿import React from 'react'
+import React from 'react'
 import { getPropertySettings, getTaxRates } from '@/services/settings.service'
 import { TaxesAndBillingClient } from './TaxesAndBillingClient'
 

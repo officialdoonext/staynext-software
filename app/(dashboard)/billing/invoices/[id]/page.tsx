@@ -20,3 +20,4 @@ export default async function InvoiceDetailPage({ params }: PageProps) {
 
   return <InvoicePrintClient invoice={invoice} />
 }
+

@@ -412,3 +412,4 @@ export function TravelAgentsClient({ initialAgents, propertyId }: TravelAgentsCl
     </div>
   )
 }
+

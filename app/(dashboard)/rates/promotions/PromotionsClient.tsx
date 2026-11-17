@@ -417,3 +417,4 @@ export function PromotionsClient({ initialPromotions, propertyId }: PromotionsCl
     </div>
   )
 }
+

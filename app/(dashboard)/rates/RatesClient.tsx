@@ -396,3 +396,4 @@ export function RatesClient({ initialPlans, propertyId }: RatesClientProps) {
     </div>
   )
 }
+

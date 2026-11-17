@@ -277,3 +277,4 @@ export async function deleteExpense(id: string): Promise<{ success: boolean; err
     return { success: false, error: err.message || 'Failed to delete expense' }
   }
 }
+

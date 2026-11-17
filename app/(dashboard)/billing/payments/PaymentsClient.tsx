@@ -367,3 +367,4 @@ export function PaymentsClient({ initialPayments, propertyId }: PaymentsClientPr
     </div>
   )
 }
+

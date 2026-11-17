@@ -521,3 +521,4 @@ export function MenuClient({ initialItems, categories, propertyId }: MenuClientP
     </div>
   )
 }
+

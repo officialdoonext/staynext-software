@@ -227,3 +227,4 @@ export function BookingEngineClient({ property, channelsCount }: BookingEngineCl
     </div>
   )
 }
+

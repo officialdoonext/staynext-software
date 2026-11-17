@@ -1,8 +1,9 @@
-﻿import React from 'react'
+import React from 'react'
 import { createClient } from '@/lib/supabase/server'
 import { getGuestsReport } from '@/services/report.service'
 import { GuestsReportClient } from './GuestsReportClient'
 
+export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Guest Profiles & Loyalty Analytics | StayNext' }
 
 export default async function GuestReportsPage() {

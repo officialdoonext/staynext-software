@@ -256,3 +256,4 @@ export function InvoicePrintClient({ invoice }: InvoicePrintClientProps) {
     </div>
   )
 }
+

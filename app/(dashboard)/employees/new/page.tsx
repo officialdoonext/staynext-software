@@ -1,4 +1,4 @@
-﻿import React from 'react'
+import React from 'react'
 import { createClient } from '@/lib/supabase/server'
 import { getDepartments } from '@/services/employee.service'
 import { EmployeeForm } from './EmployeeForm'

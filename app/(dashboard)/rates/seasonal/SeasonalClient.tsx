@@ -345,3 +345,4 @@ export function SeasonalClient({ initialRates, propertyId }: SeasonalClientProps
     </div>
   )
 }
+

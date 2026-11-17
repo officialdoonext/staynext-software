@@ -92,3 +92,4 @@ BEGIN
 END $$;
 
 CREATE INDEX IF NOT EXISTS idx_corporate_contracts_account ON corporate_contracts(corporate_account_id);
+

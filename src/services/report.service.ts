@@ -336,3 +336,4 @@ export async function getGuestsReport(propertyId: string): Promise<GuestAnalytic
     return { totalGuests: 0, vipCount: 0, topGuests: [] }
   }
 }
+

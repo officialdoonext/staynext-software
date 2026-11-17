@@ -693,3 +693,4 @@ export function InventoryClient({
     </div>
   )
 }
+

@@ -1,4 +1,4 @@
-﻿import React from 'react'
+import React from 'react'
 import { getPropertySettings, getNotificationPreferences } from '@/services/settings.service'
 import { NotificationsClient } from './NotificationsClient'
 

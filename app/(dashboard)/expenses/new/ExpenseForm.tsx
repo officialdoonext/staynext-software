@@ -242,3 +242,4 @@ export function ExpenseForm({ categories, propertyId }: ExpenseFormProps) {
     </div>
   )
 }
+

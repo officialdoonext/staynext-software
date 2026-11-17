@@ -268,3 +268,4 @@ export function DepartmentsClient({ initialDepartments, propertyId }: Department
     </div>
   )
 }
+

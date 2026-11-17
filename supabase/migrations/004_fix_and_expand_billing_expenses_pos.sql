@@ -118,3 +118,4 @@ BEGIN
 END $$;
 
 CREATE INDEX IF NOT EXISTS idx_seasonal_rates_lookup ON seasonal_rates(property_id, start_date, end_date);
+

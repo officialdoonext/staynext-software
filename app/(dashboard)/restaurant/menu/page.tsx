@@ -1,4 +1,4 @@
-﻿import React from 'react'
+import React from 'react'
 import { createClient } from '@/lib/supabase/server'
 import { getMenuItems, getMenuCategories } from '@/services/restaurant.service'
 import { MenuClient } from './MenuClient'

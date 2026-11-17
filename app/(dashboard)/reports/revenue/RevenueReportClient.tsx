@@ -188,3 +188,4 @@ export function RevenueReportClient({ payments, propertyId }: RevenueReportClien
     </div>
   )
 }
+

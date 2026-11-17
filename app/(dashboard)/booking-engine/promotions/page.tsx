@@ -1,4 +1,4 @@
-﻿import React from 'react'
+import React from 'react'
 import { createClient } from '@/lib/supabase/server'
 import { getRatePromotions } from '@/services/rate.service'
 import { PromotionsClient } from '../../rates/promotions/PromotionsClient'

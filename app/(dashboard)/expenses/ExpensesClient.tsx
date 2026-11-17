@@ -320,3 +320,4 @@ export function ExpensesClient({ initialExpenses, propertyId }: ExpensesClientPr
     </div>
   )
 }
+

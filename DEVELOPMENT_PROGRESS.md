@@ -3,11 +3,12 @@
 **Last Updated:** 2026-11-17  
 **Design Specifications:**
 - **Primary Color:** `#5e2b9d`
-- **Secondary / Accent:** `#7c3aed`, Light Background `#f7f2fd`
-- **Typography:** `Sora` (300, 400, 500) — self-hosted locally, max font-weight 500 across all UI elements
+- **Secondary / Accent:** `#4d2282`, Light Background `#f7f2fd`
+- **Typography:** `Sora` (300, 400, 500) — self-hosted locally in `public/fonts/`, max font-weight 500 across all UI elements
 - **Border Radius:** Maximum 6px across all components (`rounded-md` / `rounded-sm` capped at 6px)
 - **Cursor:** `cursor: pointer` on all buttons, links, dropdowns, accordions, tabs, and interactive controls
 - **Sidebar:** Collapsible down to 0 width with main area occupying 100% full width smoothly
+- **Multi-Tenant Policy:** Tenant-isolated queries, inactive/expired tenants gated to `/onboarding`, zero mock/dummy data across the entire platform
 
 ---
 
@@ -16,14 +17,14 @@
 | Phase | Module / Scope | Status | Verification / Build |
 |---|---|---|---|
 | **Phase 0** | Brand & UI Foundation (Sora, #5e2b9d, Max 6px radius, Collapsible Sidebar, Multi-tenant Auth Guard) | **COMPLETED** | Verified (Build 63/63 routes OK) |
-| **Phase 1** | Database Schema Expansion (003 Migration: QR, POS, Inventory, Corporate, Tax, Room Blocks) | **COMPLETED** | Migration `003_complete_pms_and_qr_system.sql` created |
+| **Phase 1** | Database Schema Expansion (001-005 Migrations: QR, POS, Inventory, Corporate, Tax, POs) | **COMPLETED** | Migrations `001` through `005` in `supabase/migrations/` |
 | **Phase 2** | Property & Room Management (`/properties/*`, `/rooms/*`, Room Blocks, QR Code Generator & Print) | **COMPLETED** | Verified (68/68 routes compiled successfully) |
 | **Phase 3** | Guest QR Self-Service Experience (`/guest/[propertyId]/[roomId]`, Menu, Orders, Requests, Tracking) | **COMPLETED** | Verified (Mobile-first guest portal + live timeline) |
-| **Phase 4** | Front Desk & Reservations (`/front-desk`, `/reservations/*`, Stay View, Quick Check-in/out) | **COMPLETED** | Verified (Real bookings, check-in, checkout, Gantt matrix) |
-| **Phase 5** | Guest Management, Housekeeping & Maintenance (`/guests/*`, `/housekeeping/*`, `/maintenance/*`) | **COMPLETED** | Verified (CRM profiles, turnover board, work orders) |
-| **Phase 6** | Billing, Folios, Invoices & Expenses (`/billing/*`, `/expenses/*`, Split Folios, Multi-tender, Tax Reports) | **IN PROGRESS** | Next up |
-| **Phase 7** | Restaurant POS, Inventory & Corporate (`/restaurant/*`, `/inventory/*`, `/corporate/*`, KOT) | **PENDING** | - |
-| **Phase 8** | Booking Engine, Reports & System Settings (`/booking-engine/*`, `/reports/*`, `/settings/*`) | **PENDING** | - |
+| **Phase 4** | Front Desk & Reservations (`/front-desk`, `/reservations/*`, Stay View, Quick Check-in/out, Gantt) | **COMPLETED** | Verified (Real bookings, check-in, checkout, Gantt matrix) |
+| **Phase 5** | Guest CRM, Housekeeping & Maintenance (`/guests/*`, `/housekeeping/*`, `/maintenance/*`) | **COMPLETED** | Verified (CRM profiles, turnover board, work orders) |
+| **Phase 6** | Billing, Folios, Invoices & Expenses (`/billing/*`, `/expenses/*`, Split Folios, GST Tax Invoice) | **COMPLETED** | Verified (Indian GST SAC 9963, ledger, P&L expenses) |
+| **Phase 7** | Restaurant POS, Inventory & Corporate (`/restaurant/*`, `/inventory/*`, `/corporate/*`, KOT) | **COMPLETED** | Verified (Table layouts, KOT dispatch, PO receiving, B2B) |
+| **Phase 8** | Booking Engine, Executive Reports & Settings (`/booking-engine/*`, `/reports/*`, `/settings/*`) | **COMPLETED** | Verified (Real ADR, RevPAR, OTA Sync, Statutory Taxes) |
 
 ---
 
@@ -38,18 +39,12 @@
 - [x] Collapsible sidebar with 100% width main content expansion.
 - [x] Multi-tenant signup/login with tenant isolation, inactive/expired guard, and `/onboarding` redirection.
 
-### Phase 1: Database Schema Expansion (`003_complete_pms_and_qr_system.sql`)
-- [x] Buildings & Floors tables verification and tenant-level RLS.
-- [x] Properties extended fields: GSTIN, PAN, business reg, coordinates, check-in/out times, currency, timezone, tax policies.
-- [x] Room blocks table (`room_blocks`) with reason, start/end dates, blocked_by, notes.
-- [x] Room QR codes table (`room_qr_codes`) with token hash, active status, print counts.
-- [x] Guest service categories & items (`guest_service_categories`, `guest_service_items`).
-- [x] Guest service requests & timeline updates (`guest_service_requests`, `guest_service_request_updates`).
-- [x] Guest food & beverage orders (`guest_orders`, `guest_order_items`).
-- [x] Restaurant POS tables (outlets, tables, restaurant orders, KOT tickets).
-- [x] Inventory management tables (categories, suppliers, items, purchase orders, transactions).
-- [x] Corporate & travel agents tables (companies, agents, contracted rates).
-- [x] Tax rates & fiscal rules (`tax_rates`).
+### Phase 1: Database Schema Expansion
+- [x] `001_initial_schema.sql`: Core tables for tenants, properties, rooms, room types, guests, reservations, folios, payments, invoices, expenses, employees, and audit logs.
+- [x] `002_multi_tenant_signup_flow.sql`: Stored procedure `handle_new_tenant_signup` with default inactive and expired subscription dates.
+- [x] `003_complete_pms_and_qr_system.sql`: Room blocks, room QR codes, guest service categories, service items, guest orders, restaurant tables/orders/KOT, inventory items/suppliers, corporate accounts, tax rates.
+- [x] `004_fix_and_expand_billing_expenses_pos.sql`: RLS policies for `expense_categories`, `departments`, `employee_schedules`, `rate_promotions`, `seasonal_rates`, relaxed `expenses.created_by` constraint, and added invoice JSON itemization and customer fields.
+- [x] `005_purchase_orders_and_corporate.sql`: Added `purchase_orders`, `travel_agents`, and `corporate_contracts` tables with RLS policies.
 
 ### Phase 2: Property & Room Management
 - [x] `/properties` - Full Supabase list, filters, search, pagination, status toggle.
@@ -87,21 +82,47 @@
 - [x] `/maintenance` - Maintenance work orders, priority management, resolution modal, room block link.
 - [x] `/maintenance/new` - Work order ticket creation form saving to Supabase.
 
-### Phase 6: Billing & Financials
-- [ ] `/billing` - Invoices and payments overview, search, filters.
-- [ ] `/billing/invoices` & `/billing/payments` - Tax invoice generation, payment processing.
-- [ ] `/expenses` - Hotel expense logging, category filtering, receipt attachments.
-- [ ] `/expenses/new` - Expense recording form saving to Supabase.
+### Phase 6: Billing, Invoices, Payments & Expenses
+- [x] `/billing` - Invoices and folios overview, charge posting dialog, record payment dialog, invoice generation, CSV export.
+- [x] `/billing/invoices` - Search, status filter, CSV export.
+- [x] `/billing/invoices/[id]` - Dedicated printable Indian GST Tax Invoice (SAC 9963, 6% CGST + 6% SGST, guest details, `window.print()` trigger).
+- [x] `/billing/payments` - Ledger query, payment method filter, record direct payment dialog, CSV export.
+- [x] `/expenses` - Outlays from Supabase, status filters, delete modal, CSV export.
+- [x] `/expenses/new` - Expense creation form with categories and receipt notes.
+- [x] `/expenses/categories` - Categories with budget progress bars, add/delete category dialogs.
 
-### Phase 7: Restaurant POS & Inventory
-- [ ] `/restaurant` - POS terminal, table layout, menu ordering, KOT printing.
-- [ ] `/inventory` - Stock tracking, purchase orders, supplier management, low stock alerts.
-- [ ] `/corporate` - Corporate accounts, travel agents, commission tracking, credit limits.
+### Phase 7: Restaurant POS, Inventory & Corporate
+- [x] `/restaurant` - Real KOT orders, live occupancy, dispatch order modal, settle bill modal with room folio transfer.
+- [x] `/restaurant/tables` - Floor seating layout, add table modal, status toggle, delete modal.
+- [x] `/restaurant/menu` - Category tabs, Veg/Non-Veg badges, availability toggle, add dish modal.
+- [x] `/restaurant/reports` - F&B sales reporting, average check size, export CSV.
+- [x] `/inventory` - Stock items table, low stock alerts, adjust stock modal, add SKU modal, export CSV.
+- [x] `/inventory/suppliers` - Vendor directory, add vendor modal, terms, export CSV.
+- [x] `/inventory/purchase-orders` - Purchase orders, issue PO modal, ship/receive status transitions, export CSV.
+- [x] `/corporate` - Commercial accounts, credit limits, add account modal, export CSV.
+- [x] `/corporate/contracts` - Rate agreements, room discounts, breakfast inclusion, add contract modal.
+- [x] `/corporate/travel-agents` - Travel agent ledger, IATA numbers, commission %, add agent modal.
 
-### Phase 8: Booking Engine, Reports & Settings
-- [ ] `/booking-engine` - Direct booking engine settings, promo codes, public widget URL.
-- [ ] `/reports` - Financial, occupancy, RevPAR, ADR, tax reports with CSV/PDF export.
-- [ ] `/settings` - Property settings, tax configuration, staff roles, notification preferences.
+### Phase 8: Employees, Rates, Booking Engine, Reports & Settings
+- [x] `/employees` - Staff directory, search, delete modal, export CSV.
+- [x] `/employees/new` - Onboarding form with role and department select.
+- [x] `/employees/departments` - Department units with staff count, add/delete modals.
+- [x] `/employees/schedules` - Duty roster, shift timings, assign shift modal.
+- [x] `/rates` - Rate plans list, meal plans, create rate plan modal.
+- [x] `/rates/promotions` - Coupon codes, discount type, create promo modal.
+- [x] `/rates/seasonal` - Date-based multipliers, add surge modal.
+- [x] `/booking-engine` - Embed code generator, direct booking link, policy settings.
+- [x] `/booking-engine/channels` - OTA 2-way sync manager, pause/resume, connect channel modal.
+- [x] `/reports` - Executive dashboard with real ADR, RevPAR, NOI, links to sub-reports.
+- [x] `/reports/occupancy` - Category yield table, export CSV.
+- [x] `/reports/financial` - Audited P&L paper statement with gross revenue and expense breakdown.
+- [x] `/reports/revenue` - Revenue ledger by payment method.
+- [x] `/reports/guests` - Guest CRM analytics and VIP loyalty leaderboards.
+- [x] `/settings` - Property profile form, classification, address, currency, timezone, operating hours, description.
+- [x] `/settings/billing` - Statutory taxes master (SAC 9963, 5%, 12%, 18% GST) and tenant SaaS subscription status.
+- [x] `/settings/integrations` - Razorpay, Stripe, WhatsApp Cloud API, Twilio, SendGrid, RFID Door Locks.
+- [x] `/settings/notifications` - Automated guest notifications and emergency management alerts.
+- [x] `/settings/users` - Team users directory, RBAC role assignments, staff onboarding.
 
 ---
 
@@ -113,3 +134,6 @@
 | 2026-11-17 | `npm run build` | Success (68/68 routes) | Verified Property, Room, QR Management and Guest App. |
 | 2026-11-17 | `npm run build` | Success (68/68 routes) | Verified Front Desk, Reservations, and Gantt stay calendar. |
 | 2026-11-17 | `npm run build` | Success (68/68 routes) | Verified Guest CRM, Housekeeping turnover board, and Maintenance. |
+| 2026-11-17 | `npm run build` | Success (68/68 routes) | Verified Billing, Invoices, Payments, Expenses, and POS. |
+| 2026-11-17 | `npm run build` | Success (68/68 routes) | Verified Inventory, Corporate, POs, Travel Agents. |
+| 2026-11-17 | `npm run build` | Success (68/68 routes) | Verified Complete PMS with 0 TypeScript/Turbopack errors. |

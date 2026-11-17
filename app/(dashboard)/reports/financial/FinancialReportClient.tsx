@@ -202,3 +202,4 @@ export function FinancialReportClient({ pnl, propertyId }: FinancialReportClient
     </div>
   )
 }
+

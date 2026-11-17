@@ -1,4 +1,4 @@
-﻿import React from 'react'
+import React from 'react'
 import { createClient } from '@/lib/supabase/server'
 import { getOccupancyReport } from '@/services/report.service'
 import { OccupancyReportClient } from './OccupancyReportClient'

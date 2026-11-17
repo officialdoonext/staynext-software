@@ -353,3 +353,4 @@ export function TablesClient({ initialTables, propertyId }: TablesClientProps) {
     </div>
   )
 }
+

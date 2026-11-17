@@ -1,7 +1,8 @@
-﻿import React from 'react'
+import React from 'react'
 import { getPropertySettings, getPropertyUsers } from '@/services/settings.service'
 import { UsersClient } from './UsersClient'
 
+export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Users & Permissions | StayNext' }
 
 export default async function SettingsUsersPage() {

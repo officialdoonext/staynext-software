@@ -587,3 +587,4 @@ export async function inviteStaffMember(
     return { success: false, error: err.message || 'Failed to add staff member' }
   }
 }
+

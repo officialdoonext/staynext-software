@@ -187,3 +187,4 @@ export function RestaurantReportsClient({ orders, propertyId }: RestaurantReport
     </div>
   )
 }
+
