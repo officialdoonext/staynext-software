@@ -17,6 +17,16 @@ import {
   CreditCard,
   Receipt,
   Building,
+  Globe,
+  ShieldCheck,
+  FileCheck,
+  Moon,
+  Landmark,
+  Wallet,
+  QrCode,
+  FileText,
+  CheckCircle2,
+  UserCheck,
 } from 'lucide-react'
 import StatCard from '@/components/dashboard/StatCard'
 import ArrivalsTable from '@/components/dashboard/ArrivalsTable'
@@ -95,6 +105,202 @@ export default async function DashboardPage() {
         </div>
         <QuickActions />
       </div>
+
+      {/* Compliance & Night Audit Action Banners */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        {/* Form III Alert */}
+        <div className={`p-3 rounded-md border flex items-center justify-between text-xs ${
+          stats.formIIIPending > 0
+            ? 'bg-amber-50 border-amber-200 text-amber-900'
+            : 'bg-emerald-50 border-emerald-200 text-emerald-900'
+        }`}>
+          <div className="flex items-center gap-2.5">
+            <Globe className={`h-4 w-4 shrink-0 ${stats.formIIIPending > 0 ? 'text-amber-600' : 'text-emerald-600'}`} />
+            <div>
+              <span className="font-semibold">FRRO Form III (Foreign Guests):</span>{' '}
+              {stats.formIIIPending > 0 ? (
+                <span><strong>{stats.formIIIPending}</strong> foreign arrival(s) pending reporting within 24h</span>
+              ) : (
+                <span>All foreign guest arrivals reported</span>
+              )}
+            </div>
+          </div>
+          <Link
+            href="/front-desk"
+            className="text-[11px] font-medium underline shrink-0 hover:opacity-80"
+          >
+            Review &rarr;
+          </Link>
+        </div>
+
+        {/* KYC ID Verification Queue */}
+        <div className={`p-3 rounded-md border flex items-center justify-between text-xs ${
+          stats.idVerificationPending > 0
+            ? 'bg-blue-50 border-blue-200 text-blue-900'
+            : 'bg-gray-50 border-gray-200 text-gray-700'
+        }`}>
+          <div className="flex items-center gap-2.5">
+            <UserCheck className="h-4 w-4 shrink-0 text-blue-600" />
+            <div>
+              <span className="font-semibold">ID Proof / KYC Queue:</span>{' '}
+              <span><strong>{stats.idVerificationPending}</strong> guest(s) awaiting verification</span>
+            </div>
+          </div>
+          <Link
+            href="/guests"
+            className="text-[11px] font-medium underline shrink-0 text-blue-800 hover:opacity-80"
+          >
+            Verify &rarr;
+          </Link>
+        </div>
+
+        {/* Night Audit Status */}
+        <div className={`p-3 rounded-md border flex items-center justify-between text-xs ${
+          stats.nightAuditCompleted
+            ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
+            : 'bg-purple-50 border-purple-200 text-purple-900'
+        }`}>
+          <div className="flex items-center gap-2.5">
+            <Moon className="h-4 w-4 shrink-0 text-[#5e2b9d]" />
+            <div>
+              <span className="font-semibold">Night Audit:</span>{' '}
+              <span>{stats.nightAuditCompleted ? 'Today’s closing completed' : 'Daily night closing pending'}</span>
+            </div>
+          </div>
+          <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+            stats.nightAuditCompleted ? 'bg-emerald-100 text-emerald-800' : 'bg-purple-100 text-[#5e2b9d]'
+          }`}>
+            {stats.nightAuditCompleted ? 'Balanced' : 'Pending'}
+          </span>
+        </div>
+      </div>
+
+      {/* India Front Desk & Statutory Operations */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xs font-medium uppercase tracking-wider text-gray-500">
+            India Front Desk &amp; Statutory Logistics
+          </h2>
+          <span className="text-[11px] text-gray-400">Rule 17 Immigration &bull; KYC &bull; Turnaround</span>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          <StatCard
+            title="Walk-in Guests"
+            value={stats.walkInGuests}
+            icon={DoorOpen}
+            iconColor="text-indigo-600"
+            iconBg="bg-indigo-50"
+            href="/front-desk"
+            subtitle="Today's direct arrivals"
+          />
+          <StatCard
+            title="Foreign Arrivals"
+            value={stats.foreignGuestArrivals}
+            icon={Globe}
+            iconColor="text-blue-600"
+            iconBg="bg-blue-50"
+            href="/front-desk"
+            subtitle="Require Form III"
+          />
+          <StatCard
+            title="Form III Pending"
+            value={stats.formIIIPending}
+            icon={AlertTriangle}
+            iconColor={stats.formIIIPending > 0 ? "text-amber-600" : "text-gray-400"}
+            iconBg={stats.formIIIPending > 0 ? "bg-amber-50" : "bg-gray-100"}
+            href="/front-desk"
+            subtitle="Due within 24h"
+          />
+          <StatCard
+            title="Form III Submitted"
+            value={stats.formIIISubmitted}
+            icon={FileCheck}
+            iconColor="text-emerald-600"
+            iconBg="bg-emerald-50"
+            href="/front-desk"
+            subtitle="Reported to portal"
+          />
+          <StatCard
+            title="Pending Cleaning"
+            value={stats.pendingRoomCleaning}
+            icon={Clock}
+            iconColor="text-orange-600"
+            iconBg="bg-orange-50"
+            href="/housekeeping"
+            subtitle="Dirty & cleaning rooms"
+          />
+          <StatCard
+            title="Room Maintenance"
+            value={stats.roomMaintenance}
+            icon={Wrench}
+            iconColor="text-rose-600"
+            iconBg="bg-rose-50"
+            href="/maintenance"
+            subtitle="Out of order / repairs"
+          />
+        </div>
+      </section>
+
+      {/* Payment Modes & GST Collections (Daily Indian Reconciliation) */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xs font-medium uppercase tracking-wider text-gray-500">
+            Payment Modes &amp; GST Reconciliation
+          </h2>
+          <Link href="/billing" className="text-xs font-medium text-[#5e2b9d] hover:text-[#4d2282]">
+            Detailed Ledger &rarr;
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          <StatCard
+            title="Cash Collection"
+            value={formatCurrency(stats.cashCollection)}
+            icon={Wallet}
+            iconColor="text-emerald-600"
+            iconBg="bg-emerald-50"
+            href="/billing/payments?method=cash"
+            subtitle="Front-desk drawer"
+          />
+          <StatCard
+            title="UPI Collection"
+            value={formatCurrency(stats.upiCollection)}
+            icon={QrCode}
+            iconColor="text-[#5e2b9d]"
+            iconBg="bg-[#f7f2fd]"
+            href="/billing/payments?method=upi"
+            subtitle="PhonePe, GPay, Paytm"
+          />
+          <StatCard
+            title="Card Collection"
+            value={formatCurrency(stats.cardCollection)}
+            icon={CreditCard}
+            iconColor="text-blue-600"
+            iconBg="bg-blue-50"
+            href="/billing/payments?method=card"
+            subtitle="POS swipe machines"
+          />
+          <StatCard
+            title="Credit / Pay Later"
+            value={formatCurrency(stats.payLaterBalance)}
+            icon={Landmark}
+            iconColor="text-rose-600"
+            iconBg="bg-rose-50"
+            href="/billing?filter=pending"
+            subtitle="Outstanding receivables"
+          />
+          <StatCard
+            title="GST Revenue"
+            value={formatCurrency(stats.gstRevenue)}
+            icon={FileText}
+            iconColor="text-teal-600"
+            iconBg="bg-teal-50"
+            href="/billing/invoices"
+            subtitle={`CGST: ${formatCurrency(stats.cgstCollected)} | SGST: ${formatCurrency(stats.sgstCollected)}`}
+          />
+        </div>
+      </section>
 
       {/* 2. Booking Statistics Cards */}
       <section className="space-y-3">

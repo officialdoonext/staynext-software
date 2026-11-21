@@ -23,6 +23,23 @@ export interface GuestItem {
   preferences?: string
   notes?: string
   created_at: string
+
+  // Indian PMS & Compliance Fields
+  guest_code?: string
+  guest_category?: 'Indian' | 'Foreign' | 'OCI' | string
+  salutation?: string
+  gender?: string
+  dob?: string
+  whatsapp_number?: string
+  state?: string
+  district?: string
+  pincode?: string
+  company_name?: string
+  company_gstin?: string
+  is_blacklisted?: boolean
+  blacklist_reason?: string
+  preferred_meal_plan?: string
+  preferred_language?: string
 }
 
 export interface GuestFilterOptions {
@@ -80,21 +97,36 @@ export async function getGuests(options?: GuestFilterOptions): Promise<{ guests:
       id: g.id,
       first_name: g.first_name || '',
       last_name: g.last_name || '',
-      name: `${g.first_name || ''} ${g.last_name || ''}`.trim() || 'Guest',
+      name: `${g.salutation ? g.salutation + ' ' : ''}${g.first_name || ''} ${g.last_name || ''}`.trim() || 'Guest',
       email: g.email || 'N/A',
       phone: g.phone || 'N/A',
-      nationality: g.nationality || 'Not specified',
-      id_type: g.id_type || 'Passport',
+      nationality: g.nationality || 'India',
+      id_type: g.id_type || 'aadhaar',
       id_number: g.id_number || '',
       address: g.address || '',
       city: g.city || '',
-      country: g.country || '',
+      country: g.country || 'India',
       is_vip: g.is_vip ?? false,
       vip_tier: g.vip_tier || (g.is_vip ? 'Gold VIP' : 'Standard'),
       total_stays: stays.length || g.total_stays || 0,
       total_spent: calculatedSpent || parseFloat(g.total_spent) || 0,
       preferences: g.preferences || 'None',
       notes: g.notes || '',
+      guest_code: g.guest_code || `GST-${g.id.substring(0, 6).toUpperCase()}`,
+      guest_category: g.guest_category || (g.nationality && g.nationality.toLowerCase() !== 'india' ? 'Foreign' : 'Indian'),
+      salutation: g.salutation || '',
+      gender: g.gender || '',
+      dob: g.dob || '',
+      whatsapp_number: g.whatsapp_number || g.phone || '',
+      state: g.state || '',
+      district: g.district || '',
+      pincode: g.pincode || '',
+      company_name: g.company_name || '',
+      company_gstin: g.company_gstin || '',
+      is_blacklisted: g.is_blacklisted ?? false,
+      blacklist_reason: g.blacklist_reason || '',
+      preferred_meal_plan: g.preferred_meal_plan || 'EP',
+      preferred_language: g.preferred_language || 'English',
       created_at: g.created_at,
     }
   })
@@ -151,6 +183,18 @@ export async function createGuest(payload: {
   is_vip?: boolean
   vip_tier?: string
   preferences?: string
+  salutation?: string
+  gender?: string
+  dob?: string
+  whatsapp_number?: string
+  guest_category?: string
+  state?: string
+  district?: string
+  pincode?: string
+  company_name?: string
+  company_gstin?: string
+  preferred_meal_plan?: string
+  preferred_language?: string
 }): Promise<{ success: boolean; data?: any; error?: string }> {
   try {
     const supabase = await createClient()
@@ -204,6 +248,18 @@ export async function createGuest(payload: {
         is_vip: payload.is_vip || false,
         vip_tier: payload.vip_tier || (payload.is_vip ? 'Gold VIP' : 'Standard'),
         preferences: payload.preferences || '',
+        salutation: payload.salutation || 'Mr',
+        gender: payload.gender || 'Male',
+        dob: payload.dob || null,
+        whatsapp_number: payload.whatsapp_number || payload.phone || null,
+        guest_category: payload.guest_category || 'Indian',
+        state: payload.state || '',
+        district: payload.district || '',
+        pincode: payload.pincode || '',
+        company_name: payload.company_name || null,
+        company_gstin: payload.company_gstin || null,
+        preferred_meal_plan: payload.preferred_meal_plan || 'EP',
+        preferred_language: payload.preferred_language || 'English',
       })
       .select()
       .single()
@@ -231,6 +287,34 @@ export async function toggleGuestVip(
     const { error } = await supabase
       .from('guests')
       .update({ is_vip: isVip, vip_tier: isVip ? vipTier : 'Standard' })
+      .eq('id', guestId)
+
+    if (error) throw error
+
+    revalidatePath('/guests')
+    return { success: true }
+  } catch (err: any) {
+    return { success: false, error: err.message }
+  }
+}
+
+/**
+ * Flag or Blacklist a guest with mandatory audit reason
+ */
+export async function toggleGuestBlacklist(
+  guestId: string,
+  isBlacklisted: boolean,
+  reason?: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const supabase = await createClient()
+
+    const { error } = await supabase
+      .from('guests')
+      .update({
+        is_blacklisted: isBlacklisted,
+        blacklist_reason: isBlacklisted ? reason || 'Security / behavioral incident flagged by management' : null,
+      })
       .eq('id', guestId)
 
     if (error) throw error

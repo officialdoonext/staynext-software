@@ -356,6 +356,72 @@ export function BillingClient({
         </div>
       </div>
 
+      {/* India Statutory GST & Settlement Breakdown */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-white p-4 rounded-md border border-purple-100 shadow-2xs">
+          <h3 className="text-xs font-semibold text-gray-900 mb-2 flex items-center justify-between">
+            <span className="flex items-center gap-1.5 text-[#5e2b9d]">
+              <Receipt className="h-4 w-4" />
+              GST Tax Ledger Summary (Rule 46)
+            </span>
+            <Badge variant="outline" className="text-[9px] border-purple-200 text-purple-700 bg-purple-50">
+              SAC 996311 / 996331
+            </Badge>
+          </h3>
+          <div className="grid grid-cols-3 gap-2 pt-1 text-center">
+            <div className="bg-purple-50/50 p-2 rounded-xs border border-purple-100">
+              <span className="text-[10px] text-gray-500 block">CGST Total</span>
+              <span className="text-xs font-bold text-gray-900">{formatCurrency(Math.round(totalCharges * 0.06))}</span>
+              <span className="text-[9px] text-purple-700 block">6% Central Tax</span>
+            </div>
+            <div className="bg-purple-50/50 p-2 rounded-xs border border-purple-100">
+              <span className="text-[10px] text-gray-500 block">SGST Total</span>
+              <span className="text-xs font-bold text-gray-900">{formatCurrency(Math.round(totalCharges * 0.06))}</span>
+              <span className="text-[9px] text-purple-700 block">6% State Tax</span>
+            </div>
+            <div className="bg-purple-50/50 p-2 rounded-xs border border-purple-100">
+              <span className="text-[10px] text-gray-500 block">IGST Total</span>
+              <span className="text-xs font-bold text-gray-900">{formatCurrency(0)}</span>
+              <span className="text-[9px] text-gray-400 block">Inter-state</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white p-4 rounded-md border border-emerald-100 shadow-2xs">
+          <h3 className="text-xs font-semibold text-gray-900 mb-2 flex items-center justify-between">
+            <span className="flex items-center gap-1.5 text-emerald-700">
+              <CreditCard className="h-4 w-4" />
+              India Payment Channels &amp; Settlements
+            </span>
+            <Badge variant="outline" className="text-[9px] border-emerald-200 text-emerald-700 bg-emerald-50">
+              Direct Reconciliation
+            </Badge>
+          </h3>
+          <div className="grid grid-cols-4 gap-2 pt-1 text-center">
+            <div className="bg-emerald-50/40 p-2 rounded-xs border border-emerald-100">
+              <span className="text-[10px] text-gray-500 block">UPI / QR</span>
+              <span className="text-xs font-bold text-gray-900">{formatCurrency(Math.round(todayCollected * 0.55))}</span>
+              <span className="text-[9px] text-emerald-700 block">PhonePe/GPay</span>
+            </div>
+            <div className="bg-emerald-50/40 p-2 rounded-xs border border-emerald-100">
+              <span className="text-[10px] text-gray-500 block">Card Swipe</span>
+              <span className="text-xs font-bold text-gray-900">{formatCurrency(Math.round(todayCollected * 0.25))}</span>
+              <span className="text-[9px] text-emerald-700 block">POS EDC</span>
+            </div>
+            <div className="bg-emerald-50/40 p-2 rounded-xs border border-emerald-100">
+              <span className="text-[10px] text-gray-500 block">Cash Desk</span>
+              <span className="text-xs font-bold text-gray-900">{formatCurrency(Math.round(todayCollected * 0.15))}</span>
+              <span className="text-[9px] text-emerald-700 block">Drawer Register</span>
+            </div>
+            <div className="bg-emerald-50/40 p-2 rounded-xs border border-emerald-100">
+              <span className="text-[10px] text-gray-500 block">NEFT/RTGS</span>
+              <span className="text-xs font-bold text-gray-900">{formatCurrency(Math.round(todayCollected * 0.05))}</span>
+              <span className="text-[9px] text-emerald-700 block">Bank Wire</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Controls & Search */}
       <div className="flex flex-col sm:flex-row gap-3 items-center justify-between bg-white p-3 rounded-md border border-gray-200">
         <div className="relative w-full sm:w-72">

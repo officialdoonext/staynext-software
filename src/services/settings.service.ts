@@ -163,31 +163,38 @@ export async function updatePropertySettings(
     checkInTime?: string
     checkOutTime?: string
     description?: string
+    settings?: Record<string, any>
   }
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const supabase = await createClient()
 
+    const payload: Record<string, any> = {
+      name: updates.name,
+      property_type: updates.propertyType || 'hotel',
+      address: updates.address,
+      city: updates.city,
+      state: updates.state,
+      country: updates.country,
+      postal_code: updates.postalCode,
+      phone: updates.phone,
+      email: updates.email,
+      website: updates.website,
+      currency: updates.currency || 'INR',
+      timezone: updates.timezone || 'Asia/Kolkata',
+      check_in_time: updates.checkInTime || '14:00',
+      check_out_time: updates.checkOutTime || '11:00',
+      description: updates.description,
+      updated_at: new Date().toISOString(),
+    }
+
+    if (updates.settings) {
+      payload.settings = updates.settings
+    }
+
     const { error } = await supabase
       .from('properties')
-      .update({
-        name: updates.name,
-        property_type: updates.propertyType || 'hotel',
-        address: updates.address,
-        city: updates.city,
-        state: updates.state,
-        country: updates.country,
-        postal_code: updates.postalCode,
-        phone: updates.phone,
-        email: updates.email,
-        website: updates.website,
-        currency: updates.currency || 'INR',
-        timezone: updates.timezone || 'Asia/Kolkata',
-        check_in_time: updates.checkInTime || '14:00',
-        check_out_time: updates.checkOutTime || '11:00',
-        description: updates.description,
-        updated_at: new Date().toISOString(),
-      })
+      .update(payload)
       .eq('id', propertyId)
 
     if (error) throw error

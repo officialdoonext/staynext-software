@@ -45,9 +45,17 @@ export default function RoomTypesClient({
     name: '',
     code: '',
     base_rate: 2500,
-    max_occupancy: 2,
+    max_occupancy: 3,
+    base_occupancy: 2,
+    default_adult_count: 2,
+    default_child_count: 1,
     bed_type: 'King Bed',
     size_sqft: 320,
+    extra_adult_rate: 500,
+    extra_child_rate: 300,
+    extra_bed_allowed: true,
+    default_meal_plan: 'EP',
+    gst_rate: 12,
     description: '',
     amenities: 'High-speed WiFi, Air Conditioning, Flat-screen TV, Electric Kettle, Mini Bar',
   })
@@ -58,9 +66,17 @@ export default function RoomTypesClient({
       name: '',
       code: '',
       base_rate: 2500,
-      max_occupancy: 2,
+      max_occupancy: 3,
+      base_occupancy: 2,
+      default_adult_count: 2,
+      default_child_count: 1,
       bed_type: 'King Bed',
       size_sqft: 320,
+      extra_adult_rate: 500,
+      extra_child_rate: 300,
+      extra_bed_allowed: true,
+      default_meal_plan: 'EP',
+      gst_rate: 12,
       description: '',
       amenities: 'High-speed WiFi, Air Conditioning, Flat-screen TV, Electric Kettle, Mini Bar',
     })
@@ -75,8 +91,16 @@ export default function RoomTypesClient({
       code: t.code || '',
       base_rate: t.base_rate,
       max_occupancy: t.max_occupancy,
+      base_occupancy: t.base_occupancy || 2,
+      default_adult_count: t.default_adult_count || 2,
+      default_child_count: t.default_child_count || 1,
       bed_type: t.bed_type || 'King Bed',
       size_sqft: t.size_sqft || 320,
+      extra_adult_rate: t.extra_adult_rate || 500,
+      extra_child_rate: t.extra_child_rate || 300,
+      extra_bed_allowed: t.extra_bed_allowed ?? true,
+      default_meal_plan: t.default_meal_plan || 'EP',
+      gst_rate: t.gst_rate || 12,
       description: t.description || '',
       amenities: t.amenities.join(', '),
     })
@@ -108,6 +132,12 @@ export default function RoomTypesClient({
           code: formData.code.trim() || formData.name.substring(0, 3).toUpperCase(),
           base_rate: Number(formData.base_rate),
           max_occupancy: Number(formData.max_occupancy),
+          base_occupancy: Number(formData.base_occupancy),
+          extra_adult_rate: Number(formData.extra_adult_rate),
+          extra_child_rate: Number(formData.extra_child_rate),
+          extra_bed_allowed: Boolean(formData.extra_bed_allowed),
+          default_meal_plan: formData.default_meal_plan,
+          gst_rate: Number(formData.gst_rate),
           bed_type: formData.bed_type,
           size_sqft: Number(formData.size_sqft),
           description: formData.description,
@@ -124,6 +154,12 @@ export default function RoomTypesClient({
                   code: formData.code.trim() || formData.name.substring(0, 3).toUpperCase(),
                   base_rate: Number(formData.base_rate),
                   max_occupancy: Number(formData.max_occupancy),
+                  base_occupancy: Number(formData.base_occupancy),
+                  extra_adult_rate: Number(formData.extra_adult_rate),
+                  extra_child_rate: Number(formData.extra_child_rate),
+                  extra_bed_allowed: Boolean(formData.extra_bed_allowed),
+                  default_meal_plan: formData.default_meal_plan,
+                  gst_rate: Number(formData.gst_rate),
                   bed_type: formData.bed_type,
                   size_sqft: Number(formData.size_sqft),
                   description: formData.description,
@@ -140,6 +176,12 @@ export default function RoomTypesClient({
           code: formData.code.trim() || formData.name.substring(0, 3).toUpperCase(),
           base_rate: Number(formData.base_rate),
           max_occupancy: Number(formData.max_occupancy),
+          base_occupancy: Number(formData.base_occupancy),
+          extra_adult_rate: Number(formData.extra_adult_rate),
+          extra_child_rate: Number(formData.extra_child_rate),
+          extra_bed_allowed: Boolean(formData.extra_bed_allowed),
+          default_meal_plan: formData.default_meal_plan,
+          gst_rate: Number(formData.gst_rate),
           bed_type: formData.bed_type,
           size_sqft: Number(formData.size_sqft),
           description: formData.description,
@@ -153,6 +195,12 @@ export default function RoomTypesClient({
             ...res.data,
             base_rate: Number(formData.base_rate),
             max_occupancy: Number(formData.max_occupancy),
+            base_occupancy: Number(formData.base_occupancy),
+            extra_adult_rate: Number(formData.extra_adult_rate),
+            extra_child_rate: Number(formData.extra_child_rate),
+            extra_bed_allowed: Boolean(formData.extra_bed_allowed),
+            default_meal_plan: formData.default_meal_plan,
+            gst_rate: Number(formData.gst_rate),
             total_rooms: 0,
             amenities: amenitiesArray,
           },
@@ -291,6 +339,16 @@ export default function RoomTypesClient({
                 </div>
 
                 <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Base Occupancy</label>
+                  <input
+                    type="number"
+                    value={formData.base_occupancy}
+                    onChange={(e) => setFormData({ ...formData, base_occupancy: Number(e.target.value) })}
+                    className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
+                  />
+                </div>
+
+                <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">Max Occupancy</label>
                   <input
                     type="number"
@@ -298,6 +356,66 @@ export default function RoomTypesClient({
                     onChange={(e) => setFormData({ ...formData, max_occupancy: Number(e.target.value) })}
                     className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
                   />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Default Meal Plan</label>
+                  <select
+                    value={formData.default_meal_plan}
+                    onChange={(e) => setFormData({ ...formData, default_meal_plan: e.target.value })}
+                    className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
+                  >
+                    <option value="EP">EP - Room Only (European Plan)</option>
+                    <option value="CP">CP - Bed &amp; Breakfast (Continental)</option>
+                    <option value="MAP">MAP - Half Board / Breakfast + Meal</option>
+                    <option value="AP">AP - Full Board / All Meals (American)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">GST Tax Slab</label>
+                  <select
+                    value={formData.gst_rate}
+                    onChange={(e) => setFormData({ ...formData, gst_rate: Number(e.target.value) })}
+                    className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
+                  >
+                    <option value="12">12% GST (Room tariff &le; ₹7,500)</option>
+                    <option value="18">18% GST (Luxury tariff &gt; ₹7,500)</option>
+                    <option value="5">5% GST (No ITC eligible)</option>
+                    <option value="0">0% GST (Exempt)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Extra Adult Rate (₹)</label>
+                  <input
+                    type="number"
+                    value={formData.extra_adult_rate}
+                    onChange={(e) => setFormData({ ...formData, extra_adult_rate: Number(e.target.value) })}
+                    className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Extra Child Rate (₹)</label>
+                  <input
+                    type="number"
+                    value={formData.extra_child_rate}
+                    onChange={(e) => setFormData({ ...formData, extra_child_rate: Number(e.target.value) })}
+                    className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Extra Bed Allowed</label>
+                  <select
+                    value={formData.extra_bed_allowed ? 'yes' : 'no'}
+                    onChange={(e) => setFormData({ ...formData, extra_bed_allowed: e.target.value === 'yes' })}
+                    className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
+                  >
+                    <option value="yes">Yes - Rollaway bed permitted</option>
+                    <option value="no">No extra bed</option>
+                  </select>
                 </div>
 
                 <div>
@@ -369,7 +487,15 @@ export default function RoomTypesClient({
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <h3 className="text-sm font-semibold text-gray-900">{type.name}</h3>
-                  <span className="font-mono text-[10px] text-gray-400 font-medium">{type.code}</span>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span className="font-mono text-[10px] text-gray-400 font-medium">{type.code}</span>
+                    <Badge variant="outline" className="text-[10px] py-0 px-1.5 border-purple-200 text-purple-700 bg-purple-50">
+                      {type.default_meal_plan || 'EP'} Plan
+                    </Badge>
+                    <Badge variant="outline" className="text-[10px] py-0 px-1.5 border-gray-200 text-gray-600">
+                      GST {type.gst_rate || 12}%
+                    </Badge>
+                  </div>
                 </div>
                 <Badge variant="purple" className="text-xs font-medium rounded-sm">
                   {formatCurrency(type.base_rate)} / night
@@ -384,12 +510,26 @@ export default function RoomTypesClient({
                   <span className="font-medium text-gray-900">{type.total_rooms} units</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-400">Max Occupancy:</span>
-                  <span className="font-medium text-gray-900">{type.max_occupancy} Guests</span>
+                  <span className="text-gray-400">Occupancy:</span>
+                  <span className="font-medium text-gray-900">
+                    Base: {type.base_occupancy || 2} &bull; Max: {type.max_occupancy} Guests
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-400">Extra Adult / Child:</span>
+                  <span className="font-medium text-gray-900">
+                    +{formatCurrency(type.extra_adult_rate || 500)} / +{formatCurrency(type.extra_child_rate || 300)}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-gray-400">Bedding:</span>
                   <span className="font-medium text-gray-900">{type.bed_type}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-400">Extra Bed Allowed:</span>
+                  <span className="font-medium text-gray-900">
+                    {type.extra_bed_allowed ?? true ? 'Yes (Rollaway)' : 'No'}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-gray-400">Area:</span>

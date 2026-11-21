@@ -214,6 +214,24 @@ export const navigationSections: NavSection[] = [
     ],
   },
   {
+    title: 'Statutory & Compliance',
+    items: [
+      {
+        title: 'Compliance & FRRO',
+        href: '/compliance',
+        icon: 'ShieldCheck',
+        children: [
+          { title: 'Overview & Alerts', href: '/compliance' },
+          { title: 'Foreign Guests (Rule 17)', href: '/compliance/foreign-guests' },
+          { title: 'Form III 24h Filing', href: '/compliance/form-iii' },
+          { title: 'Statutory Police Register', href: '/compliance/guest-register' },
+          { title: 'Licenses & Permits', href: '/compliance/licences' },
+          { title: 'DPDP Privacy Audit Logs', href: '/compliance/audit-logs' },
+        ],
+      },
+    ],
+  },
+  {
     title: 'System',
     items: [
       {

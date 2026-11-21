@@ -28,6 +28,7 @@ import {
   X,
   PanelLeftClose,
   LucideIcon,
+  ShieldCheck,
 } from 'lucide-react'
 import { navigationSections } from '@/constants/navigation'
 import { cn } from '@/lib/utils'
@@ -58,6 +59,7 @@ const iconMap: Record<string, LucideIcon> = {
   Globe,
   BarChart3,
   Settings,
+  ShieldCheck,
 }
 
 export default function Sidebar({ isOpen, mobileOpen, onMobileClose, onToggle }: SidebarProps) {

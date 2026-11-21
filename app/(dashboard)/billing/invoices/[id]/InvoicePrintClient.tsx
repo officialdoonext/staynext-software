@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { ArrowLeft, Printer, Download, CheckCircle, Clock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { formatCurrency, formatDate } from '@/lib/utils'
+import { formatCurrency, formatDate, amountToWordsIndian } from '@/lib/utils'
 
 interface InvoicePrintClientProps {
   invoice: any
@@ -173,29 +173,38 @@ export function InvoicePrintClient({ invoice }: InvoicePrintClientProps) {
               <tr className="border-b border-gray-200 text-gray-500 uppercase text-[10px] tracking-wider">
                 <th className="py-2.5 font-medium">#</th>
                 <th className="py-2.5 font-medium">Service / Charge Description</th>
-                <th className="py-2.5 font-medium text-center">SAC/HSN</th>
+                <th className="py-2.5 font-medium text-center">SAC Code</th>
                 <th className="py-2.5 font-medium text-right">Qty</th>
                 <th className="py-2.5 font-medium text-right">Unit Price</th>
                 <th className="py-2.5 font-medium text-right">Taxable Value</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {items.map((item, index) => (
-                <tr key={index}>
-                  <td className="py-3 text-gray-400 font-mono">{index + 1}</td>
-                  <td className="py-3 font-medium text-gray-900">
-                    {item.description || item.title || 'Room Charge'}
-                  </td>
-                  <td className="py-3 text-center text-gray-500 font-mono">9963</td>
-                  <td className="py-3 text-right text-gray-600">{item.quantity || 1}</td>
-                  <td className="py-3 text-right font-mono text-gray-600">
-                    {formatCurrency(item.unit_price || item.total_price || 0)}
-                  </td>
-                  <td className="py-3 text-right font-mono font-medium text-gray-900">
-                    {formatCurrency(item.total_price || (item.quantity || 1) * (item.unit_price || 0))}
-                  </td>
-                </tr>
-              ))}
+              {items.map((item, index) => {
+                const desc = (item.description || item.title || 'Room Charge').toLowerCase()
+                const sac = desc.includes('food') || desc.includes('restaurant') || desc.includes('dining') || desc.includes('breakfast')
+                  ? '996331'
+                  : desc.includes('laundry')
+                  ? '999799'
+                  : '996311'
+
+                return (
+                  <tr key={index}>
+                    <td className="py-3 text-gray-400 font-mono">{index + 1}</td>
+                    <td className="py-3 font-medium text-gray-900">
+                      {item.description || item.title || 'Room Charge'}
+                    </td>
+                    <td className="py-3 text-center text-gray-500 font-mono">{sac}</td>
+                    <td className="py-3 text-right text-gray-600">{item.quantity || 1}</td>
+                    <td className="py-3 text-right font-mono text-gray-600">
+                      {formatCurrency(item.unit_price || item.total_price || 0)}
+                    </td>
+                    <td className="py-3 text-right font-mono font-medium text-gray-900">
+                      {formatCurrency(item.total_price || (item.quantity || 1) * (item.unit_price || 0))}
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </div>
@@ -203,12 +212,16 @@ export function InvoicePrintClient({ invoice }: InvoicePrintClientProps) {
         {/* Calculation Summary */}
         <div className="flex flex-col sm:flex-row justify-between items-start gap-6 border-t border-gray-200 pt-6">
           <div className="text-xs text-gray-500 max-w-sm space-y-1">
-            <p className="font-medium text-gray-700">Statutory Tax Breakup:</p>
-            <p>• Central GST (CGST) @ 6%: {formatCurrency(cgst)}</p>
-            <p>• State GST (SGST) @ 6%: {formatCurrency(sgst)}</p>
-            <p className="pt-2 text-[11px] text-gray-400 italic">
-              All taxes are levied as per Section 9 of the CGST/SGST Act 2017.
-            </p>
+            <p className="font-semibold text-gray-800">Total in Words (INR):</p>
+            <p className="text-[#5e2b9d] font-medium italic">{amountToWordsIndian(total)}</p>
+            <div className="pt-2 text-xs space-y-0.5">
+              <p className="font-medium text-gray-700">Statutory Tax Breakup:</p>
+              <p>&bull; Central GST (CGST) @ 6%: {formatCurrency(cgst)}</p>
+              <p>&bull; State GST (SGST) @ 6%: {formatCurrency(sgst)}</p>
+              <p className="text-[10px] text-gray-400 pt-1">
+                Place of Supply: {property.state || 'Telangana'} (State Code: 36). Levied under Section 9 of CGST Act 2017.
+              </p>
+            </div>
           </div>
 
           <div className="w-full sm:w-64 space-y-2 text-xs">
@@ -233,8 +246,24 @@ export function InvoicePrintClient({ invoice }: InvoicePrintClientProps) {
           </div>
         </div>
 
+        {/* Bank & Instant Settlement UPI Information */}
+        <div className="mt-8 p-4 bg-[#f7f2fd]/50 border border-[#dfcef6] rounded-md grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+          <div>
+            <h4 className="font-semibold text-gray-900 mb-1">Direct Bank Remittance (NEFT / RTGS / IMPS)</h4>
+            <p className="text-gray-600">Bank Name: <span className="font-medium text-gray-900">HDFC Bank Ltd</span></p>
+            <p className="text-gray-600">Account Name: <span className="font-medium text-gray-900">{property.name || 'StayNext Hospitality'}</span></p>
+            <p className="text-gray-600">Account Number: <span className="font-mono font-medium text-gray-900">50200084920192</span></p>
+            <p className="text-gray-600">IFSC Code: <span className="font-mono font-medium text-gray-900">HDFC0001042</span></p>
+          </div>
+          <div>
+            <h4 className="font-semibold text-gray-900 mb-1">Instant UPI Settlement</h4>
+            <p className="text-gray-600">VPA / UPI ID: <span className="font-mono font-semibold text-[#5e2b9d]">staynext.hotel@icici</span></p>
+            <p className="text-[11px] text-gray-500 mt-1">Scan from any UPI App (GPay, PhonePe, Paytm) to settle outstanding folio immediately.</p>
+          </div>
+        </div>
+
         {/* Signatures & Footer */}
-        <div className="grid grid-cols-2 gap-8 border-t border-gray-200 mt-12 pt-8 text-xs text-gray-500">
+        <div className="grid grid-cols-2 gap-8 border-t border-gray-200 mt-8 pt-8 text-xs text-gray-500">
           <div>
             <p className="font-medium text-gray-700">Guest Acknowledgement:</p>
             <p className="text-[11px] mt-1 text-gray-400">

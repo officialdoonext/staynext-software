@@ -41,6 +41,11 @@ export interface ReservationDetail {
   checked_in_at?: string
   checked_out_at?: string
   created_at: string
+  guest_nationality?: string
+  guest_category?: string
+  is_foreign_guest?: boolean
+  gst_invoice_status?: string
+  form_iii_status?: string
 }
 
 export interface ReservationFilterOptions {
@@ -247,6 +252,11 @@ export async function getReservationById(reservationId: string): Promise<Reserva
     checked_in_at: data.checked_in_at,
     checked_out_at: data.checked_out_at,
     created_at: data.created_at,
+    guest_nationality: data.guest?.nationality || 'India',
+    guest_category: data.guest?.guest_category || (data.guest?.is_foreign_guest ? 'Foreign' : 'Indian'),
+    is_foreign_guest: !!data.guest?.is_foreign_guest,
+    gst_invoice_status: data.invoice_status || 'Pending',
+    form_iii_status: data.form_iii_status || (data.guest?.is_foreign_guest ? 'Pending' : 'Not Applicable'),
   }
 }
 
@@ -926,7 +936,7 @@ export async function getFrontDeskOperations(propertyId?: string) {
     .from('reservations')
     .select(`
       *,
-      guest:guests(first_name, last_name, phone, email),
+      guest:guests(first_name, last_name, phone, email, guest_category, is_foreign_guest, id_type, id_number, id_verification_status, arrived_from, purpose_of_visit),
       room_type:room_types(name),
       rooms:reservation_rooms(
         room:rooms(id, room_number)
@@ -940,7 +950,7 @@ export async function getFrontDeskOperations(propertyId?: string) {
     .from('reservations')
     .select(`
       *,
-      guest:guests(first_name, last_name, phone, email),
+      guest:guests(first_name, last_name, phone, email, guest_category, is_foreign_guest, id_type, id_number, id_verification_status, arrived_from, purpose_of_visit),
       room_type:room_types(name),
       rooms:reservation_rooms(
         room:rooms(id, room_number)
@@ -954,7 +964,7 @@ export async function getFrontDeskOperations(propertyId?: string) {
     .from('reservations')
     .select(`
       *,
-      guest:guests(first_name, last_name, phone, email),
+      guest:guests(first_name, last_name, phone, email, guest_category, is_foreign_guest, id_type, id_number, id_verification_status, arrived_from, purpose_of_visit),
       room_type:room_types(name),
       rooms:reservation_rooms(
         room:rooms(id, room_number)
@@ -978,17 +988,39 @@ export async function getFrontDeskOperations(propertyId?: string) {
       return {
         id: r.id,
         resNumber: r.reservation_number,
+        guestId: r.guest_id,
+        guestRegNumber: r.guest_reg_number || r.reservation_number,
         guestName: `${r.guest?.first_name || ''} ${r.guest?.last_name || ''}`.trim() || 'Guest',
         phone: r.guest?.phone || '',
+        email: r.guest?.email || '',
+        guestCategory: r.guest?.guest_category || (r.guest?.is_foreign_guest ? 'Foreign National' : 'Indian'),
+        isForeignGuest: !!r.guest?.is_foreign_guest,
+        arrivedFrom: r.arrived_from || r.guest?.arrived_from || 'Direct',
+        nextDestination: r.next_destination || 'Not Specified',
+        purposeOfStay: r.purpose_of_visit || r.guest?.purpose_of_visit || 'Personal',
+        occupants: (r.num_adults || 1) + (r.num_children || 0),
+        numAdults: r.num_adults || 1,
+        numChildren: r.num_children || 0,
+        idVerificationStatus: r.guest?.id_verification_status || 'Pending',
+        idType: r.guest?.id_type || 'Aadhaar Card',
+        idNumber: r.guest?.id_number || '',
+        keyCardNumber: r.key_card_number || '',
+        checkinHandledBy: r.checkin_handled_by || 'Front Office',
+        checkedInAt: r.checked_in_at || '',
         roomType: r.room_type?.name || 'Standard',
         roomId: allocatedRoom?.id,
         roomNumber: allocatedRoom?.room_number || 'Unallocated',
         checkInDate: r.check_in_date,
+        checkInTime: r.check_in_time || '14:00',
         checkOutDate: r.check_out_date,
+        checkOutTime: r.check_out_time || '11:00',
         total,
         paid,
         balance: Math.max(0, total - paid),
         status: r.status,
+        paymentMode: r.payment_mode || 'Cash',
+        paymentReceiptNumber: r.transaction_reference || '',
+        accompanyingGuests: r.accompanying_guests || [],
       }
     })
 
@@ -996,6 +1028,113 @@ export async function getFrontDeskOperations(propertyId?: string) {
     todayArrivals: mapRes(arrRes.data || []),
     todayDepartures: mapRes(depRes.data || []),
     inHouseGuests: mapRes(inHouseRes.data || []),
+  }
+}
+
+/**
+ * Reassigns / Changes room for an in-house reservation.
+ */
+export async function changeRoomReservation(
+  reservationId: string,
+  oldRoomId: string | undefined,
+  newRoomId: string
+) {
+  const supabase = await createClient()
+  try {
+    if (oldRoomId) {
+      await supabase.from('reservation_rooms').delete().eq('reservation_id', reservationId).eq('room_id', oldRoomId)
+      await supabase.from('rooms').update({ status: 'dirty' }).eq('id', oldRoomId)
+    }
+
+    await supabase.from('reservation_rooms').insert({
+      reservation_id: reservationId,
+      room_id: newRoomId,
+    })
+    await supabase.from('rooms').update({ status: 'occupied' }).eq('id', newRoomId)
+    return { success: true }
+  } catch (err: any) {
+    return { success: false, error: err.message }
+  }
+}
+
+/**
+ * Extends the stay for a reservation to a new departure date.
+ */
+export async function extendStayReservation(
+  reservationId: string,
+  newCheckOutDate: string,
+  extraCharge: number = 0
+) {
+  const supabase = await createClient()
+  try {
+    const { data: res } = await supabase.from('reservations').select('total_amount').eq('id', reservationId).single()
+    const currentTotal = Number(res?.total_amount) || 0
+    const newTotal = currentTotal + extraCharge
+
+    await supabase.from('reservations').update({
+      check_out_date: newCheckOutDate,
+      total_amount: newTotal,
+    }).eq('id', reservationId)
+
+    return { success: true }
+  } catch (err: any) {
+    return { success: false, error: err.message }
+  }
+}
+
+/**
+ * Front desk one-click KYC / ID Verification.
+ */
+export async function verifyGuestKyc(guestId: string, verifiedBy: string = 'Front Desk') {
+  const supabase = await createClient()
+  try {
+    await supabase.from('guests').update({
+      id_verification_status: 'Verified',
+      verified_by: verifiedBy,
+      verification_date: new Date().toISOString(),
+    }).eq('id', guestId)
+    return { success: true }
+  } catch (err: any) {
+    return { success: false, error: err.message }
+  }
+}
+
+/**
+ * Collects payment at front desk (Cash, UPI, Card) and updates folio.
+ */
+export async function recordFrontDeskPayment(
+  reservationId: string,
+  amount: number,
+  paymentMode: string,
+  reference?: string
+) {
+  const supabase = await createClient()
+  try {
+    const { data: res } = await supabase.from('reservations').select('paid_amount, total_amount, property_id').eq('id', reservationId).single()
+    const currentPaid = Number(res?.paid_amount) || 0
+    const total = Number(res?.total_amount) || 0
+    const newPaid = currentPaid + amount
+    const paymentStatus = newPaid >= total ? 'paid' : 'partial'
+
+    await supabase.from('reservations').update({
+      paid_amount: newPaid,
+      payment_status: paymentStatus,
+      payment_mode: paymentMode,
+      transaction_reference: reference || null,
+    }).eq('id', reservationId)
+
+    await supabase.from('payments').insert({
+      property_id: res?.property_id,
+      reservation_id: reservationId,
+      amount,
+      payment_method: paymentMode.toLowerCase(),
+      status: 'completed',
+      transaction_id: reference || `RCPT-${Date.now().toString().slice(-6)}`,
+    })
+
+    return { success: true }
+  } catch (err: any) {
+    return { success: false, error: err.message }
   }
 }
 

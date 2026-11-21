@@ -67,6 +67,9 @@ export function PaymentsClient({ initialPayments, propertyId }: PaymentsClientPr
   })
 
   const totalCollected = payments.reduce((acc, p) => acc + p.amount, 0)
+  const upiTotal = payments
+    .filter((p) => p.paymentMethod === 'upi' || p.paymentMethod?.toLowerCase().includes('upi'))
+    .reduce((acc, p) => acc + p.amount, 0)
   const cardTotal = payments
     .filter((p) => p.paymentMethod === 'card' || p.paymentMethod === 'pos')
     .reduce((acc, p) => acc + p.amount, 0)
@@ -172,21 +175,26 @@ export function PaymentsClient({ initialPayments, propertyId }: PaymentsClientPr
       </div>
 
       {/* Metrics */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="bg-white p-4 rounded-md border border-gray-200 shadow-2xs">
-          <span className="text-xs font-medium text-gray-600">Total Payments Recorded</span>
+          <span className="text-xs font-medium text-gray-600">Total Payments</span>
           <p className="text-2xl font-medium text-emerald-600 mt-2">{formatCurrency(totalCollected)}</p>
           <p className="text-[11px] text-gray-500 mt-0.5">{payments.length} transactions processed</p>
         </div>
         <div className="bg-white p-4 rounded-md border border-gray-200 shadow-2xs">
-          <span className="text-xs font-medium text-gray-600">Cards &amp; POS Terminals</span>
-          <p className="text-2xl font-medium text-[#5e2b9d] mt-2">{formatCurrency(cardTotal)}</p>
-          <p className="text-[11px] text-gray-500 mt-0.5">Electronic payments</p>
+          <span className="text-xs font-medium text-gray-600">UPI / QR Collections</span>
+          <p className="text-2xl font-medium text-[#5e2b9d] mt-2">{formatCurrency(upiTotal)}</p>
+          <p className="text-[11px] text-purple-700 mt-0.5">Instant Bank Transfer</p>
+        </div>
+        <div className="bg-white p-4 rounded-md border border-gray-200 shadow-2xs">
+          <span className="text-xs font-medium text-gray-600">Cards &amp; POS</span>
+          <p className="text-2xl font-medium text-blue-600 mt-2">{formatCurrency(cardTotal)}</p>
+          <p className="text-[11px] text-gray-500 mt-0.5">Electronic terminals</p>
         </div>
         <div className="bg-white p-4 rounded-md border border-gray-200 shadow-2xs">
           <span className="text-xs font-medium text-gray-600">Cash Settlements</span>
           <p className="text-2xl font-medium text-gray-900 mt-2">{formatCurrency(cashTotal)}</p>
-          <p className="text-[11px] text-gray-500 mt-0.5">Physical desk register</p>
+          <p className="text-[11px] text-gray-500 mt-0.5">Physical desk drawer</p>
         </div>
       </div>
 
@@ -205,17 +213,17 @@ export function PaymentsClient({ initialPayments, propertyId }: PaymentsClientPr
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <span className="text-xs text-gray-500">Method:</span>
           <div className="flex gap-1 flex-wrap">
-            {['all', 'card', 'cash', 'bank_transfer', 'pos'].map((m) => (
+            {['all', 'upi', 'cash', 'card', 'bank_transfer', 'pos'].map((m) => (
               <button
                 key={m}
                 onClick={() => setMethodFilter(m)}
-                className={`px-2.5 py-1 text-xs rounded-md capitalize cursor-pointer transition-colors ${
+                className={`px-2.5 py-1 text-xs rounded-md uppercase cursor-pointer transition-colors ${
                   methodFilter === m
                     ? 'bg-[#5e2b9d] text-white font-medium'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
-                {m.replace('_', ' ')}
+                {m === 'all' ? 'All Methods' : m === 'upi' ? 'UPI / QR' : m.replace('_', ' ')}
               </button>
             ))}
           </div>
@@ -312,10 +320,11 @@ export function PaymentsClient({ initialPayments, propertyId }: PaymentsClientPr
                   onChange={(e) => setForm({ ...form, paymentMethod: e.target.value })}
                   className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
                 >
-                  <option value="card">Credit / Debit Card</option>
+                  <option value="upi">UPI / Instant QR (GPay / PhonePe / Paytm)</option>
                   <option value="cash">Cash Settlement</option>
-                  <option value="bank_transfer">Bank Wire / UPI</option>
-                  <option value="pos">POS Terminal</option>
+                  <option value="card">Credit / Debit Card</option>
+                  <option value="bank_transfer">Bank Transfer (NEFT / RTGS)</option>
+                  <option value="pos">POS EDC Machine</option>
                   <option value="stripe">Online Gateway</option>
                 </select>
               </div>

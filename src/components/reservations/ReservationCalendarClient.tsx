@@ -22,7 +22,8 @@ import {
   ArrowDownLeft,
   ArrowUpRight,
   Phone,
-  Mail
+  Mail,
+  Wrench
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -239,6 +240,22 @@ export default function ReservationCalendarClient({
 
   const { positioned: unallocatedPositioned, totalLanes: unallocatedLanes } = assignUnallocatedLanes(unassignedReservations)
 
+  // Group rooms by category for inventory header
+  const categoryInventory = rooms.reduce((acc: Record<string, { total: number; available: number }>, r) => {
+    const cat = r.room_type_name || 'Standard'
+    if (!acc[cat]) acc[cat] = { total: 0, available: 0 }
+    acc[cat].total += 1
+    if (r.status === 'available') acc[cat].available += 1
+    return acc
+  }, {})
+
+  const maintenanceRoomsCount = rooms.filter(
+    (r) => r.status === 'maintenance' || r.status === 'out_of_order' || r.status === 'blocked'
+  ).length
+
+  const availableRoomsCount = rooms.filter((r) => r.status === 'available').length
+  const isOverbooked = unassignedReservations.length > availableRoomsCount
+
   const filteredReservations = reservations.filter((r) => {
     if (!searchFilter) return true
     const term = searchFilter.toLowerCase()
@@ -393,6 +410,42 @@ export default function ReservationCalendarClient({
         </div>
       </div>
 
+      {/* Category Inventory & Operations Policy Ribbon */}
+      <div className="bg-white p-3 rounded-md border border-gray-200 shadow-2xs space-y-2">
+        <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+          <div className="flex items-center gap-3">
+            <span className="font-semibold text-gray-900 flex items-center gap-1">
+              <Clock className="h-3.5 w-3.5 text-[#5e2b9d]" /> Standard Times:
+            </span>
+            <span className="text-gray-600 bg-gray-100 px-2 py-0.5 rounded text-[11px]">Check-In: 2:00 PM</span>
+            <span className="text-gray-600 bg-gray-100 px-2 py-0.5 rounded text-[11px]">Check-Out: 11:00 AM</span>
+            <span className="text-gray-500 text-[11px]">Min Stay: 1 Night &bull; Max Stay: 30 Nights</span>
+          </div>
+
+          {isOverbooked && (
+            <div className="flex items-center gap-1.5 text-xs text-rose-700 bg-rose-50 px-2.5 py-1 rounded-md border border-rose-200 font-semibold animate-pulse">
+              <AlertCircle className="h-3.5 w-3.5 text-rose-600" />
+              <span>Overbooking Notice: {unassignedReservations.length} unallocated bookings</span>
+            </div>
+          )}
+        </div>
+
+        {/* Category availability tags */}
+        <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-gray-100">
+          <span className="text-[11px] text-gray-400 font-medium">Room Inventory by Category:</span>
+          {Object.entries(categoryInventory).map(([cat, count]) => (
+            <span key={cat} className="text-[11px] px-2 py-0.5 rounded bg-gray-50 border border-gray-200 text-gray-700 font-medium">
+              {cat}: <strong className="text-[#5e2b9d]">{count.available}</strong>/{count.total} free
+            </span>
+          ))}
+          {maintenanceRoomsCount > 0 && (
+            <span className="text-[11px] px-2 py-0.5 rounded bg-rose-50 border border-rose-200 text-rose-700 font-medium flex items-center gap-1">
+              <Wrench className="h-3 w-3 text-rose-500" /> {maintenanceRoomsCount} in Maintenance / Blocked
+            </span>
+          )}
+        </div>
+      </div>
+
       {/* Main Calendar Matrix Table */}
       <div className="bg-white rounded-md border border-gray-200 shadow-2xs overflow-hidden">
         <div className="overflow-x-auto">
@@ -512,6 +565,13 @@ export default function ReservationCalendarClient({
                         <div className="text-[10px] text-gray-400 font-normal pl-5">
                           {room.room_type_name}
                         </div>
+                        {(room.status === 'maintenance' || room.status === 'out_of_order' || room.status === 'blocked') && (
+                          <div className="mt-1 pl-5">
+                            <span className="text-[9px] px-1.5 py-0.5 rounded bg-rose-50 border border-rose-200 text-rose-700 font-medium inline-flex items-center gap-1">
+                              <Wrench className="h-2.5 w-2.5" /> Maintenance
+                            </span>
+                          </div>
+                        )}
                       </td>
 
                       {/* Day Grid Area with Spanning Cards */}

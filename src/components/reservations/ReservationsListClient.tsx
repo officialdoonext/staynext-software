@@ -306,23 +306,26 @@ export default function ReservationsListClient({
       </div>
 
       {/* Reservations Table */}
-      <div className="bg-white rounded-md border border-gray-200 shadow-2xs overflow-hidden">
-        <table className="w-full text-left text-xs">
+      <div className="bg-white rounded-md border border-gray-200 shadow-2xs overflow-x-auto">
+        <table className="w-full text-left text-xs min-w-[1150px]">
           <thead className="bg-gray-50 text-gray-600 border-b border-gray-200 uppercase text-[10px] font-medium tracking-wider">
             <tr>
-              <th className="px-4 py-3">Booking ID</th>
-              <th className="px-4 py-3">Guest</th>
-              <th className="px-4 py-3">Stay Dates</th>
-              <th className="px-4 py-3">Room / Category</th>
-              <th className="px-4 py-3">Folio Total</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3 text-right">Actions</th>
+              <th className="px-3.5 py-3">Reservation #</th>
+              <th className="px-3.5 py-3">Guest &amp; Nationality</th>
+              <th className="px-3.5 py-3">Channel</th>
+              <th className="px-3.5 py-3">Check-In / Out</th>
+              <th className="px-3.5 py-3">Allocated Room</th>
+              <th className="px-3.5 py-3">Financials (Tot / Adv / Bal)</th>
+              <th className="px-3.5 py-3">GST Invoice</th>
+              <th className="px-3.5 py-3">Form III Status</th>
+              <th className="px-3.5 py-3">Status</th>
+              <th className="px-3.5 py-3 text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-4 py-12 text-center text-gray-500">
+                <td colSpan={10} className="px-4 py-12 text-center text-gray-500">
                   <Calendar className="h-8 w-8 text-gray-300 mx-auto mb-2" />
                   <div className="font-medium text-gray-800 text-xs">No reservations found</div>
                   <div className="text-[11px] text-gray-400 mt-0.5">Try resetting filters or create a new reservation.</div>
@@ -331,43 +334,104 @@ export default function ReservationsListClient({
             ) : (
               filtered.map((res) => (
                 <tr key={res.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-4 py-3">
+                  {/* 1. Reservation Number */}
+                  <td className="px-3.5 py-3">
                     <span className="font-semibold text-gray-900 block">{res.reservation_number}</span>
-                    <span className="text-[10px] text-gray-400 capitalize">{res.booking_source}</span>
+                    <span className="text-[10px] text-gray-400">{res.nights} {res.nights === 1 ? 'night' : 'nights'}</span>
                   </td>
-                  <td className="px-4 py-3">
-                    <div className="font-medium text-gray-900">{res.guest_name}</div>
-                    <div className="text-[10px] text-gray-500">{res.guest_phone || res.guest_email}</div>
-                  </td>
-                  <td className="px-4 py-3 text-gray-600">
-                    <div className="font-medium text-gray-900">
-                      {formatDate(res.check_in_date)} {formatTimeString(res.check_in_time)} &rarr; {formatDate(res.check_out_date)} {formatTimeString(res.check_out_time)}
+
+                  {/* 2. Guest, Mobile & Nationality */}
+                  <td className="px-3.5 py-3">
+                    <div className="font-medium text-gray-900 flex items-center gap-1.5">
+                      <span>{res.guest_name}</span>
+                      {res.is_foreign_guest ? (
+                        <span className="px-1 py-0.2 text-[9px] font-semibold bg-blue-100 text-blue-800 rounded">
+                          Foreign
+                        </span>
+                      ) : (
+                        <span className="px-1 py-0.2 text-[9px] font-medium bg-gray-100 text-gray-600 rounded">
+                          {res.guest_nationality || 'Indian'}
+                        </span>
+                      )}
                     </div>
-                    <div className="text-[10px] text-gray-400 mt-0.5">
-                      {res.nights} {res.nights === 1 ? 'night' : 'nights'} • {res.num_adults}A, {res.num_children}C
+                    <div className="text-[10px] text-gray-500">{res.guest_phone || res.guest_email || 'No phone'}</div>
+                  </td>
+
+                  {/* 3. Booking Channel */}
+                  <td className="px-3.5 py-3">
+                    <span className="px-2 py-0.5 text-[10px] rounded-sm bg-gray-100 text-gray-700 capitalize font-medium">
+                      {res.booking_source?.replace(/_/g, ' ') || 'Direct'}
+                    </span>
+                  </td>
+
+                  {/* 4. Check-in & Check-out */}
+                  <td className="px-3.5 py-3 text-gray-700">
+                    <div className="font-medium text-gray-900 text-[11px]">
+                      {formatDate(res.check_in_date)} &bull; {formatTimeString(res.check_in_time)}
+                    </div>
+                    <div className="text-[10px] text-gray-500">
+                      &rarr; {formatDate(res.check_out_date)} &bull; {formatTimeString(res.check_out_time)}
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-gray-700">
+
+                  {/* 5. Room & Category */}
+                  <td className="px-3.5 py-3 text-gray-700">
                     <div className="font-medium">
                       {res.room_number ? (
-                        <span className="text-[#5e2b9d] font-semibold">Room {res.room_number}</span>
+                        <span className="text-[#5e2b9d] font-semibold text-xs">Room {res.room_number}</span>
                       ) : (
-                        <span className="text-amber-600 italic">Unassigned</span>
+                        <span className="text-amber-600 italic text-[11px]">Unassigned</span>
                       )}
                     </div>
                     <div className="text-[10px] text-gray-500">{res.room_type_name}</div>
                   </td>
-                  <td className="px-4 py-3 text-gray-700">
+
+                  {/* 6. Financials (Total / Adv / Bal) */}
+                  <td className="px-3.5 py-3">
                     <div className="font-medium text-gray-900">{formatCurrency(res.total_amount)}</div>
-                    <div className="flex items-center gap-1.5 mt-0.5">
-                      {getPaymentBadge(res.payment_status)}
-                      {res.balance_amount > 0 && (
-                        <span className="text-[10px] text-gray-400">Bal: {formatCurrency(res.balance_amount)}</span>
+                    <div className="text-[10px] text-gray-500 flex items-center gap-1.5">
+                      <span>Adv: <strong className="text-emerald-700">{formatCurrency(res.paid_amount)}</strong></span>
+                      {res.balance_amount > 0 ? (
+                        <span className="text-rose-600 font-semibold">Bal: {formatCurrency(res.balance_amount)}</span>
+                      ) : (
+                        <span className="text-emerald-600 font-medium">Cleared</span>
                       )}
                     </div>
                   </td>
-                  <td className="px-4 py-3">{getStatusBadge(res.status)}</td>
-                  <td className="px-4 py-3 text-right">
+
+                  {/* 7. GST Invoice Status */}
+                  <td className="px-3.5 py-3">
+                    {res.gst_invoice_status === 'Generated' ? (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                        Generated
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-medium text-gray-500 bg-gray-50 px-1.5 py-0.5 rounded border border-gray-200">
+                        Pending
+                      </span>
+                    )}
+                  </td>
+
+                  {/* 8. Form III Status */}
+                  <td className="px-3.5 py-3">
+                    {res.form_iii_status === 'Submitted' ? (
+                      <span className="px-1.5 py-0.5 text-[9px] font-medium bg-emerald-100 text-emerald-800 rounded">
+                        Submitted
+                      </span>
+                    ) : res.form_iii_status === 'Pending' ? (
+                      <span className="px-1.5 py-0.5 text-[9px] font-medium bg-amber-100 text-amber-800 rounded">
+                        Form III Due
+                      </span>
+                    ) : (
+                      <span className="text-[10px] text-gray-400">N/A</span>
+                    )}
+                  </td>
+
+                  {/* 9. Booking Status */}
+                  <td className="px-3.5 py-3">{getStatusBadge(res.status)}</td>
+
+                  {/* 10. Actions */}
+                  <td className="px-3.5 py-3 text-right">
                     <div className="flex items-center justify-end gap-1.5">
                       {res.status === 'confirmed' && (
                         <Button

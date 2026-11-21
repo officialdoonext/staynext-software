@@ -45,10 +45,13 @@ export default function RoomBlockingClient({
 
   const [formData, setFormData] = useState({
     room_id: rooms[0]?.id || '',
+    block_type: 'Maintenance',
     reason: 'AC Compressor Service & Maintenance',
     start_date: todayStr,
     end_date: defaultEndStr,
     blocked_by: 'Duty Manager',
+    approved_by: 'General Manager',
+    maintenance_ticket_number: 'WO-1042',
     notes: '',
   })
 
@@ -74,6 +77,9 @@ export default function RoomBlockingClient({
         property_id: selectedPropertyId,
         room_id: formData.room_id,
         reason: formData.reason.trim(),
+        block_type: formData.block_type,
+        maintenance_ticket_number: formData.maintenance_ticket_number,
+        approved_by: formData.approved_by,
         start_date: formData.start_date,
         end_date: formData.end_date,
         blocked_by: formData.blocked_by,
@@ -87,6 +93,10 @@ export default function RoomBlockingClient({
         {
           ...res.data,
           room_number: roomObj?.room_number || 'Room',
+          block_type: (formData.block_type as any) || 'Maintenance',
+          maintenance_ticket_number: formData.maintenance_ticket_number,
+          approved_by: formData.approved_by,
+          inspection_status: 'Pending',
         },
         ...prev,
       ])
@@ -212,13 +222,50 @@ export default function RoomBlockingClient({
                   </select>
                 </div>
 
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Block Type *</label>
+                  <select
+                    value={formData.block_type}
+                    onChange={(e) => setFormData({ ...formData, block_type: e.target.value })}
+                    className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
+                  >
+                    <option value="Maintenance">Maintenance &amp; Engineering</option>
+                    <option value="Renovation">Room Renovation / Refurbishment</option>
+                    <option value="Pest Control">Pest Control Treatment</option>
+                    <option value="Deep Cleaning">Deep Sanitization / Cleaning</option>
+                    <option value="Safety Issue">Safety / Electrical Inspection</option>
+                    <option value="VIP Reservation Hold">VIP / Government Hold</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Work Order / Ticket #</label>
+                  <input
+                    type="text"
+                    value={formData.maintenance_ticket_number}
+                    onChange={(e) => setFormData({ ...formData, maintenance_ticket_number: e.target.value })}
+                    placeholder="e.g. WO-1042"
+                    className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Approved By</label>
+                  <input
+                    type="text"
+                    value={formData.approved_by}
+                    onChange={(e) => setFormData({ ...formData, approved_by: e.target.value })}
+                    className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
+                  />
+                </div>
+
                 <div className="sm:col-span-2">
                   <label className="block text-xs font-medium text-gray-700 mb-1">Reason for Block *</label>
                   <input
                     type="text"
                     value={formData.reason}
                     onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
-                    placeholder="e.g. Bathroom tile repair, VIP block, deep sanitization"
+                    placeholder="e.g. AC compressor failure, bathroom plumbing leak"
                     className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
                     required
                   />
@@ -256,13 +303,13 @@ export default function RoomBlockingClient({
                   />
                 </div>
 
-                <div className="sm:col-span-2">
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Work Order / Notes</label>
+                <div className="sm:col-span-3">
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Work Order Notes / Vendor Details</label>
                   <input
                     type="text"
                     value={formData.notes}
                     onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                    placeholder="Vendor contact or technician ticket number"
+                    placeholder="External vendor contact or technician notes"
                     className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
                   />
                 </div>
@@ -299,17 +346,19 @@ export default function RoomBlockingClient({
           <thead className="bg-gray-50 text-gray-600 border-b border-gray-200 uppercase text-[10px] font-medium tracking-wider">
             <tr>
               <th className="px-4 py-3">Room Unit</th>
-              <th className="px-4 py-3">Block Reason</th>
+              <th className="px-4 py-3">Block Type &amp; Work Order</th>
+              <th className="px-4 py-3">Reason &amp; Scope</th>
               <th className="px-4 py-3">Duration</th>
-              <th className="px-4 py-3">Blocked By</th>
-              <th className="px-4 py-3">Status</th>
+              <th className="px-4 py-3">Blocked &amp; Approved By</th>
+              <th className="px-4 py-3">Inspection Status</th>
+              <th className="px-4 py-3">Block Status</th>
               <th className="px-4 py-3 text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
             {blocks.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
+                <td colSpan={8} className="px-4 py-8 text-center text-gray-500">
                   No rooms currently under inventory block. All configured rooms are in active circulation.
                 </td>
               </tr>
@@ -319,6 +368,14 @@ export default function RoomBlockingClient({
                   <td className="px-4 py-3 font-semibold text-gray-900">
                     Room {b.room_number}
                   </td>
+                  <td className="px-4 py-3">
+                    <span className="font-medium text-gray-900">{b.block_type || 'Maintenance'}</span>
+                    {b.maintenance_ticket_number && (
+                      <div className="font-mono text-[10px] text-purple-700 bg-purple-50 inline-block px-1 py-0.2 rounded-xs mt-0.5">
+                        #{b.maintenance_ticket_number}
+                      </div>
+                    )}
+                  </td>
                   <td className="px-4 py-3 text-gray-800">
                     <div>{b.reason}</div>
                     {b.notes && <div className="text-[10px] text-gray-400 mt-0.5">{b.notes}</div>}
@@ -326,7 +383,17 @@ export default function RoomBlockingClient({
                   <td className="px-4 py-3 text-gray-600">
                     {formatDate(b.start_date)} &rarr; {formatDate(b.end_date)}
                   </td>
-                  <td className="px-4 py-3 text-gray-500">{b.blocked_by}</td>
+                  <td className="px-4 py-3 text-gray-500">
+                    <div>{b.blocked_by}</div>
+                    {b.approved_by && (
+                      <div className="text-[10px] text-gray-400">Appr: {b.approved_by}</div>
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
+                    <Badge variant="outline" className={`text-[10px] rounded-sm ${b.inspection_status === 'Passed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
+                      {b.inspection_status || 'Pending'}
+                    </Badge>
+                  </td>
                   <td className="px-4 py-3">
                     <Badge variant={b.status === 'active' ? 'destructive' : 'secondary'} className="text-[10px] rounded-sm">
                       {b.status === 'active' ? 'Active Block' : 'Released'}

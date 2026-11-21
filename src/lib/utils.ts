@@ -73,3 +73,36 @@ export function getStatusColor(status: string): string {
   }
   return colorMap[status] || 'bg-gray-100 text-gray-800'
 }
+
+export function amountToWordsIndian(amount: number): string {
+  const a = Math.floor(Math.abs(amount))
+  if (a === 0) return 'Rupees Zero Only'
+
+  const ones = [
+    '', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine',
+    'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen',
+    'Seventeen', 'Eighteen', 'Nineteen'
+  ]
+  const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety']
+
+  const numToWords = (n: number): string => {
+    if (n === 0) return ''
+    if (n < 20) return ones[n]
+    if (n < 100) return `${tens[Math.floor(n / 10)]} ${ones[n % 10]}`.trim()
+    if (n < 1000) return `${ones[Math.floor(n / 100)]} Hundred ${numToWords(n % 100)}`.trim()
+    return ''
+  }
+
+  let words = ''
+  const crore = Math.floor(a / 10000000)
+  const lakh = Math.floor((a % 10000000) / 100000)
+  const thousand = Math.floor((a % 100000) / 1000)
+  const remainder = a % 1000
+
+  if (crore > 0) words += `${numToWords(crore)} Crore `
+  if (lakh > 0) words += `${numToWords(lakh)} Lakh `
+  if (thousand > 0) words += `${numToWords(thousand)} Thousand `
+  if (remainder > 0) words += `${numToWords(remainder)} `
+
+  return `Rupees ${words.trim()} Only`
+}

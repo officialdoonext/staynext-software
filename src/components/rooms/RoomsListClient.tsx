@@ -456,33 +456,94 @@ export default function RoomsListClient({
         </div>
       ) : (
         /* TABLE VIEW */
-        <div className="bg-white rounded-md border border-gray-200 shadow-2xs overflow-hidden">
-          <table className="w-full text-left text-xs">
+        <div className="bg-white rounded-md border border-gray-200 shadow-2xs overflow-x-auto">
+          <table className="w-full text-left text-xs min-w-[1100px]">
             <thead className="bg-gray-50 text-gray-600 border-b border-gray-200 uppercase text-[10px] font-medium tracking-wider">
               <tr>
-                <th className="px-4 py-3">Room</th>
-                <th className="px-4 py-3">Category</th>
-                <th className="px-4 py-3">Floor / Wing</th>
-                <th className="px-4 py-3">Base Rate</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3 text-right">Actions</th>
+                <th className="px-3.5 py-3">Room &amp; Status</th>
+                <th className="px-3.5 py-3">Category &amp; AC</th>
+                <th className="px-3.5 py-3">Building &amp; Floor</th>
+                <th className="px-3.5 py-3">Bed &amp; Max Occupants</th>
+                <th className="px-3.5 py-3">Tariffs (Base / Wknd)</th>
+                <th className="px-3.5 py-3">GST Category</th>
+                <th className="px-3.5 py-3">Room Status</th>
+                <th className="px-3.5 py-3">Housekeeping</th>
+                <th className="px-3.5 py-3 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {filtered.map((room) => (
                 <tr key={room.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-4 py-3 font-semibold text-gray-900">
-                    Room {room.room_number}
+                  {/* Room Number & Active */}
+                  <td className="px-3.5 py-3">
+                    <span className="font-semibold text-gray-900 block text-xs">
+                      Room {room.room_number}
+                    </span>
+                    <span className={`text-[10px] inline-flex items-center gap-1 font-medium ${
+                      room.is_active ? 'text-emerald-700' : 'text-gray-400'
+                    }`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${room.is_active ? 'bg-emerald-500' : 'bg-gray-300'}`} />
+                      {room.is_active ? 'Active' : 'Inactive'}
+                    </span>
                   </td>
-                  <td className="px-4 py-3 text-gray-600">{room.room_type_name}</td>
-                  <td className="px-4 py-3 text-gray-500">
-                    {room.floor_name} • {room.building_name}
+
+                  {/* Category & AC */}
+                  <td className="px-3.5 py-3">
+                    <div className="font-medium text-gray-800">{room.room_type_name}</div>
+                    <span className={`text-[9px] px-1.5 py-0.2 rounded font-semibold ${
+                      room.is_ac ? 'bg-cyan-50 text-cyan-800 border border-cyan-200' : 'bg-amber-50 text-amber-800 border border-amber-200'
+                    }`}>
+                      {room.is_ac ? 'AC' : 'Non-AC'}
+                    </span>
                   </td>
-                  <td className="px-4 py-3 font-medium text-gray-900">
-                    {formatCurrency(room.base_rate || 0)}
+
+                  {/* Floor / Wing */}
+                  <td className="px-3.5 py-3 text-gray-600">
+                    <div className="font-medium text-gray-800">{room.building_name || 'Main Block'}</div>
+                    <div className="text-[10px] text-gray-400">{room.floor_name || 'Ground Floor'}</div>
                   </td>
-                  <td className="px-4 py-3">{getStatusBadge(room.status)}</td>
-                  <td className="px-4 py-3 text-right">
+
+                  {/* Bed & Capacity */}
+                  <td className="px-3.5 py-3 text-gray-700">
+                    <div className="font-medium">{room.bed_type || 'Double Bed'}</div>
+                    <div className="text-[10px] text-gray-400">
+                      {room.max_adults || 2} Adults &bull; {room.max_children || 1} Child
+                    </div>
+                  </td>
+
+                  {/* Base & Weekend Tariffs */}
+                  <td className="px-3.5 py-3">
+                    <div className="font-medium text-gray-900">{formatCurrency(room.base_rate || 0)}</div>
+                    <div className="text-[10px] text-gray-400">
+                      Wknd: {formatCurrency(room.weekend_price || Math.round((room.base_rate || 0) * 1.15))}
+                    </div>
+                  </td>
+
+                  {/* GST Category */}
+                  <td className="px-3.5 py-3">
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-700 font-medium">
+                      {room.gst_category || 'Accommodation'}
+                    </span>
+                  </td>
+
+                  {/* Status */}
+                  <td className="px-3.5 py-3">{getStatusBadge(room.status)}</td>
+
+                  {/* Housekeeping */}
+                  <td className="px-3.5 py-3">
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                      room.status === 'dirty'
+                        ? 'bg-amber-100 text-amber-800'
+                        : room.status === 'cleaning'
+                        ? 'bg-cyan-100 text-cyan-800'
+                        : 'bg-emerald-100 text-emerald-800'
+                    }`}>
+                      {room.status === 'dirty' ? 'Dirty' : room.status === 'cleaning' ? 'Cleaning' : 'Clean / Inspected'}
+                    </span>
+                  </td>
+
+                  {/* Actions */}
+                  <td className="px-3.5 py-3 text-right">
                     <div className="flex items-center justify-end gap-1.5">
                       <select
                         value={room.status}

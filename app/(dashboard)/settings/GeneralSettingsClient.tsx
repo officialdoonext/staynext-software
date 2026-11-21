@@ -52,6 +52,13 @@ export function GeneralSettingsClient({ initialProperty }: GeneralSettingsClient
   const [checkOutTime, setCheckOutTime] = useState(property?.checkOutTime || '11:00')
   const [description, setDescription] = useState(property?.description || '')
 
+  // Indian Hospitality & Statutory Compliance fields
+  const [gstin, setGstin] = useState(property?.settings?.gstin || '')
+  const [panNumber, setPanNumber] = useState(property?.settings?.panNumber || '')
+  const [fssaiNumber, setFssaiNumber] = useState(property?.settings?.fssaiNumber || '')
+  const [frroCode, setFrroCode] = useState(property?.settings?.frroCode || '')
+  const [nightAuditTime, setNightAuditTime] = useState(property?.settings?.nightAuditTime || '02:00')
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!property?.id) {
@@ -76,6 +83,14 @@ export function GeneralSettingsClient({ initialProperty }: GeneralSettingsClient
       checkInTime,
       checkOutTime,
       description,
+      settings: {
+        ...(property.settings || {}),
+        gstin: gstin.toUpperCase(),
+        panNumber: panNumber.toUpperCase(),
+        fssaiNumber,
+        frroCode,
+        nightAuditTime,
+      },
     })
     setIsSaving(false)
 
@@ -411,6 +426,94 @@ export function GeneralSettingsClient({ initialProperty }: GeneralSettingsClient
                 placeholder="Highlight property amenities, location advantages, and hospitality experience..."
                 className="text-xs rounded-md"
               />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Indian Statutory & Regulatory Compliance */}
+        <Card className="border-gray-200 shadow-2xs rounded-md">
+          <CardHeader className="border-b border-gray-100 pb-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4 text-[#5e2b9d]" />
+                <CardTitle className="text-sm font-medium text-gray-900">
+                  Indian Statutory &amp; Regulatory Compliance
+                </CardTitle>
+              </div>
+              <Badge variant="purple" className="text-[10px] rounded-sm font-mono">
+                GST / FRRO / FSSAI
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  Hotel GSTIN (15 Digits)
+                </label>
+                <Input
+                  value={gstin}
+                  onChange={(e) => setGstin(e.target.value)}
+                  maxLength={15}
+                  placeholder="36AABCS1429B1Z1"
+                  className="text-xs rounded-md uppercase font-mono"
+                />
+                <p className="text-[10px] text-gray-400 mt-1">Printed on Rule 46 Tax Invoices</p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  Permanent Account Number (PAN)
+                </label>
+                <Input
+                  value={panNumber}
+                  onChange={(e) => setPanNumber(e.target.value)}
+                  maxLength={10}
+                  placeholder="AABCS1429B"
+                  className="text-xs rounded-md uppercase font-mono"
+                />
+                <p className="text-[10px] text-gray-400 mt-1">Entity Income Tax identifier</p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  FSSAI Food Safety Licence #
+                </label>
+                <Input
+                  value={fssaiNumber}
+                  onChange={(e) => setFssaiNumber(e.target.value)}
+                  maxLength={14}
+                  placeholder="10020042000123"
+                  className="text-xs rounded-md font-mono"
+                />
+                <p className="text-[10px] text-gray-400 mt-1">Required for dining / F&amp;B service</p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  FRRO Accommodator Registration Code
+                </label>
+                <Input
+                  value={frroCode}
+                  onChange={(e) => setFrroCode(e.target.value)}
+                  placeholder="HYD00249"
+                  className="text-xs rounded-md uppercase font-mono"
+                />
+                <p className="text-[10px] text-gray-400 mt-1">Form III / Form C portal ID</p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  Night Audit Automated Closing Time
+                </label>
+                <Input
+                  type="time"
+                  value={nightAuditTime}
+                  onChange={(e) => setNightAuditTime(e.target.value)}
+                  className="text-xs rounded-md font-mono"
+                />
+                <p className="text-[10px] text-gray-400 mt-1">Daily room charge posting &amp; day close</p>
+              </div>
             </div>
           </CardContent>
         </Card>

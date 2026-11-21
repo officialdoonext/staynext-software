@@ -33,6 +33,24 @@ export interface DashboardStats {
   pendingPayments: number
   outstandingBalance: number
   todayExpenses: number
+
+  // India Specific & Operations Compliance Metrics:
+  walkInGuests: number
+  foreignGuestArrivals: number
+  formIIIPending: number
+  formIIISubmitted: number
+  idVerificationPending: number
+  gstRevenue: number
+  cgstCollected: number
+  sgstCollected: number
+  igstCollected: number
+  cashCollection: number
+  upiCollection: number
+  cardCollection: number
+  payLaterBalance: number
+  pendingRoomCleaning: number
+  roomMaintenance: number
+  nightAuditCompleted: boolean
 }
 
 const emptyStats: DashboardStats = {
@@ -56,6 +74,23 @@ const emptyStats: DashboardStats = {
   pendingPayments: 0,
   outstandingBalance: 0,
   todayExpenses: 0,
+
+  walkInGuests: 0,
+  foreignGuestArrivals: 0,
+  formIIIPending: 0,
+  formIIISubmitted: 0,
+  idVerificationPending: 0,
+  gstRevenue: 0,
+  cgstCollected: 0,
+  sgstCollected: 0,
+  igstCollected: 0,
+  cashCollection: 0,
+  upiCollection: 0,
+  cardCollection: 0,
+  payLaterBalance: 0,
+  pendingRoomCleaning: 0,
+  roomMaintenance: 0,
+  nightAuditCompleted: false,
 }
 
 export async function getDashboardStats(propertyId?: string): Promise<DashboardStats> {
@@ -216,6 +251,114 @@ export async function getDashboardStats(propertyId?: string): Promise<DashboardS
       0
     )
 
+    // India Specific Operational Metrics Queries
+    let walkInGuests = 0
+    let foreignGuestArrivals = 0
+    let formIIIPending = 0
+    let formIIISubmitted = 0
+    let idVerificationPending = 0
+    let cashCollection = 0
+    let upiCollection = 0
+    let cardCollection = 0
+    let cgstCollected = 0
+    let sgstCollected = 0
+    let igstCollected = 0
+    let gstRevenue = 0
+    let nightAuditCompleted = false
+
+    try {
+      const walkInsQuery = supabase
+        .from('reservations')
+        .select('*', { count: 'exact', head: true })
+        .eq('check_in_date', today)
+        .eq('booking_type', 'Walk-in')
+      if (propertyId) walkInsQuery.eq('property_id', propertyId)
+      const { count } = await walkInsQuery
+      walkInGuests = count || 0
+    } catch {}
+
+    try {
+      const foreignQuery = supabase
+        .from('foreign_guest_details')
+        .select('*', { count: 'exact', head: true })
+        .eq('arrival_date_in_india', today)
+      const { count } = await foreignQuery
+      foreignGuestArrivals = count || 0
+    } catch {}
+
+    try {
+      const formIIIPendingQuery = supabase
+        .from('foreign_guest_details')
+        .select('*', { count: 'exact', head: true })
+        .eq('form_iii_status', 'Pending')
+      const { count } = await formIIIPendingQuery
+      formIIIPending = count || 0
+    } catch {}
+
+    try {
+      const formIIISubmittedQuery = supabase
+        .from('foreign_guest_details')
+        .select('*', { count: 'exact', head: true })
+        .eq('form_iii_status', 'Submitted')
+      const { count } = await formIIISubmittedQuery
+      formIIISubmitted = count || 0
+    } catch {}
+
+    try {
+      const idVerifyQuery = supabase
+        .from('guests')
+        .select('*', { count: 'exact', head: true })
+        .eq('id_verification_status', 'Pending')
+      const { count } = await idVerifyQuery
+      idVerificationPending = count || 0
+    } catch {}
+
+    try {
+      const paymentsMethodQuery = supabase
+        .from('payments')
+        .select('amount, payment_method')
+        .gte('created_at', `${today}T00:00:00`)
+        .eq('status', 'completed')
+      if (propertyId) paymentsMethodQuery.eq('property_id', propertyId)
+      const { data: todayPaymentMethods } = await paymentsMethodQuery
+
+      ;(todayPaymentMethods || []).forEach((p: any) => {
+        const amt = Number(p.amount) || 0
+        const method = (p.payment_method || '').toLowerCase()
+        if (method.includes('cash')) cashCollection += amt
+        else if (method.includes('upi')) upiCollection += amt
+        else cardCollection += amt
+      })
+    } catch {}
+
+    try {
+      const taxQuery = supabase
+        .from('reservations')
+        .select('cgst_amount, sgst_amount, igst_amount')
+        .eq('check_in_date', today)
+      if (propertyId) taxQuery.eq('property_id', propertyId)
+      const { data: taxData } = await taxQuery
+
+      ;(taxData || []).forEach((t: any) => {
+        cgstCollected += Number(t.cgst_amount) || 0
+        sgstCollected += Number(t.sgst_amount) || 0
+        igstCollected += Number(t.igst_amount) || 0
+      })
+      gstRevenue = cgstCollected + sgstCollected + igstCollected
+    } catch {}
+
+    try {
+      const nightAuditQuery = supabase
+        .from('night_audit_records')
+        .select('id')
+        .eq('audit_date', today)
+        .eq('status', 'Completed')
+        .limit(1)
+      if (propertyId) nightAuditQuery.eq('property_id', propertyId)
+      const { data: auditRows } = await nightAuditQuery
+      nightAuditCompleted = !!(auditRows && auditRows.length > 0)
+    } catch {}
+
     return {
       totalReservations: totalReservations || 0,
       todayCheckIns: todayCheckIns || 0,
@@ -237,6 +380,23 @@ export async function getDashboardStats(propertyId?: string): Promise<DashboardS
       pendingPayments,
       outstandingBalance: pendingPayments,
       todayExpenses,
+
+      walkInGuests,
+      foreignGuestArrivals,
+      formIIIPending,
+      formIIISubmitted,
+      idVerificationPending,
+      gstRevenue,
+      cgstCollected,
+      sgstCollected,
+      igstCollected,
+      cashCollection,
+      upiCollection,
+      cardCollection,
+      payLaterBalance: pendingPayments,
+      pendingRoomCleaning: (dirtyRooms || 0) + (cleaningRooms || 0),
+      roomMaintenance: (maintenanceRooms || 0) + (outOfOrderRooms || 0),
+      nightAuditCompleted,
     }
   } catch {
     return emptyStats

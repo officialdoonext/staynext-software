@@ -27,16 +27,28 @@ export default function GuestForm() {
   const [successMsg, setSuccessMsg] = useState('')
 
   const [formData, setFormData] = useState({
+    salutation: 'Mr',
     first_name: '',
     last_name: '',
+    gender: 'Male',
+    dob: '',
     email: '',
     phone: '',
+    whatsapp_number: '',
+    guest_category: 'Indian',
     nationality: 'India',
     id_type: 'aadhaar',
     id_number: '',
     address: '',
     city: '',
+    district: '',
+    state: '',
+    pincode: '',
     country: 'India',
+    company_name: '',
+    company_gstin: '',
+    preferred_meal_plan: 'EP',
+    preferred_language: 'English',
     is_vip: false,
     vip_tier: 'Gold VIP',
     preferences: '',
@@ -122,7 +134,24 @@ export default function GuestForm() {
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-4 space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Salutation</label>
+                <select
+                  name="salutation"
+                  value={formData.salutation}
+                  onChange={handleChange}
+                  className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
+                >
+                  <option value="Mr">Mr.</option>
+                  <option value="Mrs">Mrs.</option>
+                  <option value="Ms">Ms.</option>
+                  <option value="Dr">Dr.</option>
+                  <option value="CA">CA</option>
+                  <option value="Prof">Prof.</option>
+                </select>
+              </div>
+
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">First Name *</label>
                 <input
@@ -136,7 +165,7 @@ export default function GuestForm() {
                 />
               </div>
 
-              <div>
+              <div className="sm:col-span-2">
                 <label className="block text-xs font-medium text-gray-700 mb-1">Last Name *</label>
                 <input
                   type="text"
@@ -150,7 +179,33 @@ export default function GuestForm() {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Phone Number</label>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Gender</label>
+                <select
+                  name="gender"
+                  value={formData.gender}
+                  onChange={handleChange}
+                  className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
+                >
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                  <option value="Prefer not to say">Prefer not to say</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Date of Birth</label>
+                <input
+                  type="date"
+                  name="dob"
+                  value={formData.dob}
+                  onChange={handleChange}
+                  className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Mobile (+91) *</label>
                 <input
                   type="tel"
                   name="phone"
@@ -162,13 +217,50 @@ export default function GuestForm() {
               </div>
 
               <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">WhatsApp Number</label>
+                <input
+                  type="tel"
+                  name="whatsapp_number"
+                  value={formData.whatsapp_number}
+                  onChange={handleChange}
+                  placeholder="+91 98765 43210"
+                  className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
+                />
+              </div>
+
+              <div className="sm:col-span-2">
                 <label className="block text-xs font-medium text-gray-700 mb-1">Email Address</label>
                 <input
                   type="email"
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
-                  placeholder="rahul@example.com"
+                  placeholder="rahul.sharma@example.com"
+                  className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Guest Category</label>
+                <select
+                  name="guest_category"
+                  value={formData.guest_category}
+                  onChange={handleChange}
+                  className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
+                >
+                  <option value="Indian">Indian Resident</option>
+                  <option value="Foreign">Foreign National (Form III)</option>
+                  <option value="OCI">OCI Cardholder</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Nationality</label>
+                <input
+                  type="text"
+                  name="nationality"
+                  value={formData.nationality}
+                  onChange={handleChange}
                   className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
                 />
               </div>
@@ -185,10 +277,11 @@ export default function GuestForm() {
                   <option value="passport">Passport</option>
                   <option value="driving_license">Driving License</option>
                   <option value="voter_id">Voter ID</option>
+                  <option value="pan_card">PAN Card</option>
                 </select>
               </div>
 
-              <div>
+              <div className="sm:col-span-3">
                 <label className="block text-xs font-medium text-gray-700 mb-1">Document ID Number</label>
                 <input
                   type="text"
@@ -200,27 +293,108 @@ export default function GuestForm() {
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Nationality</label>
+              {/* Address Section */}
+              <div className="sm:col-span-2">
+                <label className="block text-xs font-medium text-gray-700 mb-1">Street Address</label>
                 <input
                   type="text"
-                  name="nationality"
-                  value={formData.nationality}
+                  name="address"
+                  value={formData.address}
                   onChange={handleChange}
+                  placeholder="Flat / House #, Street Name, Area"
                   className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">City &amp; Country</label>
+                <label className="block text-xs font-medium text-gray-700 mb-1">City</label>
                 <input
                   type="text"
                   name="city"
                   value={formData.city}
                   onChange={handleChange}
-                  placeholder="Mumbai, India"
+                  placeholder="Mumbai"
                   className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
                 />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">State &amp; PIN Code</label>
+                <div className="grid grid-cols-2 gap-1.5">
+                  <input
+                    type="text"
+                    name="state"
+                    value={formData.state}
+                    onChange={handleChange}
+                    placeholder="Maharashtra"
+                    className="w-full px-2.5 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
+                  />
+                  <input
+                    type="text"
+                    name="pincode"
+                    value={formData.pincode}
+                    onChange={handleChange}
+                    placeholder="400001"
+                    className="w-full px-2.5 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
+                  />
+                </div>
+              </div>
+
+              {/* B2B / Corporate Billing */}
+              <div className="sm:col-span-2">
+                <label className="block text-xs font-medium text-gray-700 mb-1">Company / Organization Name</label>
+                <input
+                  type="text"
+                  name="company_name"
+                  value={formData.company_name}
+                  onChange={handleChange}
+                  placeholder="e.g. Tata Consultancy Services"
+                  className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
+                />
+              </div>
+
+              <div className="sm:col-span-2">
+                <label className="block text-xs font-medium text-gray-700 mb-1">Company GSTIN (For B2B Tax Invoice)</label>
+                <input
+                  type="text"
+                  name="company_gstin"
+                  value={formData.company_gstin}
+                  onChange={handleChange}
+                  placeholder="e.g. 27AAAAA0000A1Z5"
+                  className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] uppercase"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Preferred Meal Plan</label>
+                <select
+                  name="preferred_meal_plan"
+                  value={formData.preferred_meal_plan}
+                  onChange={handleChange}
+                  className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
+                >
+                  <option value="EP">EP - Room Only</option>
+                  <option value="CP">CP - Bed &amp; Breakfast</option>
+                  <option value="MAP">MAP - Half Board</option>
+                  <option value="AP">AP - Full Board</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Preferred Language</label>
+                <select
+                  name="preferred_language"
+                  value={formData.preferred_language}
+                  onChange={handleChange}
+                  className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
+                >
+                  <option value="English">English</option>
+                  <option value="Hindi">Hindi</option>
+                  <option value="Telugu">Telugu</option>
+                  <option value="Tamil">Tamil</option>
+                  <option value="Kannada">Kannada</option>
+                  <option value="Bengali">Bengali</option>
+                </select>
               </div>
 
               <div className="flex items-center pt-2">
@@ -256,7 +430,7 @@ export default function GuestForm() {
                 </div>
               )}
 
-              <div className="sm:col-span-2">
+              <div className="sm:col-span-4">
                 <label className="block text-xs font-medium text-gray-700 mb-1">
                   Guest Preferences &amp; Special Requirements
                 </label>

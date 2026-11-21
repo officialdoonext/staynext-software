@@ -175,59 +175,81 @@ export function InvoicesClient({ initialInvoices, propertyId }: InvoicesClientPr
           </p>
         </div>
       ) : (
-        <div className="bg-white border border-gray-200 rounded-md shadow-2xs overflow-hidden">
-          <Table>
+        <div className="bg-white border border-gray-200 rounded-md shadow-2xs overflow-x-auto">
+          <Table className="min-w-[900px]">
             <TableHeader>
               <TableRow className="bg-gray-50/75">
-                <TableHead className="text-xs font-medium">Invoice #</TableHead>
+                <TableHead className="text-xs font-medium">Invoice # &amp; Type</TableHead>
                 <TableHead className="text-xs font-medium">Date</TableHead>
-                <TableHead className="text-xs font-medium">Guest / Customer</TableHead>
-                <TableHead className="text-xs font-medium">Tax Amount</TableHead>
+                <TableHead className="text-xs font-medium">Guest / Corporate GSTIN</TableHead>
+                <TableHead className="text-xs font-medium">Taxable Subtotal</TableHead>
+                <TableHead className="text-xs font-medium">CGST / SGST (12%)</TableHead>
                 <TableHead className="text-xs font-medium">Total Amount</TableHead>
                 <TableHead className="text-xs font-medium">Status</TableHead>
                 <TableHead className="text-xs font-medium text-right">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map((inv) => (
-                <TableRow key={inv.id} className="hover:bg-gray-50/50">
-                  <TableCell className="font-mono text-xs font-medium text-[#5e2b9d]">
-                    {inv.invoiceNumber}
-                  </TableCell>
-                  <TableCell className="text-xs text-gray-500">
-                    {formatDate(inv.issuedAt || inv.createdAt)}
-                  </TableCell>
-                  <TableCell className="text-xs font-medium text-gray-900">
-                    {inv.guestName || 'Guest'}
-                  </TableCell>
-                  <TableCell className="text-xs font-medium text-gray-600">
-                    {formatCurrency(inv.taxAmount)}
-                  </TableCell>
-                  <TableCell className="text-xs font-medium text-gray-900">
-                    {formatCurrency(inv.total)}
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={inv.status === 'paid' ? 'success' : inv.status === 'issued' ? 'warning' : 'outline'}
-                      className="text-[10px] capitalize rounded-sm"
-                    >
-                      {inv.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Link href={`/billing/invoices/${inv.id}`}>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-7 px-2.5 text-xs text-gray-700 hover:bg-[#f7f2fd] hover:text-[#5e2b9d] cursor-pointer rounded-md font-medium"
+              {filtered.map((inv) => {
+                const cgst = (inv.taxAmount / 2).toFixed(2)
+                const sgst = (inv.taxAmount / 2).toFixed(2)
+
+                return (
+                  <TableRow key={inv.id} className="hover:bg-gray-50/50">
+                    <TableCell>
+                      <span className="font-mono text-xs font-semibold text-[#5e2b9d] block">
+                        {inv.invoiceNumber}
+                      </span>
+                      <span className="text-[9px] bg-purple-50 text-purple-700 border border-purple-200 px-1 py-0.2 rounded-xs font-medium">
+                        Tax Invoice
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-xs text-gray-500">
+                      {formatDate(inv.issuedAt || inv.createdAt)}
+                    </TableCell>
+                    <TableCell className="text-xs">
+                      <div className="font-medium text-gray-900">{inv.guestName || 'Guest'}</div>
+                      {inv.customerGstin ? (
+                        <div className="font-mono text-[10px] text-purple-700 bg-purple-50 px-1 rounded-xs inline-block mt-0.5">
+                          GSTIN: {inv.customerGstin}
+                        </div>
+                      ) : (
+                        <div className="text-[10px] text-gray-400">B2C Retail</div>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-xs font-medium text-gray-700">
+                      {formatCurrency(inv.subtotal)}
+                    </TableCell>
+                    <TableCell className="text-xs text-gray-600 font-mono">
+                      <div>CGST: {formatCurrency(Number(cgst))}</div>
+                      <div>SGST: {formatCurrency(Number(sgst))}</div>
+                    </TableCell>
+                    <TableCell className="text-xs font-bold text-gray-900 font-mono">
+                      {formatCurrency(inv.total)}
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={inv.status === 'paid' ? 'success' : inv.status === 'issued' ? 'warning' : 'outline'}
+                        className="text-[10px] capitalize rounded-sm"
                       >
-                        <Eye className="h-3.5 w-3.5 mr-1" />
-                        View / Print
-                      </Button>
-                    </Link>
-                  </TableCell>
-                </TableRow>
-              ))}
+                        {inv.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Link href={`/billing/invoices/${inv.id}`}>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 px-2.5 text-xs text-gray-700 hover:bg-[#f7f2fd] hover:text-[#5e2b9d] cursor-pointer rounded-md font-medium"
+                        >
+                          <Eye className="h-3.5 w-3.5 mr-1" />
+                          View / Print
+                        </Button>
+                      </Link>
+                    </TableCell>
+                  </TableRow>
+                )
+              })}
             </TableBody>
           </Table>
         </div>

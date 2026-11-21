@@ -22,6 +22,16 @@ export interface RoomItem {
   max_occupancy?: number
   qr_token?: string
   created_at: string
+
+  // Extended PMS Fields
+  max_adults?: number
+  max_children?: number
+  weekday_price?: number
+  weekend_price?: number
+  is_ac?: boolean
+  gst_category?: string
+  bed_type?: string
+  housekeeping_status?: 'clean' | 'dirty' | 'cleaning' | 'inspected'
 }
 
 export interface RoomTypeItem {
@@ -39,6 +49,16 @@ export interface RoomTypeItem {
   images: string[]
   is_active: boolean
   created_at: string
+
+  // Extended Room Type Fields
+  base_occupancy?: number
+  default_adult_count?: number
+  default_child_count?: number
+  extra_adult_rate?: number
+  extra_child_rate?: number
+  extra_bed_allowed?: boolean
+  default_meal_plan?: string // EP, CP, MAP, AP
+  gst_rate?: number
 }
 
 export interface RoomBlockItem {
@@ -53,6 +73,13 @@ export interface RoomBlockItem {
   notes?: string
   status: 'active' | 'released'
   created_at: string
+
+  // Extended Room Block Fields
+  block_type?: 'Maintenance' | 'Renovation' | 'Pest Control' | 'Deep Cleaning' | 'Safety Issue'
+  maintenance_ticket_number?: string
+  approved_by?: string
+  actual_release_date?: string
+  inspection_status?: 'Pending' | 'Inspected' | 'Passed'
 }
 
 export interface RoomFilterOptions {
@@ -143,6 +170,14 @@ export async function getRooms(
     max_occupancy: r.room_type?.max_occupancy || 2,
     qr_token: r.qr_code?.token_hash,
     created_at: r.created_at,
+    max_adults: r.max_adults || r.room_type?.max_occupancy || 2,
+    max_children: r.max_children || 1,
+    weekday_price: r.weekday_price || r.room_type?.base_rate || 0,
+    weekend_price: r.weekend_price || Math.round((r.room_type?.base_rate || 0) * 1.15),
+    is_ac: r.is_ac ?? true,
+    gst_category: r.gst_category || 'Accommodation',
+    bed_type: r.bed_type || r.room_type?.bed_type || 'Double Bed',
+    housekeeping_status: r.status === 'dirty' ? 'dirty' : r.status === 'cleaning' ? 'cleaning' : 'clean',
   }))
 
   return { rooms, totalCount: count || rooms.length }
@@ -368,8 +403,16 @@ export async function getRoomTypes(propertyId?: string): Promise<RoomTypeItem[]>
     description: rt.description || '',
     base_rate: parseFloat(rt.base_rate) || 0,
     max_occupancy: rt.max_occupancy || 2,
-    bed_type: rt.bed_type || 'King Bed',
+    base_occupancy: rt.base_occupancy || 2,
+    default_adult_count: rt.default_adult_count || 2,
+    default_child_count: rt.default_child_count || 1,
+    bed_type: rt.bed_type || rt.default_bed_type || 'King Bed',
     size_sqft: parseFloat(rt.size_sqft) || 280,
+    extra_adult_rate: parseFloat(rt.extra_adult_rate) || 500,
+    extra_child_rate: parseFloat(rt.extra_child_rate) || 300,
+    extra_bed_allowed: rt.extra_bed_allowed ?? true,
+    default_meal_plan: rt.default_meal_plan || 'EP',
+    gst_rate: parseFloat(rt.gst_rate) || 12,
     total_rooms: (rt.rooms || []).length,
     amenities: Array.isArray(rt.amenities) ? rt.amenities : [],
     images: Array.isArray(rt.images) ? rt.images : [],
@@ -391,8 +434,16 @@ export async function createRoomType(payload: Partial<RoomTypeItem>): Promise<{ 
         description: payload.description || '',
         base_rate: payload.base_rate || 0,
         max_occupancy: payload.max_occupancy || 2,
+        base_occupancy: payload.base_occupancy || 2,
+        default_adult_count: payload.default_adult_count || 2,
+        default_child_count: payload.default_child_count || 1,
         bed_type: payload.bed_type || 'King Bed',
         size_sqft: payload.size_sqft || 300,
+        extra_adult_rate: payload.extra_adult_rate || 500,
+        extra_child_rate: payload.extra_child_rate || 300,
+        extra_bed_allowed: payload.extra_bed_allowed ?? true,
+        default_meal_plan: payload.default_meal_plan || 'EP',
+        gst_rate: payload.gst_rate || 12,
         amenities: payload.amenities || ['WiFi', 'Air Conditioning', 'Flat-screen TV'],
         images: payload.images || [],
         is_active: true,
@@ -483,6 +534,11 @@ export async function getRoomBlocks(propertyId?: string): Promise<RoomBlockItem[
     blocked_by: b.blocked_by || 'Staff',
     notes: b.notes || '',
     status: b.status || 'active',
+    block_type: b.block_type || 'Maintenance',
+    maintenance_ticket_number: b.maintenance_ticket_number || '',
+    approved_by: b.approved_by || '',
+    actual_release_date: b.actual_release_date,
+    inspection_status: b.inspection_status || 'Pending',
     created_at: b.created_at,
   }))
 }
@@ -495,6 +551,9 @@ export async function createRoomBlock(payload: {
   end_date: string
   blocked_by?: string
   notes?: string
+  block_type?: string
+  maintenance_ticket_number?: string
+  approved_by?: string
 }): Promise<{ success: boolean; data?: any; error?: string }> {
   try {
     const supabase = await createClient()
@@ -510,6 +569,10 @@ export async function createRoomBlock(payload: {
         end_date: payload.end_date,
         blocked_by: payload.blocked_by || 'Front Desk',
         notes: payload.notes || '',
+        block_type: payload.block_type || 'Maintenance',
+        maintenance_ticket_number: payload.maintenance_ticket_number || '',
+        approved_by: payload.approved_by || '',
+        inspection_status: 'Pending',
         status: 'active',
       })
       .select()
