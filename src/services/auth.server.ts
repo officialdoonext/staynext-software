@@ -1,5 +1,6 @@
 'use server'
 
+import '@/lib/dns-init'
 import { createClient as createServerClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import {
@@ -399,9 +400,16 @@ export async function signInTenantAction(identifier: string, password: string) {
       redirectTo: access.isAllowed ? '/dashboard' : '/onboarding',
     }
   } catch (err: any) {
+    const errorMsg = err?.message || ''
+    if (errorMsg.includes('fetch failed') || errorMsg.includes('timeout') || errorMsg.includes('ConnectTimeoutError')) {
+      return {
+        success: false,
+        error: 'Network connection to Supabase timed out. Please check your internet connection and try again.',
+      }
+    }
     return {
       success: false,
-      error: err.message || 'Authentication error. Please try again.',
+      error: errorMsg || 'Authentication error. Please try again.',
     }
   }
 }

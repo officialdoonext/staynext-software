@@ -250,31 +250,118 @@ export async function getReservationById(reservationId: string): Promise<Reserva
   }
 }
 
-/**
- * Create a reservation atomically
- */
-export async function createReservation(payload: {
-  property_id: string
-  first_name: string
-  last_name: string
-  email: string
-  phone: string
+export interface AccompanyingGuestItem {
+  id?: string
+  name: string
+  age?: number | string
+  gender?: string
+  relationship?: string
+  phone?: string
+  nationality?: string
   id_type?: string
   id_number?: string
-  room_type_id: string
-  room_id?: string
+  verification_status?: string
+}
+
+export interface CreateReservationPayload {
+  property_id: string
+  // 1. Guest Information
+  first_name: string
+  last_name: string
+  guest_type?: string
+  gender?: string
+  date_of_birth?: string
+  age?: number | string
+  email?: string
+  phone: string
+  alternate_phone?: string
+  nationality?: string
+  occupation?: string
+  company_name?: string
+
+  // 2. Identity & Documents
+  id_type?: string
+  id_number?: string
+  id_issue_date?: string
+  id_expiry_date?: string
+  id_verification_status?: string
+  verified_by?: string
+  verification_date?: string
+  id_document_url?: string
+
+  // Foreign Guest / Form III (Form C)
+  is_foreign_guest?: boolean
+  passport_number?: string
+  passport_issue_date?: string
+  passport_expiry_date?: string
+  passport_issue_country?: string
+  passport_issue_place?: string
+  visa_number?: string
+  visa_type?: string
+  visa_issue_date?: string
+  visa_expiry_date?: string
+  permanent_address_abroad?: string
+  address_in_india?: string
+  date_of_arrival_in_india?: string
+  arrived_from?: string
+  purpose_of_visit?: string
+  expected_duration_days?: number | string
+  guest_photo_url?: string
+
+  // 3. Booking & Stay Details
+  booking_type?: string
+  booking_source?: string
+  booking_date?: string
   check_in_date: string
   check_in_time?: string
   check_out_date: string
   check_out_time?: string
   num_adults: number
   num_children: number
+  special_requests?: string
+  status?: 'confirmed' | 'checked_in' | 'reserved'
+  immediate_check_in?: boolean
+
+  // 4. Room Allocation
+  room_type_id: string
+  room_id?: string
+  room_tariff?: number
+  extra_bed?: boolean
+  extra_bed_charges?: number
+
+  // 5. Payment & Billing
+  room_charges?: number
+  food_charges?: number
+  other_charges?: number
+  discount_amount?: number
+  subtotal_amount?: number
+  taxable_amount?: number
+  gst_rate?: number
+  cgst_amount?: number
+  sgst_amount?: number
+  igst_amount?: number
+  tax_amount?: number
   total_amount: number
   paid_amount: number
   payment_method?: string
-  booking_source?: string
-  special_requests?: string
-}): Promise<{ success: boolean; data?: any; error?: string }> {
+  payment_mode?: string
+  transaction_reference?: string
+
+  // 6. Additional Guest Information (Accompanying Guests)
+  accompanying_guests?: AccompanyingGuestItem[]
+
+  // 7. Check-in & Signature
+  key_card_number?: string
+  guest_signature?: string
+  checkin_handled_by?: string
+}
+
+/**
+ * Create a reservation atomically with all 6 registration sections
+ */
+export async function createReservation(
+  payload: CreateReservationPayload
+): Promise<{ success: boolean; data?: any; error?: string }> {
   try {
     const supabase = await createClient()
 
@@ -311,7 +398,7 @@ export async function createReservation(payload: {
       tenantId = fallbackTenant?.id || null
     }
 
-    // 2. Find or create guest
+    // 2. Find or create/update guest
     let guestId: string | undefined
     if (payload.email) {
       const { data: existingGuest } = await supabase
@@ -323,25 +410,87 @@ export async function createReservation(payload: {
       if (existingGuest?.id) {
         guestId = existingGuest.id
       }
+    } else if (payload.phone) {
+      const { data: existingGuest } = await supabase
+        .from('guests')
+        .select('id')
+        .eq('phone', payload.phone.trim())
+        .maybeSingle()
+
+      if (existingGuest?.id) {
+        guestId = existingGuest.id
+      }
+    }
+
+    const guestPayload: Record<string, any> = {
+      tenant_id: tenantId,
+      first_name: payload.first_name.trim(),
+      last_name: payload.last_name.trim(),
+      email: payload.email?.trim().toLowerCase() || null,
+      phone: payload.phone.trim() || null,
+      nationality: payload.nationality || 'India',
+      id_type: payload.id_type || 'Aadhaar Card',
+      id_number: payload.id_number || '',
+      gender: payload.gender || 'Prefer not to say',
+      date_of_birth: payload.date_of_birth || null,
+      guest_type: payload.guest_type || 'Individual',
+      age: payload.age ? Number(payload.age) : null,
+      alternate_phone: payload.alternate_phone || null,
+      occupation: payload.occupation || null,
+      company_name: payload.company_name || null,
+      id_issue_date: payload.id_issue_date || null,
+      id_expiry_date: payload.id_expiry_date || null,
+      id_verification_status: payload.id_verification_status || 'Verified',
+      verified_by: payload.verified_by || 'Front Desk',
+      verification_date: payload.verification_date || new Date().toISOString(),
+      id_document_url: payload.id_document_url || null,
+      is_foreign_guest: Boolean(payload.is_foreign_guest),
+      passport_number: payload.passport_number || null,
+      passport_issue_date: payload.passport_issue_date || null,
+      passport_expiry_date: payload.passport_expiry_date || null,
+      passport_issue_country: payload.passport_issue_country || null,
+      passport_issue_place: payload.passport_issue_place || null,
+      visa_number: payload.visa_number || null,
+      visa_type: payload.visa_type || null,
+      visa_issue_date: payload.visa_issue_date || null,
+      visa_expiry_date: payload.visa_expiry_date || null,
+      permanent_address_abroad: payload.permanent_address_abroad || null,
+      address_in_india: payload.address_in_india || null,
+      date_of_arrival_in_india: payload.date_of_arrival_in_india || null,
+      arrived_from: payload.arrived_from || null,
+      purpose_of_visit: payload.purpose_of_visit || null,
+      expected_duration_days: payload.expected_duration_days ? Number(payload.expected_duration_days) : null,
+      guest_photo_url: payload.guest_photo_url || null,
     }
 
     if (!guestId) {
-      const { data: newGuest, error: guestErr } = await supabase
-        .from('guests')
-        .insert({
+      // Try insert with full fields, gracefully fall back if columns pending migration
+      let insertResult = await supabase.from('guests').insert(guestPayload).select('id').single()
+      if (insertResult.error) {
+        // Fallback to basic columns if migration 009 not yet executed in Supabase
+        const basicGuestPayload = {
           tenant_id: tenantId,
           first_name: payload.first_name.trim(),
           last_name: payload.last_name.trim(),
-          email: payload.email.trim().toLowerCase() || null,
+          email: payload.email?.trim().toLowerCase() || null,
           phone: payload.phone.trim() || null,
           id_type: payload.id_type || 'passport',
           id_number: payload.id_number || '',
-        })
-        .select('id')
-        .single()
-
-      if (guestErr) throw guestErr
-      guestId = newGuest.id
+          nationality: payload.nationality || 'India',
+          gender: payload.gender || 'Prefer not to say',
+          date_of_birth: payload.date_of_birth || null,
+        }
+        insertResult = await supabase.from('guests').insert(basicGuestPayload).select('id').single()
+      }
+      if (insertResult.error) throw insertResult.error
+      guestId = insertResult.data.id
+    } else {
+      // Update existing guest info
+      try {
+        await supabase.from('guests').update(guestPayload).eq('id', guestId)
+      } catch {
+        // Ignored if custom columns pending migration
+      }
     }
 
     const resNumber = generateReservationNumber()
@@ -352,10 +501,62 @@ export async function createReservation(payload: {
         ? 'partial'
         : 'pending'
 
-    // 2. Insert reservation
-    const { data: reservation, error: resErr } = await supabase
+    const isImmediateCheckIn = Boolean(payload.immediate_check_in || payload.status === 'checked_in')
+    const reservationStatus = isImmediateCheckIn ? 'checked_in' : 'confirmed'
+    const nowIso = new Date().toISOString()
+
+    // 3. Insert reservation record
+    const reservationInsertPayload: Record<string, any> = {
+      reservation_number: resNumber,
+      property_id: payload.property_id,
+      guest_id: guestId,
+      room_type_id: payload.room_type_id,
+      check_in_date: payload.check_in_date,
+      check_in_time: payload.check_in_time || '14:00',
+      check_out_date: payload.check_out_date,
+      check_out_time: payload.check_out_time || '11:00',
+      num_adults: payload.num_adults || 1,
+      num_children: payload.num_children || 0,
+      total_amount: payload.total_amount,
+      paid_amount: payload.paid_amount || 0,
+      payment_status: paymentStatus,
+      status: reservationStatus,
+      booking_source: payload.booking_source || 'direct',
+      special_requests: payload.special_requests || '',
+      checked_in_at: isImmediateCheckIn ? nowIso : null,
+      // Extended fields
+      booking_type: payload.booking_type || (isImmediateCheckIn ? 'Walk-in' : 'Advance Booking'),
+      booking_date: payload.booking_date || payload.check_in_date,
+      purpose_of_visit: payload.purpose_of_visit || 'Personal',
+      extra_bed: Boolean(payload.extra_bed),
+      extra_bed_charges: payload.extra_bed_charges || 0,
+      food_charges: payload.food_charges || 0,
+      other_charges: payload.other_charges || 0,
+      discount_amount: payload.discount_amount || 0,
+      subtotal_amount: payload.subtotal_amount || payload.total_amount,
+      taxable_amount: payload.taxable_amount || payload.total_amount,
+      gst_rate: payload.gst_rate || 12,
+      cgst_amount: payload.cgst_amount || 0,
+      sgst_amount: payload.sgst_amount || 0,
+      igst_amount: payload.igst_amount || 0,
+      tax_amount: payload.tax_amount || 0,
+      payment_mode: payload.payment_mode || payload.payment_method || 'Cash',
+      transaction_reference: payload.transaction_reference || null,
+      accompanying_guests: payload.accompanying_guests || [],
+      key_card_number: payload.key_card_number || null,
+      guest_signature: payload.guest_signature || null,
+      checkin_handled_by: payload.checkin_handled_by || 'Front Desk',
+    }
+
+    let { data: reservation, error: resErr } = await supabase
       .from('reservations')
-      .insert({
+      .insert(reservationInsertPayload)
+      .select()
+      .single()
+
+    // Fallback if migration 009 columns pending in Supabase
+    if (resErr) {
+      const basicReservationPayload = {
         reservation_number: resNumber,
         property_id: payload.property_id,
         guest_id: guestId,
@@ -369,16 +570,47 @@ export async function createReservation(payload: {
         total_amount: payload.total_amount,
         paid_amount: payload.paid_amount || 0,
         payment_status: paymentStatus,
-        status: 'confirmed',
+        status: reservationStatus,
         booking_source: payload.booking_source || 'direct',
         special_requests: payload.special_requests || '',
-      })
-      .select()
-      .single()
+        checked_in_at: isImmediateCheckIn ? nowIso : null,
+      }
+      const retryResult = await supabase
+        .from('reservations')
+        .insert(basicReservationPayload)
+        .select()
+        .single()
+      if (retryResult.error) throw retryResult.error
+      reservation = retryResult.data
+    }
 
-    if (resErr) throw resErr
+    // 4. Save accompanying guests to relational table if present
+    if (payload.accompanying_guests && payload.accompanying_guests.length > 0 && reservation?.id) {
+      const guestRows = payload.accompanying_guests
+        .filter((g) => g.name && g.name.trim())
+        .map((g) => ({
+          reservation_id: reservation.id,
+          guest_name: g.name.trim(),
+          age: g.age ? Number(g.age) : null,
+          gender: g.gender || 'Prefer not to say',
+          relationship: g.relationship || 'Guest',
+          phone: g.phone || null,
+          nationality: g.nationality || 'India',
+          id_type: g.id_type || 'Aadhaar Card',
+          id_number: g.id_number || '',
+          verification_status: g.verification_status || 'Verified',
+        }))
 
-    // 3. Allocate room (either user-selected or auto-allocated available room of that category)
+      if (guestRows.length > 0) {
+        try {
+          await supabase.from('reservation_accompanying_guests').insert(guestRows)
+        } catch {
+          // Ignored if table pending migration
+        }
+      }
+    }
+
+    // 5. Allocate room (either user-selected or auto-allocated available room of that category)
     let allocatedRoomId = payload.room_id
 
     if (!allocatedRoomId && payload.room_type_id && payload.property_id) {
@@ -418,10 +650,11 @@ export async function createReservation(payload: {
         check_in_time: payload.check_in_time || '14:00',
         check_out_date: payload.check_out_date,
         check_out_time: payload.check_out_time || '11:00',
-        rate_per_night: payload.total_amount,
+        rate_per_night: payload.room_tariff || payload.total_amount,
       })
 
-      await supabase.from('rooms').update({ status: 'reserved' }).eq('id', allocatedRoomId)
+      const targetRoomStatus = isImmediateCheckIn ? 'occupied' : 'reserved'
+      await supabase.from('rooms').update({ status: targetRoomStatus }).eq('id', allocatedRoomId)
     }
 
     revalidatePath('/reservations')
@@ -429,6 +662,7 @@ export async function createReservation(payload: {
     revalidatePath('/front-desk')
     revalidatePath('/dashboard')
     revalidatePath('/rooms')
+    revalidatePath('/guests')
     return { success: true, data: reservation }
   } catch (err: any) {
     return { success: false, error: err.message }

@@ -1,3 +1,4 @@
+import '@/lib/dns-init'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 

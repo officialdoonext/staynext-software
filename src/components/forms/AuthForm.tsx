@@ -20,6 +20,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { toast } from 'sonner'
 import { signUpTenantAction, signInTenantAction } from '@/services/auth.server'
+import { signInTenant, signUpTenant } from '@/services/auth.service'
 import Link from 'next/link'
 
 interface AuthFormProps {
@@ -71,29 +72,78 @@ export default function AuthForm({ initialTab = 'signin' }: AuthFormProps) {
     setLoginLoading(true)
 
     try {
+      // 1. Primary: Server action (handles cookies & tenant lookup)
       const res = await signInTenantAction(
         loginIdentifier.trim(),
         loginPassword
       )
 
-      if (!res.success) {
-        setLoginError(res.error || 'Failed to sign in. Please verify credentials.')
-        setLoginLoading(false)
+      if (res.success) {
+        if (res.access?.isAllowed) {
+          toast.success('Login successful! Welcome back.')
+          router.push('/dashboard')
+        } else {
+          toast.warning(
+            'Account is inactive or subscription expired. Redirecting to onboarding...'
+          )
+          router.push(res.redirectTo || '/onboarding')
+        }
+        router.refresh()
         return
       }
 
-      if (res.access?.isAllowed) {
-        toast.success('Login successful! Welcome back.')
-        router.push('/dashboard')
-      } else {
-        toast.warning(
-          'Account is inactive or subscription expired. Redirecting to onboarding...'
-        )
-        router.push(res.redirectTo || '/onboarding')
+      // If server action reported network error or fetch failed, fallback to client browser client
+      if (
+        res.error &&
+        (res.error.includes('fetch failed') ||
+          res.error.includes('timed out') ||
+          res.error.includes('Network connection') ||
+          res.error.includes('Network error'))
+      ) {
+        console.warn('Server network error, attempting client-side authentication fallback...')
+        try {
+          const clientRes = await signInTenant(loginIdentifier.trim(), loginPassword)
+          if (clientRes.success) {
+            if (clientRes.access?.isAllowed) {
+              toast.success('Login successful! Welcome back.')
+              router.push('/dashboard')
+            } else {
+              toast.warning(
+                'Account is inactive or subscription expired. Redirecting to onboarding...'
+              )
+              router.push(clientRes.redirectTo || '/onboarding')
+            }
+            router.refresh()
+            return
+          }
+        } catch (clientErr: any) {
+          setLoginError(clientErr.message || res.error)
+          return
+        }
       }
-      router.refresh()
+
+      setLoginError(res.error || 'Failed to sign in. Please verify credentials.')
     } catch (err: any) {
-      setLoginError(err.message || 'Invalid credentials. Please verify and try again.')
+      // If server action completely threw an exception (e.g. Next.js server network failure)
+      try {
+        console.warn('Server action exception, attempting client-side fallback...', err)
+        const clientRes = await signInTenant(loginIdentifier.trim(), loginPassword)
+        if (clientRes.success) {
+          if (clientRes.access?.isAllowed) {
+            toast.success('Login successful! Welcome back.')
+            router.push('/dashboard')
+          } else {
+            toast.warning(
+              'Account is inactive or subscription expired. Redirecting to onboarding...'
+            )
+            router.push(clientRes.redirectTo || '/onboarding')
+          }
+          router.refresh()
+          return
+        }
+      } catch (clientErr: any) {
+        setLoginError(clientErr.message || 'Invalid credentials. Please verify and try again.')
+      }
     } finally {
       setLoginLoading(false)
     }
@@ -111,31 +161,68 @@ export default function AuthForm({ initialTab = 'signin' }: AuthFormProps) {
 
     setSignupLoading(true)
 
-    try {
-      const res = await signUpTenantAction({
-        propertyName: signupData.propertyName.trim(),
-        mobileNumber: signupData.mobileNumber.trim(),
-        username: signupData.username.trim(),
-        email: signupData.email.trim(),
-        password: signupData.password,
-        city: signupData.city.trim(),
-        address: signupData.address.trim(),
-      })
+    const payload = {
+      propertyName: signupData.propertyName.trim(),
+      mobileNumber: signupData.mobileNumber.trim(),
+      username: signupData.username.trim(),
+      email: signupData.email.trim(),
+      password: signupData.password,
+      city: signupData.city.trim(),
+      address: signupData.address.trim(),
+    }
 
-      if (!res.success) {
-        setSignupError(res.error || 'Registration failed. Please check details and try again.')
-        setSignupLoading(false)
+    try {
+      const res = await signUpTenantAction(payload)
+
+      if (res.success) {
+        toast.info('Account registered with status: Inactive (Expired).')
+        toast.success('Redirecting to Onboarding Verification...')
+        router.push(res.redirectTo || '/onboarding')
+        router.refresh()
         return
       }
 
-      toast.info('Account registered with status: Inactive (Expired).')
-      toast.success('Redirecting to Onboarding Verification...')
-      router.push(res.redirectTo || '/onboarding')
-      router.refresh()
+      // If server action reported network error or fetch failed, fallback to client browser client
+      if (
+        res.error &&
+        (res.error.includes('fetch failed') ||
+          res.error.includes('timed out') ||
+          res.error.includes('Network connection') ||
+          res.error.includes('Network error'))
+      ) {
+        console.warn('Server network error, attempting client-side registration fallback...')
+        try {
+          const clientRes = await signUpTenant(payload)
+          if (clientRes.success) {
+            toast.info('Account registered with status: Inactive (Expired).')
+            toast.success('Redirecting to Onboarding Verification...')
+            router.push(clientRes.redirectTo || '/onboarding')
+            router.refresh()
+            return
+          }
+        } catch (clientErr: any) {
+          setSignupError(clientErr.message || res.error)
+          return
+        }
+      }
+
+      setSignupError(res.error || 'Registration failed. Please check details and try again.')
     } catch (err: any) {
-      setSignupError(
-        err.message || 'Registration failed. Please check details and try again.'
-      )
+      try {
+        console.warn('Server action exception, attempting client-side signup fallback...', err)
+        const clientRes = await signUpTenant(payload)
+        if (clientRes.success) {
+          toast.info('Account registered with status: Inactive (Expired).')
+          toast.success('Redirecting to Onboarding Verification...')
+          router.push(clientRes.redirectTo || '/onboarding')
+          router.refresh()
+          return
+        }
+      } catch (clientErr: any) {
+        setSignupError(
+          clientErr.message || 'Registration failed. Please check details and try again.'
+        )
+      }
     } finally {
       setSignupLoading(false)
     }

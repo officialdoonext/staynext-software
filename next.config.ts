@@ -1,3 +1,4 @@
+import "./src/lib/dns-init";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
