@@ -148,7 +148,7 @@ export default function Header({
           {/* Date Indicator */}
           <div className="hidden xl:flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-gray-600 bg-gray-50 border border-gray-200 rounded-md">
             <Calendar className="h-3.5 w-3.5 text-[#5e2b9d] shrink-0" />
-            <span className="font-medium">{todayFormatted}</span>
+            <span suppressHydrationWarning className="font-medium">{todayFormatted}</span>
           </div>
 
           {/* Notification Bell */}

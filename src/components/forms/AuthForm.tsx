@@ -95,10 +95,10 @@ export default function AuthForm({ initialTab = 'signin' }: AuthFormProps) {
       // If server action reported network error or fetch failed, fallback to client browser client
       if (
         res.error &&
-        (res.error.includes('fetch failed') ||
-          res.error.includes('timed out') ||
-          res.error.includes('Network connection') ||
-          res.error.includes('Network error'))
+        (res.error.toLowerCase().includes('fetch failed') ||
+          res.error.toLowerCase().includes('timed out') ||
+          res.error.toLowerCase().includes('network') ||
+          res.error.toLowerCase().includes('connection'))
       ) {
         console.warn('Server network error, attempting client-side authentication fallback...')
         try {
@@ -115,9 +115,17 @@ export default function AuthForm({ initialTab = 'signin' }: AuthFormProps) {
             }
             router.refresh()
             return
+          } else {
+            setLoginError('Authentication failed. Please verify your credentials or check your connection.')
+            return
           }
         } catch (clientErr: any) {
-          setLoginError(clientErr.message || res.error)
+          const errMsg = clientErr.message || ''
+          if (errMsg.toLowerCase().includes('fetch') || errMsg.toLowerCase().includes('network')) {
+            setLoginError('Unable to connect to database server. Please check your internet connection or verify your Supabase project status.')
+          } else {
+            setLoginError(errMsg || res.error)
+          }
           return
         }
       }
@@ -140,9 +148,16 @@ export default function AuthForm({ initialTab = 'signin' }: AuthFormProps) {
           }
           router.refresh()
           return
+        } else {
+          setLoginError('Authentication failed. Please check your credentials.')
         }
       } catch (clientErr: any) {
-        setLoginError(clientErr.message || 'Invalid credentials. Please verify and try again.')
+        const errMsg = clientErr.message || ''
+        if (errMsg.toLowerCase().includes('fetch') || errMsg.toLowerCase().includes('network')) {
+          setLoginError('Unable to connect to database server. Please verify your internet connection.')
+        } else {
+          setLoginError(errMsg || 'Invalid credentials. Please verify and try again.')
+        }
       }
     } finally {
       setLoginLoading(false)

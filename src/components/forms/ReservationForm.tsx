@@ -263,13 +263,6 @@ export default function ReservationForm({
   // Accompanying Guests List
   const [accompanyingGuests, setAccompanyingGuests] = useState<AccompanyingGuestItem[]>([])
 
-  // Automatically switch is_foreign_guest if nationality changes
-  useEffect(() => {
-    if (formData.nationality && formData.nationality !== 'India') {
-      setFormData((prev) => ({ ...prev, is_foreign_guest: true }))
-    }
-  }, [formData.nationality])
-
   // Calculate age from date of birth
   const handleDobChange = (dobStr: string) => {
     if (!dobStr) {
@@ -429,7 +422,13 @@ export default function ReservationForm({
       const checked = (e.target as HTMLInputElement).checked
       setFormData((prev) => ({ ...prev, [name]: checked }))
     } else {
-      setFormData((prev) => ({ ...prev, [name]: value }))
+      setFormData((prev) => {
+        const next = { ...prev, [name]: value }
+        if (name === 'nationality') {
+          next.is_foreign_guest = value !== 'India'
+        }
+        return next
+      })
     }
   }
 

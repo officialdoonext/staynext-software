@@ -211,12 +211,17 @@ export async function createMenuCategory(data: {
   try {
     const supabase = await createClient()
 
+    const baseSlug = data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'menu'
+    const slug = `${baseSlug}-${Math.floor(1000 + Math.random() * 9000)}`
+
     const { data: cat, error } = await supabase
       .from('guest_service_categories')
       .insert({
         property_id: data.propertyId,
         name: data.name,
+        slug,
         type: data.type || 'food_beverage',
+        is_active: true,
       })
       .select('id')
       .single()
@@ -224,6 +229,7 @@ export async function createMenuCategory(data: {
     if (error) return { success: false, error: error.message }
 
     revalidatePath('/restaurant/menu')
+    revalidatePath('/guest')
     return { success: true, categoryId: cat?.id }
   } catch (err: any) {
     return { success: false, error: err.message || 'Failed to create category' }
@@ -296,22 +302,43 @@ export async function createMenuItem(data: {
   try {
     const supabase = await createClient()
 
+    // Retrieve property_id from category if needed
+    let propertyId: string | undefined
+    try {
+      const { data: cat } = await supabase
+        .from('guest_service_categories')
+        .select('property_id')
+        .eq('id', data.categoryId)
+        .maybeSingle()
+      propertyId = cat?.property_id
+    } catch {}
+
+    const payload: Record<string, any> = {
+      category_id: data.categoryId,
+      name: data.name,
+      price: data.price,
+      description: data.description || null,
+      is_veg: data.isVeg,
+      dietary_type: data.isVeg ? 'veg' : 'non-veg',
+      is_available: data.isAvailable,
+      tax_rate_percentage: 5,
+      preparation_time_mins: 20,
+    }
+
+    if (propertyId) {
+      payload.property_id = propertyId
+    }
+
     const { data: item, error } = await supabase
       .from('guest_service_items')
-      .insert({
-        category_id: data.categoryId,
-        name: data.name,
-        price: data.price,
-        description: data.description || null,
-        is_veg: data.isVeg,
-        is_available: data.isAvailable,
-      })
+      .insert(payload)
       .select('id')
       .single()
 
     if (error) return { success: false, error: error.message }
 
     revalidatePath('/restaurant/menu')
+    revalidatePath('/guest')
     return { success: true, itemId: item?.id }
   } catch (err: any) {
     return { success: false, error: err.message || 'Failed to create menu item' }

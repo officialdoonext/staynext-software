@@ -48,7 +48,7 @@ export function checkTenantAccess(data: {
 
   const rawExpiry = data.subscription_expires_at || data.expiry_date
   let isExpired = true
-  let expiryDate = rawExpiry || ''
+  const expiryDate = rawExpiry || ''
 
   if (rawExpiry) {
     const exp = new Date(rawExpiry)

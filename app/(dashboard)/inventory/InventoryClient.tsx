@@ -3,7 +3,7 @@
 import React, { useState } from 'react'
 import Link from 'next/link'
 import {
-  Package,
+  Boxes,
   Plus,
   AlertTriangle,
   ArrowDownRight,
@@ -324,7 +324,7 @@ export function InventoryClient({
       {filteredItems.length === 0 ? (
         <div className="bg-white rounded-md border border-gray-200 p-12 text-center max-w-lg mx-auto my-8 shadow-2xs">
           <div className="w-12 h-12 bg-[#f7f2fd] text-[#5e2b9d] rounded-md flex items-center justify-center mx-auto mb-4">
-            <Package className="h-6 w-6" />
+            <Boxes className="h-6 w-6" />
           </div>
           <h3 className="text-base font-medium text-gray-900 font-sora">No Items Found</h3>
           <p className="text-xs text-gray-500 mt-1 max-w-sm mx-auto">

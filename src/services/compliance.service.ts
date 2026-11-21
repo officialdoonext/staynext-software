@@ -82,7 +82,7 @@ export async function getComplianceOverview(propertyId?: string) {
     const supabase = await createClient()
 
     // 1. Fetch foreign guests
-    let foreignQuery = supabase
+    const foreignQuery = supabase
       .from('foreign_guest_details')
       .select('id, form_iii_status, created_at')
 

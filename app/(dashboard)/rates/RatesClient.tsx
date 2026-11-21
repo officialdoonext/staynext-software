@@ -302,7 +302,7 @@ export function RatesClient({ initialPlans, propertyId }: RatesClientProps) {
                 >
                   <option value="ep">EP - European Plan (Room Only)</option>
                   <option value="cp">CP - Continental Plan (Breakfast)</option>
-                  <option value="map">MAP - Modified American (B'fast + Lunch/Dinner)</option>
+                  <option value="map">MAP - Modified American (Breakfast + Lunch/Dinner)</option>
                   <option value="ap">AP - American Plan (All Meals)</option>
                 </select>
               </div>

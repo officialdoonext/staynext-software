@@ -57,7 +57,7 @@ export async function getCorporateAccounts(
   try {
     const supabase = await createClient()
 
-    let query = supabase
+    const query = supabase
       .from('corporate_accounts')
       .select('*')
       .eq('property_id', propertyId)

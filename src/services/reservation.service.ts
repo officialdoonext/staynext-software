@@ -558,11 +558,15 @@ export async function createReservation(
       checkin_handled_by: payload.checkin_handled_by || 'Front Desk',
     }
 
-    let { data: reservation, error: resErr } = await supabase
+    let reservation: any = null
+    const firstInsert = await supabase
       .from('reservations')
       .insert(reservationInsertPayload)
       .select()
       .single()
+
+    const resErr = firstInsert.error
+    reservation = firstInsert.data
 
     // Fallback if migration 009 columns pending in Supabase
     if (resErr) {

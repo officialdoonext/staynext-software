@@ -16,7 +16,7 @@ import {
   CreditCard,
   Receipt,
   UtensilsCrossed,
-  Package,
+  Boxes,
   UserCog,
   Briefcase,
   Globe,
@@ -53,7 +53,8 @@ const iconMap: Record<string, LucideIcon> = {
   CreditCard,
   Receipt,
   UtensilsCrossed,
-  Package,
+  Boxes,
+  Package: Boxes,
   UserCog,
   Briefcase,
   Globe,
@@ -131,9 +132,12 @@ export default function Sidebar({ isOpen, mobileOpen, onMobileClose, onToggle }:
 
       {/* Nav List */}
       <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-6 scrollbar-thin">
-        {navigationSections.map((section, idx) => (
-          <div key={idx} className="space-y-1">
-            <h4 className="px-3 text-[11px] font-medium uppercase tracking-wider text-gray-400">
+        {navigationSections.map((section) => (
+          <div key={section.title} className="space-y-1">
+            <h4
+              suppressHydrationWarning
+              className="px-3 text-[11px] font-medium uppercase tracking-wider text-gray-400"
+            >
               {section.title}
             </h4>
             <div className="space-y-0.5">

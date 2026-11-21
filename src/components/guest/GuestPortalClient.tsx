@@ -5,16 +5,10 @@ import Link from 'next/link'
 import {
   Utensils,
   Sparkles,
-  Package,
-  Shirt,
   Wrench,
-  Car,
-  Bell,
-  MessageSquare,
   ShoppingBag,
   Plus,
   Minus,
-  Check,
   Search,
   Clock,
   CheckCircle2,
@@ -23,7 +17,6 @@ import {
   PhoneCall,
   Loader2,
   X,
-  CreditCard
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -101,7 +94,10 @@ export default function GuestPortalClient({
     try {
       const stored = localStorage.getItem(`staynext_guest_${room.id}_activities`)
       if (stored) {
-        setRecentActivities(JSON.parse(stored))
+        const parsed = JSON.parse(stored)
+        queueMicrotask(() => {
+          setRecentActivities(parsed)
+        })
       }
     } catch {}
   }, [room.id])
@@ -222,11 +218,12 @@ export default function GuestPortalClient({
       if (!res.success) throw new Error(res.error || 'Failed to submit request')
 
       const token = res.tracking_token
+      const catLabel = selectedServiceItem.category === 'housekeeping' ? 'Housekeeping team' : 'Engineering Maintenance team'
       setSelectedServiceItem(null)
       setRequestNotes('')
       setNotification({
         type: 'success',
-        message: `Your request for "${selectedServiceItem.name}" was received and alerted to staff.`,
+        message: `Your request for "${selectedServiceItem.name}" was received and alerted to the ${catLabel}.`,
         trackingToken: token,
       })
 
@@ -374,17 +371,12 @@ export default function GuestPortalClient({
         )}
       </header>
 
-      {/* 2. CATEGORY HORIZONTAL BAR */}
-      <nav className="bg-white border-b border-gray-200 px-3 py-2 flex items-center gap-1.5 overflow-x-auto scrollbar-none sticky top-14 z-20">
+      {/* 2. CATEGORY HORIZONTAL BAR (STREAMLINED: FOOD, HOUSEKEEPING, MAINTENANCE) */}
+      <nav className="bg-white border-b border-gray-200 px-3 py-2 flex items-center justify-around gap-2 sticky top-14 z-20 font-sora">
         {[
-          { slug: 'food-beverage', label: 'Dining', icon: Utensils },
+          { slug: 'food-beverage', label: 'Food & Dining', icon: Utensils },
           { slug: 'housekeeping', label: 'Housekeeping', icon: Sparkles },
-          { slug: 'amenities', label: 'Amenities', icon: Package },
-          { slug: 'laundry', label: 'Laundry', icon: Shirt },
-          { slug: 'maintenance', label: 'Repairs', icon: Wrench },
-          { slug: 'transportation', label: 'Taxi', icon: Car },
-          { slug: 'concierge', label: 'Reception', icon: Bell },
-          { slug: 'feedback', label: 'Manager', icon: MessageSquare },
+          { slug: 'maintenance', label: 'Maintenance', icon: Wrench },
         ].map((tab) => {
           const Icon = tab.icon
           const isActive = activeCategorySlug === tab.slug
@@ -396,13 +388,13 @@ export default function GuestPortalClient({
                 setActiveCategorySlug(tab.slug)
                 setSearchQuery('')
               }}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-medium rounded-md transition-all cursor-pointer whitespace-nowrap ${
                 isActive
                   ? 'bg-[#5e2b9d] text-white shadow-2xs'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  : 'bg-gray-100/80 text-gray-700 hover:bg-gray-200/80'
               }`}
             >
-              <Icon className="h-3.5 w-3.5" />
+              <Icon className="h-4 w-4" />
               {tab.label}
             </button>
           )
@@ -414,8 +406,8 @@ export default function GuestPortalClient({
         {/* Category Description Banner */}
         <div className="bg-[#f7f2fd]/60 border border-[#dfcef6] rounded-md p-3 text-xs flex items-center justify-between">
           <div>
-            <span className="font-semibold text-[#5e2b9d] block">{activeCategory.name}</span>
-            <span className="text-[11px] text-gray-500 mt-0.5 block">{activeCategory.description}</span>
+            <span className="font-semibold text-[#5e2b9d] block">{activeCategory?.name || 'Guest Services'}</span>
+            <span className="text-[11px] text-gray-500 mt-0.5 block">{activeCategory?.description || 'Instant in-room service'}</span>
           </div>
           {recentActivities.length > 0 && (
             <Link
@@ -426,6 +418,34 @@ export default function GuestPortalClient({
             </Link>
           )}
         </div>
+
+        {/* Custom Request Shortcut for Housekeeping & Maintenance */}
+        {activeCategorySlug !== 'food-beverage' && (
+          <div className="bg-white border border-[#dfcef6] rounded-md p-3.5 shadow-2xs flex items-center justify-between gap-3">
+            <div>
+              <h4 className="text-xs font-semibold text-gray-900 font-sora">
+                Need something custom?
+              </h4>
+              <p className="text-[11px] text-gray-500 mt-0.5">
+                Type any specific {activeCategorySlug === 'housekeeping' ? 'housekeeping request' : 'maintenance issue'} to hotel staff.
+              </p>
+            </div>
+            <Button
+              size="sm"
+              onClick={() => {
+                setSelectedServiceItem({
+                  name: activeCategorySlug === 'housekeeping' ? 'Custom Housekeeping Request' : 'Custom Maintenance Issue',
+                  category: activeCategorySlug,
+                  price: 0,
+                })
+              }}
+              className="bg-[#5e2b9d] hover:bg-[#4d2282] text-white text-xs h-8 px-3 rounded-md cursor-pointer shrink-0 font-medium"
+            >
+              <Plus className="h-3.5 w-3.5 mr-1" />
+              Write Request
+            </Button>
+          </div>
+        )}
 
         {/* Dietary & Search Filters (For Dining) */}
         {activeCategorySlug === 'food-beverage' && (

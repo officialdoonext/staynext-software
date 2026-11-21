@@ -88,7 +88,7 @@ export default function FloorPlanClient({
               Visual Floor Plan &amp; Room Matrix
             </h1>
             <p className="text-xs text-gray-500 mt-1">
-              Interactive bird's-eye layout of rooms across hotel floors and architectural blocks.
+              Interactive bird&apos;s-eye layout of rooms across hotel floors and architectural blocks.
             </p>
           </div>
         </div>

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import Link from 'next/link'
 import {
   ArrowLeft,
@@ -32,18 +32,28 @@ export default function PropertyLicensesClient({ initialLicenses }: PropertyLice
   const [errorMsg, setErrorMsg] = useState('')
   const [successMsg, setSuccessMsg] = useState('')
 
-  const todayStr = new Date().toISOString().split('T')[0]
-  const oneYearLaterStr = new Date(Date.now() + 86400000 * 365).toISOString().split('T')[0]
+  const nowTs = useMemo(() => Date.now(), [])
 
   const [formData, setFormData] = useState({
     license_type: 'Municipal Corporation Trade Licence',
     license_number: '',
     issuing_authority: '',
-    issue_date: todayStr,
-    expiry_date: oneYearLaterStr,
+    issue_date: '',
+    expiry_date: '',
     alert_days: 60,
     status: 'Active' as const,
   })
+
+  const openAddModal = () => {
+    const today = new Date().toISOString().split('T')[0]
+    const oneYearLater = new Date(Date.now() + 86400000 * 365).toISOString().split('T')[0]
+    setFormData((prev) => ({
+      ...prev,
+      issue_date: prev.issue_date || today,
+      expiry_date: prev.expiry_date || oneYearLater,
+    }))
+    setShowAddModal(true)
+  }
 
   const handleAddSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -82,7 +92,7 @@ export default function PropertyLicensesClient({ initialLicenses }: PropertyLice
   }
 
   const getDaysRemaining = (expiryDate: string) => {
-    const diff = new Date(expiryDate).getTime() - Date.now()
+    const diff = new Date(expiryDate).getTime() - nowTs
     return Math.ceil(diff / (1000 * 60 * 60 * 24))
   }
 
@@ -114,7 +124,7 @@ export default function PropertyLicensesClient({ initialLicenses }: PropertyLice
         <div className="flex items-center gap-2">
           <Button
             size="sm"
-            onClick={() => setShowAddModal(true)}
+            onClick={openAddModal}
             className="bg-[#5e2b9d] hover:bg-[#4d2282] text-white text-xs h-9 cursor-pointer rounded-md font-medium"
           >
             <Plus className="h-4 w-4 mr-1.5" />

@@ -25,7 +25,7 @@ export interface HousekeepingTaskItem {
 export async function getHousekeepingTasks(propertyId?: string): Promise<HousekeepingTaskItem[]> {
   const supabase = await createClient()
 
-  let query = supabase
+  const query = supabase
     .from('housekeeping_tasks')
     .select(`
       *,

@@ -51,7 +51,7 @@ export function PaymentsClient({ initialPayments, propertyId }: PaymentsClientPr
   const [form, setForm] = useState({
     amount: '',
     paymentMethod: 'card',
-    reference: `PAY-${Date.now().toString(36).toUpperCase()}`,
+    reference: '',
     notes: '',
   })
 
@@ -156,7 +156,15 @@ export function PaymentsClient({ initialPayments, propertyId }: PaymentsClientPr
         <div className="flex items-center gap-2">
           <Button
             size="sm"
-            onClick={() => setIsRecordOpen(true)}
+            onClick={() => {
+              setForm({
+                amount: '',
+                paymentMethod: 'card',
+                reference: `PAY-${Date.now().toString(36).toUpperCase()}`,
+                notes: '',
+              })
+              setIsRecordOpen(true)
+            }}
             className="bg-[#5e2b9d] hover:bg-[#4d2282] text-white text-xs h-9 cursor-pointer rounded-md font-medium"
           >
             <Plus className="h-4 w-4 mr-1.5" />

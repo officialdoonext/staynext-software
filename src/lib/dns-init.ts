@@ -12,6 +12,11 @@ export function initDnsResolution() {
   initialized = true
 
   try {
+    // 1. Force Node.js to prefer IPv4 over IPv6 globally
+    if (typeof dns.setDefaultResultOrder === 'function') {
+      dns.setDefaultResultOrder('ipv4first')
+    }
+
     const resolver = new dns.Resolver()
     resolver.setServers(['8.8.8.8', '1.1.1.1'])
 
@@ -28,10 +33,26 @@ export function initDnsResolution() {
       if (typeof opts === 'function') {
         cb = opts
         opts = {}
+      } else if (typeof opts === 'number') {
+        opts = { family: opts }
+      } else if (!opts) {
+        opts = {}
       }
 
       if (typeof hostname === 'string' && hostname.includes('supabase.co')) {
+        let responded = false
+        const timer = setTimeout(() => {
+          if (!responded) {
+            responded = true
+            originalLookup(hostname, opts, cb!)
+          }
+        }, 2000)
+
         resolver.resolve4(hostname, (err, addresses) => {
+          if (responded) return
+          responded = true
+          clearTimeout(timer)
+
           if (!err && addresses && addresses.length > 0) {
             if (opts && opts.all) {
               const res = addresses.map((addr) => ({ address: addr, family: 4 }))

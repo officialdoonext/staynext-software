@@ -40,20 +40,28 @@ export default function RoomBlockingClient({
   const [errorMsg, setErrorMsg] = useState('')
   const [successMsg, setSuccessMsg] = useState('')
 
-  const todayStr = new Date().toISOString().split('T')[0]
-  const defaultEndStr = new Date(Date.now() + 86400000 * 3).toISOString().split('T')[0]
-
   const [formData, setFormData] = useState({
     room_id: rooms[0]?.id || '',
     block_type: 'Maintenance',
     reason: 'AC Compressor Service & Maintenance',
-    start_date: todayStr,
-    end_date: defaultEndStr,
+    start_date: '',
+    end_date: '',
     blocked_by: 'Duty Manager',
     approved_by: 'General Manager',
     maintenance_ticket_number: 'WO-1042',
     notes: '',
   })
+
+  const openAddForm = () => {
+    const today = new Date().toISOString().split('T')[0]
+    const defaultEnd = new Date(Date.now() + 86400000 * 3).toISOString().split('T')[0]
+    setFormData((prev) => ({
+      ...prev,
+      start_date: prev.start_date || today,
+      end_date: prev.end_date || defaultEnd,
+    }))
+    setShowAddForm((prev) => !prev)
+  }
 
   const handleAddBlock = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -162,7 +170,7 @@ export default function RoomBlockingClient({
           )}
 
           <Button
-            onClick={() => setShowAddForm(!showAddForm)}
+            onClick={openAddForm}
             size="sm"
             className="bg-[#5e2b9d] hover:bg-[#4d2282] text-white text-xs h-9 font-medium rounded-md cursor-pointer"
           >

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Building2,
@@ -47,9 +47,11 @@ export default function OnboardingClient({
   const city = currentProfile?.city || 'Not provided'
   const address = currentProfile?.address || 'Not provided'
   const status = currentProfile?.status || 'inactive'
-  const expiryDate = currentProfile?.expiryDate
-    ? new Date(currentProfile.expiryDate)
-    : new Date(Date.now() - 86400000)
+  const expiryDate = useMemo(() => {
+    return currentProfile?.expiryDate
+      ? new Date(currentProfile.expiryDate)
+      : new Date()
+  }, [currentProfile])
 
   const handleRefreshStatus = async () => {
     setChecking(true)

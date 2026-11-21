@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { revalidatePath } from 'next/cache'
 import crypto from 'crypto'
 
 export interface GuestRoomContext {
@@ -188,142 +189,137 @@ export async function validateGuestRoom(
 }
 
 /**
- * Fetch guest service categories & items (Menu, Amenities, Services)
+ * Fetch guest service categories & items (Food, Housekeeping, Maintenance)
+ * Specifically configured for Room QR scanning
  */
 export async function getGuestServiceCatalog(propertyId: string): Promise<GuestServiceCategoryWithItems[]> {
   const supabase = await createClient()
 
-  // 1. Fetch categories
-  const { data: categories, error } = await supabase
-    .from('guest_service_categories')
-    .select(`
-      id,
-      name,
-      slug,
-      icon,
-      description,
-      display_order,
-      items:guest_service_items(
+  // 1. Fetch live food menu items from the Restaurant section
+  let dbFoodItems: any[] = []
+  try {
+    const { data: items } = await supabase
+      .from('guest_service_items')
+      .select(`
         id,
         name,
         description,
         price,
         tax_rate_percentage,
         dietary_type,
+        is_veg,
         is_available,
         preparation_time_mins,
         image_url,
-        display_order
-      )
-    `)
-    .eq('property_id', propertyId)
-    .eq('is_active', true)
-    .order('display_order', { ascending: true })
+        display_order,
+        guest_service_categories!inner (
+          id,
+          property_id,
+          name
+        )
+      `)
+      .eq('guest_service_categories.property_id', propertyId)
+      .eq('is_available', true)
+      .order('name', { ascending: true })
 
-  // If database has categories with items, return them
-  if (!error && categories && categories.length > 0 && categories.some((c: any) => c.items?.length > 0)) {
-    return categories.map((cat: any) => ({
-      id: cat.id,
-      name: cat.name,
-      slug: cat.slug,
-      icon: cat.icon || 'Utensils',
-      description: cat.description || '',
-      display_order: cat.display_order,
-      items: (cat.items || [])
-        .filter((i: any) => i.is_available)
-        .sort((a: any, b: any) => (a.display_order || 0) - (b.display_order || 0))
-        .map((i: any) => ({
-          id: i.id,
-          name: i.name,
-          description: i.description || '',
-          price: parseFloat(i.price) || 0,
-          tax_rate_percentage: parseFloat(i.tax_rate_percentage) || 5,
-          dietary_type: i.dietary_type || 'veg',
-          is_available: i.is_available,
-          preparation_time_mins: i.preparation_time_mins || 20,
-          image_url: i.image_url || '',
-        })),
-    }))
+    if (items && items.length > 0) {
+      dbFoodItems = items.map((i: any) => ({
+        id: i.id,
+        name: i.name,
+        description: i.description || (i.guest_service_categories?.name ? `From ${i.guest_service_categories.name} menu` : 'Freshly prepared specialty dish'),
+        price: parseFloat(i.price) || 0,
+        tax_rate_percentage: parseFloat(i.tax_rate_percentage) || 5,
+        dietary_type: i.is_veg !== undefined ? (i.is_veg ? 'veg' : 'non-veg') : (i.dietary_type || 'veg'),
+        is_available: true,
+        preparation_time_mins: i.preparation_time_mins || 20,
+        image_url: i.image_url || '',
+      }))
+    }
+  } catch (e) {
+    console.error('getGuestServiceCatalog food items error:', e)
   }
 
-  // Built-in standard hotel guest service catalog
+  const defaultFoodItems = [
+    {
+      id: 'item-fnb-1',
+      name: 'Classic Club Sandwich with Golden Fries',
+      description: 'Triple-decker sandwich with toasted bread, cheddar cheese, crisp lettuce, tomato and golden fries.',
+      price: 280,
+      tax_rate_percentage: 5,
+      dietary_type: 'veg',
+      is_available: true,
+      preparation_time_mins: 15,
+    },
+    {
+      id: 'item-fnb-2',
+      name: 'Paneer Butter Masala with 2 Butter Naan',
+      description: 'Cottage cheese simmered in a rich tomato, butter, and cashew gravy served with clay-oven naan.',
+      price: 360,
+      tax_rate_percentage: 5,
+      dietary_type: 'veg',
+      is_available: true,
+      preparation_time_mins: 25,
+    },
+    {
+      id: 'item-fnb-3',
+      name: 'Hyderabadi Chicken Dum Biryani',
+      description: 'Fragrant basmati rice layered with spiced chicken, mint, saffron and served with mirchi ka salan & raita.',
+      price: 420,
+      tax_rate_percentage: 5,
+      dietary_type: 'non-veg',
+      is_available: true,
+      preparation_time_mins: 25,
+    },
+    {
+      id: 'item-fnb-4',
+      name: 'Margherita Pizza (10-inch)',
+      description: 'Hand-stretched sourdough crust with San Marzano tomato sauce, fresh mozzarella, and aromatic basil.',
+      price: 390,
+      tax_rate_percentage: 5,
+      dietary_type: 'veg',
+      is_available: true,
+      preparation_time_mins: 20,
+    },
+    {
+      id: 'item-fnb-5',
+      name: 'Fresh Cold Pressed Watermelon Juice',
+      description: 'Pure 100% freshly pressed watermelon with a hint of mint and black salt.',
+      price: 140,
+      tax_rate_percentage: 5,
+      dietary_type: 'beverage',
+      is_available: true,
+      preparation_time_mins: 10,
+    },
+    {
+      id: 'item-fnb-6',
+      name: 'Filter Coffee / Masala Chai Flask (Serves 2)',
+      description: 'Freshly brewed aromatic South Indian filter coffee or spiced ginger-cardamom tea.',
+      price: 120,
+      tax_rate_percentage: 5,
+      dietary_type: 'beverage',
+      is_available: true,
+      preparation_time_mins: 10,
+    },
+  ]
+
+  const foodItems = dbFoodItems.length > 0 ? dbFoodItems : defaultFoodItems
+
   return [
     {
       id: 'cat-fnb',
-      name: 'Food & Beverage',
+      name: 'Food & In-Room Dining',
       slug: 'food-beverage',
       icon: 'Utensils',
-      description: 'Chef specials, snacks, hot mains and refreshing beverages',
+      description: 'Specialty dishes, snacks, hot mains and beverages delivered directly to your room',
       display_order: 1,
-      items: [
-        {
-          id: 'item-fnb-1',
-          name: 'Classic Club Sandwich',
-          description: 'Triple-decker sandwich with toasted bread, cheddar cheese, crisp lettuce, tomato and golden fries.',
-          price: 280,
-          tax_rate_percentage: 5,
-          dietary_type: 'veg',
-          is_available: true,
-          preparation_time_mins: 15,
-        },
-        {
-          id: 'item-fnb-2',
-          name: 'Paneer Butter Masala with 2 Butter Naan',
-          description: 'Cottage cheese simmered in a rich tomato, butter, and cashew gravy served with clay-oven naan.',
-          price: 360,
-          tax_rate_percentage: 5,
-          dietary_type: 'veg',
-          is_available: true,
-          preparation_time_mins: 25,
-        },
-        {
-          id: 'item-fnb-3',
-          name: 'Hyderabadi Chicken Dum Biryani',
-          description: 'Fragrant basmati rice layered with spiced chicken, mint, saffron and served with mirchi ka salan & raita.',
-          price: 420,
-          tax_rate_percentage: 5,
-          dietary_type: 'non-veg',
-          is_available: true,
-          preparation_time_mins: 25,
-        },
-        {
-          id: 'item-fnb-4',
-          name: 'Margherita Pizza (10-inch)',
-          description: 'Hand-stretched sourdough crust with San Marzano tomato sauce, fresh mozzarella, and aromatic basil.',
-          price: 390,
-          tax_rate_percentage: 5,
-          dietary_type: 'veg',
-          is_available: true,
-          preparation_time_mins: 20,
-        },
-        {
-          id: 'item-fnb-5',
-          name: 'Fresh Cold Pressed Watermelon Juice',
-          description: 'Pure 100% freshly pressed watermelon with a hint of mint and black salt.',
-          price: 140,
-          tax_rate_percentage: 5,
-          dietary_type: 'beverage',
-          is_available: true,
-          preparation_time_mins: 10,
-        },
-        {
-          id: 'item-fnb-6',
-          name: 'Filter Coffee / Masala Chai Flask (Serves 2)',
-          description: 'Freshly brewed aromatic South Indian filter coffee or spiced ginger-cardamom tea.',
-          price: 120,
-          tax_rate_percentage: 5,
-          dietary_type: 'beverage',
-          is_available: true,
-          preparation_time_mins: 10,
-        },
-      ],
+      items: foodItems,
     },
     {
       id: 'cat-hk',
       name: 'Housekeeping Services',
       slug: 'housekeeping',
       icon: 'Sparkles',
-      description: 'Quick room turnover, fresh linens, bathroom refresh and dusting',
+      description: 'Room cleaning, fresh bed linens, bath towels and room replenishment',
       display_order: 2,
       items: [
         {
@@ -356,20 +352,10 @@ export async function getGuestServiceCatalog(propertyId: string): Promise<GuestS
           is_available: true,
           preparation_time_mins: 10,
         },
-      ],
-    },
-    {
-      id: 'cat-amenities',
-      name: 'Extra Amenities',
-      slug: 'amenities',
-      icon: 'Package',
-      description: 'Toiletries, dental kit, shaving kit, extra pillows and slippers',
-      display_order: 3,
-      items: [
         {
-          id: 'item-am-1',
-          name: 'Dental Care & Shaving Kit',
-          description: 'Bamboo toothbrush with herbal paste, and dual-blade razor with shaving cream.',
+          id: 'item-hk-4',
+          name: 'Trash Removal & Room Dusting',
+          description: 'Clear bins, sanitize high-touch handles, and quick room refreshment.',
           price: 0,
           tax_rate_percentage: 0,
           dietary_type: 'general',
@@ -377,64 +363,14 @@ export async function getGuestServiceCatalog(propertyId: string): Promise<GuestS
           preparation_time_mins: 10,
         },
         {
-          id: 'item-am-2',
-          name: 'Complimentary Packaged Drinking Water (2 Bottles)',
-          description: 'Two 1-liter sealed mineral water bottles delivered to your room.',
-          price: 0,
-          tax_rate_percentage: 0,
-          dietary_type: 'beverage',
-          is_available: true,
-          preparation_time_mins: 10,
-        },
-        {
-          id: 'item-am-3',
-          name: 'Soft Plush Bedroom Slippers',
-          description: 'Disposable hygienic padded bedroom slippers.',
+          id: 'item-hk-5',
+          name: 'Complimentary Drinking Water & Tea Kit Refill',
+          description: 'Two 1-liter sealed mineral water bottles with tea bags, coffee sachets, and dairy creamer.',
           price: 0,
           tax_rate_percentage: 0,
           dietary_type: 'general',
           is_available: true,
           preparation_time_mins: 10,
-        },
-        {
-          id: 'item-am-4',
-          name: 'Extra Feather/Memory Foam Pillow',
-          description: 'Hypoallergenic orthopedic or ultra-soft feather pillow.',
-          price: 0,
-          tax_rate_percentage: 0,
-          dietary_type: 'general',
-          is_available: true,
-          preparation_time_mins: 15,
-        },
-      ],
-    },
-    {
-      id: 'cat-laundry',
-      name: 'Laundry & Ironing',
-      slug: 'laundry',
-      icon: 'Shirt',
-      description: 'Express ironing, dry cleaning, and wash & fold delivery',
-      display_order: 4,
-      items: [
-        {
-          id: 'item-ld-1',
-          name: 'Steam Ironing (Per Garment)',
-          description: 'Wrinkle-free steam pressing on shirt, trouser, saree, or suit.',
-          price: 60,
-          tax_rate_percentage: 18,
-          dietary_type: 'general',
-          is_available: true,
-          preparation_time_mins: 45,
-        },
-        {
-          id: 'item-ld-2',
-          name: 'Wash & Fold Laundry Bag (Up to 5kg)',
-          description: 'Complete detergent wash, tumble dry, and neat fold delivered within 8 hours.',
-          price: 350,
-          tax_rate_percentage: 18,
-          dietary_type: 'general',
-          is_available: true,
-          preparation_time_mins: 240,
         },
       ],
     },
@@ -443,8 +379,8 @@ export async function getGuestServiceCatalog(propertyId: string): Promise<GuestS
       name: 'Maintenance & Repairs',
       slug: 'maintenance',
       icon: 'Wrench',
-      description: 'Urgent assistance for AC, geyser/hot water, TV, electrical or plumbing',
-      display_order: 5,
+      description: 'Prompt technician visit for AC cooling, geyser/hot water, TV, electrical or plumbing',
+      display_order: 3,
       items: [
         {
           id: 'item-mt-1',
@@ -476,75 +412,25 @@ export async function getGuestServiceCatalog(propertyId: string): Promise<GuestS
           is_available: true,
           preparation_time_mins: 15,
         },
-      ],
-    },
-    {
-      id: 'cat-transport',
-      name: 'Transportation & Taxi',
-      slug: 'transportation',
-      icon: 'Car',
-      description: 'Airport drop/pickup, city sightseeing taxi, and private chauffeur',
-      display_order: 6,
-      items: [
         {
-          id: 'item-tr-1',
-          name: 'Airport / Railway Station Transfer Booking',
-          description: 'Sedan or SUV with courteous verified driver arranged at your preferred departure time.',
-          price: 900,
-          tax_rate_percentage: 5,
-          dietary_type: 'general',
-          is_available: true,
-          preparation_time_mins: 30,
-        },
-      ],
-    },
-    {
-      id: 'cat-frontdesk',
-      name: 'Front Desk & Concierge',
-      slug: 'concierge',
-      icon: 'Bell',
-      description: 'Wake-up call, luggage assistance, bill summary and express checkout',
-      display_order: 7,
-      items: [
-        {
-          id: 'item-fd-1',
-          name: 'Morning Wake-Up Call Request',
-          description: 'Front desk automated operator call at your requested time.',
+          id: 'item-mt-4',
+          name: 'Television / Cable / Remote Issue',
+          description: 'Assistance with TV channels, HDMI connection, or remote battery replacement.',
           price: 0,
           tax_rate_percentage: 0,
           dietary_type: 'general',
           is_available: true,
-          preparation_time_mins: 5,
+          preparation_time_mins: 15,
         },
         {
-          id: 'item-fd-2',
-          name: 'Bellboy Luggage Pickup for Checkout',
-          description: 'Staff assistance to collect your bags from room and transfer to lobby.',
+          id: 'item-mt-5',
+          name: 'Electrical Light / Power Socket Issue',
+          description: 'Electrician check for room bedside switches, power outlets, or lighting fixtures.',
           price: 0,
           tax_rate_percentage: 0,
           dietary_type: 'general',
           is_available: true,
-          preparation_time_mins: 10,
-        },
-      ],
-    },
-    {
-      id: 'cat-feedback',
-      name: 'Feedback & Complaints',
-      slug: 'feedback',
-      icon: 'MessageSquare',
-      description: 'Direct channel to Duty Manager for immediate service rectification',
-      display_order: 8,
-      items: [
-        {
-          id: 'item-fb-1',
-          name: 'Direct Message to General Manager / Duty Manager',
-          description: 'Share feedback or any dissatisfaction for prompt personal resolution.',
-          price: 0,
-          tax_rate_percentage: 0,
-          dietary_type: 'general',
-          is_available: true,
-          preparation_time_mins: 10,
+          preparation_time_mins: 15,
         },
       ],
     },
@@ -620,6 +506,44 @@ export async function submitGuestOrder(payload: {
 
     await supabase.from('guest_order_items').insert(orderItemsPayload)
 
+    // Automatically route order to Restaurant section (restaurant_orders) for kitchen fulfillment
+    try {
+      const { data: restOrder } = await supabase
+        .from('restaurant_orders')
+        .insert({
+          property_id: payload.property_id,
+          room_id: payload.room_id,
+          order_number: orderNumber,
+          order_type: 'room_delivery',
+          guest_name: payload.guest_name.trim() || 'Guest',
+          status: 'placed',
+          subtotal,
+          tax_amount: taxAmount,
+          total_amount: totalAmount,
+          payment_status: 'unpaid',
+          payment_method: payload.payment_method || 'pay_at_checkout',
+          notes: `In-Room Dining QR Order. Special instructions: ${payload.special_instructions || 'None'}`,
+        })
+        .select('id')
+        .maybeSingle()
+
+      if (restOrder?.id) {
+        const restOrderItems = payload.items.map((it) => ({
+          order_id: restOrder.id,
+          item_name: it.item_name,
+          quantity: it.quantity,
+          unit_price: it.unit_price,
+          total_price: Number((it.unit_price * it.quantity).toFixed(2)),
+          notes: it.special_requests || null,
+        }))
+        await supabase.from('restaurant_order_items').insert(restOrderItems)
+      }
+      revalidatePath('/restaurant')
+      revalidatePath('/restaurant/reports')
+    } catch (restErr) {
+      console.error('Restaurant order dispatch error:', restErr)
+    }
+
     return {
       success: true,
       order: {
@@ -634,7 +558,10 @@ export async function submitGuestOrder(payload: {
 }
 
 /**
- * Submit Guest Service Request (Housekeeping, Amenities, Maintenance, etc.)
+ * Submit Guest Service Request (Housekeeping, Maintenance)
+ * Automatically routes request to respective modules:
+ * - Housekeeping -> housekeeping_tasks
+ * - Maintenance  -> maintenance_requests
  */
 export async function submitGuestServiceRequest(payload: {
   property_id: string
@@ -677,8 +604,48 @@ export async function submitGuestServiceRequest(payload: {
       request_id: req.id,
       status: 'pending',
       message: 'Request submitted and queued for staff.',
-      updated_by: 'System',
+      updated_by: 'Guest QR Portal',
     })
+
+    // If Housekeeping request, create a real housekeeping task in /housekeeping
+    if (payload.category_slug === 'housekeeping') {
+      try {
+        await supabase.from('housekeeping_tasks').insert({
+          property_id: payload.property_id,
+          room_id: payload.room_id,
+          task_type: payload.request_type || 'Guest Room Cleaning',
+          priority: payload.priority || 'medium',
+          status: 'pending',
+          notes: `${payload.description || ''} ${payload.guest_notes || ''}`.trim() || 'Requested by guest via Room QR',
+        })
+        // Set room status to dirty/cleaning
+        await supabase.from('rooms').update({ status: 'dirty' }).eq('id', payload.room_id)
+        revalidatePath('/housekeeping')
+        revalidatePath('/rooms')
+        revalidatePath('/dashboard')
+      } catch (hkErr) {
+        console.error('Failed to route housekeeping task:', hkErr)
+      }
+    }
+
+    // If Maintenance request, create a real maintenance ticket in /maintenance
+    if (payload.category_slug === 'maintenance') {
+      try {
+        await supabase.from('maintenance_requests').insert({
+          property_id: payload.property_id,
+          room_id: payload.room_id,
+          title: payload.request_type || 'Room Maintenance Issue',
+          description: `${payload.description || ''} ${payload.guest_notes || ''}`.trim() || 'Reported by guest via Room QR',
+          category: 'Guest Room',
+          priority: payload.priority || 'medium',
+          status: 'open',
+        })
+        revalidatePath('/maintenance')
+        revalidatePath('/dashboard')
+      } catch (mtErr) {
+        console.error('Failed to route maintenance ticket:', mtErr)
+      }
+    }
 
     return {
       success: true,
