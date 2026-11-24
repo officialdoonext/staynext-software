@@ -145,6 +145,17 @@ export default function MaintenanceClient({
             </select>
           )}
 
+          <Link href="/maintenance/types">
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-[#dfcef6] text-[#5e2b9d] hover:bg-[#f7f2fd] text-xs h-9 font-medium rounded-md cursor-pointer"
+            >
+              <Wrench className="h-4 w-4 mr-1.5 text-[#5e2b9d]" />
+              Maintenance Types
+            </Button>
+          </Link>
+
           <Link href="/maintenance/new">
             <Button size="sm" className="bg-[#5e2b9d] hover:bg-[#4d2282] text-white text-xs h-9 font-medium rounded-md cursor-pointer">
               <Plus className="h-4 w-4 mr-1.5" />

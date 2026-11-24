@@ -304,6 +304,168 @@ export async function getGuestServiceCatalog(propertyId: string): Promise<GuestS
 
   const foodItems = dbFoodItems.length > 0 ? dbFoodItems : defaultFoodItems
 
+  // 2. Fetch live Housekeeping Types created for this property
+  let dbHkItems: any[] = []
+  try {
+    const { data: hkTypes } = await supabase
+      .from('housekeeping_types')
+      .select('*')
+      .eq('property_id', propertyId)
+      .eq('is_active', true)
+      .order('name', { ascending: true })
+
+    if (hkTypes && hkTypes.length > 0) {
+      dbHkItems = hkTypes.map((h: any) => ({
+        id: `type-hk-${h.id}`,
+        name: h.name,
+        description: h.description || 'Standard room turnover service and replenishment',
+        price: 0,
+        tax_rate_percentage: 0,
+        dietary_type: 'general',
+        is_available: true,
+        preparation_time_mins: h.estimated_minutes || 30,
+      }))
+    }
+  } catch (hkErr) {
+    console.error('getGuestServiceCatalog hkTypes error:', hkErr)
+  }
+
+  const defaultHkItems = [
+    {
+      id: 'item-hk-1',
+      name: 'Full Room Cleaning & Dusting',
+      description: 'Complete floor vacuuming/mopping, surface sanitization, and dust-free turnover.',
+      price: 0,
+      tax_rate_percentage: 0,
+      dietary_type: 'general',
+      is_available: true,
+      preparation_time_mins: 30,
+    },
+    {
+      id: 'item-hk-2',
+      name: 'Fresh Bed Linen & Pillow Covers',
+      description: 'Replacement with fresh, sanitized 400-thread count cotton sheets and duvet.',
+      price: 0,
+      tax_rate_percentage: 0,
+      dietary_type: 'general',
+      is_available: true,
+      preparation_time_mins: 15,
+    },
+    {
+      id: 'item-hk-3',
+      name: 'Fresh Bath & Hand Towels Set',
+      description: 'Set of two large plush bath towels, two hand towels, and a bath mat.',
+      price: 0,
+      tax_rate_percentage: 0,
+      dietary_type: 'general',
+      is_available: true,
+      preparation_time_mins: 10,
+    },
+    {
+      id: 'item-hk-4',
+      name: 'Trash Removal & Room Dusting',
+      description: 'Clear bins, sanitize high-touch handles, and quick room refreshment.',
+      price: 0,
+      tax_rate_percentage: 0,
+      dietary_type: 'general',
+      is_available: true,
+      preparation_time_mins: 10,
+    },
+    {
+      id: 'item-hk-5',
+      name: 'Complimentary Drinking Water & Tea Kit Refill',
+      description: 'Two 1-liter sealed mineral water bottles with tea bags, coffee sachets, and dairy creamer.',
+      price: 0,
+      tax_rate_percentage: 0,
+      dietary_type: 'general',
+      is_available: true,
+      preparation_time_mins: 10,
+    },
+  ]
+
+  const housekeepingItems = dbHkItems.length > 0 ? dbHkItems : defaultHkItems
+
+  // 3. Fetch live Maintenance Types created for this property
+  let dbMtItems: any[] = []
+  try {
+    const { data: mtTypes } = await supabase
+      .from('maintenance_types')
+      .select('*')
+      .eq('property_id', propertyId)
+      .eq('is_active', true)
+      .order('name', { ascending: true })
+
+    if (mtTypes && mtTypes.length > 0) {
+      dbMtItems = mtTypes.map((m: any) => ({
+        id: `type-mt-${m.id}`,
+        name: m.name,
+        description: m.description || `In-room technical inspection (${m.category || 'General'})`,
+        price: 0,
+        tax_rate_percentage: 0,
+        dietary_type: 'general',
+        is_available: true,
+        preparation_time_mins: m.estimated_minutes || 30,
+      }))
+    }
+  } catch (mtErr) {
+    console.error('getGuestServiceCatalog mtTypes error:', mtErr)
+  }
+
+  const defaultMtItems = [
+    {
+      id: 'item-mt-1',
+      name: 'Air Conditioner Temperature / Cooling Issue',
+      description: 'Technician will visit your room immediately to inspect AC filters and remote thermostat.',
+      price: 0,
+      tax_rate_percentage: 0,
+      dietary_type: 'general',
+      is_available: true,
+      preparation_time_mins: 15,
+    },
+    {
+      id: 'item-mt-2',
+      name: 'High-Speed WiFi / Internet Connectivity Help',
+      description: 'Assistance reconnecting your laptop or smartphone to hotel high-speed network.',
+      price: 0,
+      tax_rate_percentage: 0,
+      dietary_type: 'general',
+      is_available: true,
+      preparation_time_mins: 15,
+    },
+    {
+      id: 'item-mt-3',
+      name: 'Bathroom Plumbing or Hot Water Check',
+      description: 'Inspection of shower pressure, water heater geyser, or faucet drainage.',
+      price: 0,
+      tax_rate_percentage: 0,
+      dietary_type: 'general',
+      is_available: true,
+      preparation_time_mins: 15,
+    },
+    {
+      id: 'item-mt-4',
+      name: 'Television / Cable / Remote Issue',
+      description: 'Assistance with TV channels, HDMI connection, or remote battery replacement.',
+      price: 0,
+      tax_rate_percentage: 0,
+      dietary_type: 'general',
+      is_available: true,
+      preparation_time_mins: 15,
+    },
+    {
+      id: 'item-mt-5',
+      name: 'Electrical Light / Power Socket Issue',
+      description: 'Electrician check for room bedside switches, power outlets, or lighting fixtures.',
+      price: 0,
+      tax_rate_percentage: 0,
+      dietary_type: 'general',
+      is_available: true,
+      preparation_time_mins: 15,
+    },
+  ]
+
+  const maintenanceItems = dbMtItems.length > 0 ? dbMtItems : defaultMtItems
+
   return [
     {
       id: 'cat-fnb',
@@ -321,58 +483,7 @@ export async function getGuestServiceCatalog(propertyId: string): Promise<GuestS
       icon: 'Sparkles',
       description: 'Room cleaning, fresh bed linens, bath towels and room replenishment',
       display_order: 2,
-      items: [
-        {
-          id: 'item-hk-1',
-          name: 'Full Room Cleaning & Dusting',
-          description: 'Complete floor vacuuming/mopping, surface sanitization, and dust-free turnover.',
-          price: 0,
-          tax_rate_percentage: 0,
-          dietary_type: 'general',
-          is_available: true,
-          preparation_time_mins: 30,
-        },
-        {
-          id: 'item-hk-2',
-          name: 'Fresh Bed Linen & Pillow Covers',
-          description: 'Replacement with fresh, sanitized 400-thread count cotton sheets and duvet.',
-          price: 0,
-          tax_rate_percentage: 0,
-          dietary_type: 'general',
-          is_available: true,
-          preparation_time_mins: 15,
-        },
-        {
-          id: 'item-hk-3',
-          name: 'Fresh Bath & Hand Towels Set',
-          description: 'Set of two large plush bath towels, two hand towels, and a bath mat.',
-          price: 0,
-          tax_rate_percentage: 0,
-          dietary_type: 'general',
-          is_available: true,
-          preparation_time_mins: 10,
-        },
-        {
-          id: 'item-hk-4',
-          name: 'Trash Removal & Room Dusting',
-          description: 'Clear bins, sanitize high-touch handles, and quick room refreshment.',
-          price: 0,
-          tax_rate_percentage: 0,
-          dietary_type: 'general',
-          is_available: true,
-          preparation_time_mins: 10,
-        },
-        {
-          id: 'item-hk-5',
-          name: 'Complimentary Drinking Water & Tea Kit Refill',
-          description: 'Two 1-liter sealed mineral water bottles with tea bags, coffee sachets, and dairy creamer.',
-          price: 0,
-          tax_rate_percentage: 0,
-          dietary_type: 'general',
-          is_available: true,
-          preparation_time_mins: 10,
-        },
-      ],
+      items: housekeepingItems,
     },
     {
       id: 'cat-maint',
@@ -381,58 +492,7 @@ export async function getGuestServiceCatalog(propertyId: string): Promise<GuestS
       icon: 'Wrench',
       description: 'Prompt technician visit for AC cooling, geyser/hot water, TV, electrical or plumbing',
       display_order: 3,
-      items: [
-        {
-          id: 'item-mt-1',
-          name: 'Air Conditioner Temperature / Cooling Issue',
-          description: 'Technician will visit your room immediately to inspect AC filters and remote thermostat.',
-          price: 0,
-          tax_rate_percentage: 0,
-          dietary_type: 'general',
-          is_available: true,
-          preparation_time_mins: 15,
-        },
-        {
-          id: 'item-mt-2',
-          name: 'High-Speed WiFi / Internet Connectivity Help',
-          description: 'Assistance reconnecting your laptop or smartphone to hotel high-speed network.',
-          price: 0,
-          tax_rate_percentage: 0,
-          dietary_type: 'general',
-          is_available: true,
-          preparation_time_mins: 15,
-        },
-        {
-          id: 'item-mt-3',
-          name: 'Bathroom Plumbing or Hot Water Check',
-          description: 'Inspection of shower pressure, water heater geyser, or faucet drainage.',
-          price: 0,
-          tax_rate_percentage: 0,
-          dietary_type: 'general',
-          is_available: true,
-          preparation_time_mins: 15,
-        },
-        {
-          id: 'item-mt-4',
-          name: 'Television / Cable / Remote Issue',
-          description: 'Assistance with TV channels, HDMI connection, or remote battery replacement.',
-          price: 0,
-          tax_rate_percentage: 0,
-          dietary_type: 'general',
-          is_available: true,
-          preparation_time_mins: 15,
-        },
-        {
-          id: 'item-mt-5',
-          name: 'Electrical Light / Power Socket Issue',
-          description: 'Electrician check for room bedside switches, power outlets, or lighting fixtures.',
-          price: 0,
-          tax_rate_percentage: 0,
-          dietary_type: 'general',
-          is_available: true,
-          preparation_time_mins: 15,
-        },
-      ],
+      items: maintenanceItems,
     },
   ]
 }

@@ -77,9 +77,8 @@ export const navigationSections: NavSection[] = [
         href: '/housekeeping',
         icon: 'Sparkles',
         children: [
-          { title: 'Task Board', href: '/housekeeping' },
-          { title: 'Schedule', href: '/housekeeping/schedule' },
-          { title: 'Reports', href: '/housekeeping/reports' },
+          { title: 'Housekeeping Requests', href: '/housekeeping' },
+          { title: 'Housekeeping Types', href: '/housekeeping/types' },
         ],
       },
       {
@@ -87,9 +86,8 @@ export const navigationSections: NavSection[] = [
         href: '/maintenance',
         icon: 'Wrench',
         children: [
-          { title: 'Requests', href: '/maintenance' },
-          { title: 'New Request', href: '/maintenance/new' },
-          { title: 'Reports', href: '/maintenance/reports' },
+          { title: 'Maintenance Requests', href: '/maintenance' },
+          { title: 'Maintenance Types', href: '/maintenance/types' },
         ],
       },
     ],

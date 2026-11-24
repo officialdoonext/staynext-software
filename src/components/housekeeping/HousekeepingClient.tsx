@@ -169,6 +169,17 @@ export default function HousekeepingClient({
             </select>
           )}
 
+          <Link href="/housekeeping/types">
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-[#dfcef6] text-[#5e2b9d] hover:bg-[#f7f2fd] text-xs h-9 font-medium rounded-md cursor-pointer"
+            >
+              <Sparkles className="h-4 w-4 mr-1.5 text-[#5e2b9d]" />
+              Housekeeping Types
+            </Button>
+          </Link>
+
           <Button
             size="sm"
             onClick={() => setShowAddTask(true)}
