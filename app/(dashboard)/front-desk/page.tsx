@@ -1,5 +1,6 @@
 import React from 'react'
 import { getFrontDeskOperations } from '@/services/reservation.service'
+import { getFrontDeskRoomMatrix } from '@/services/frontdesk.service'
 import { getRooms } from '@/services/room.service'
 import { getProperties } from '@/services/property.service'
 import FrontDeskClient from '@/components/frontdesk/FrontDeskClient'
@@ -30,8 +31,9 @@ export default async function FrontDeskPage() {
     )
   }
 
-  const [ops, { rooms: availableRooms }] = await Promise.all([
+  const [ops, matrix, { rooms: availableRooms }] = await Promise.all([
     getFrontDeskOperations(primaryProp.id),
+    getFrontDeskRoomMatrix(primaryProp.id),
     getRooms(primaryProp.id),
   ])
 
@@ -39,6 +41,7 @@ export default async function FrontDeskPage() {
     <FrontDeskClient
       property={primaryProp}
       properties={properties}
+      matrix={matrix}
       todayArrivals={ops.todayArrivals}
       todayDepartures={ops.todayDepartures}
       inHouseGuests={ops.inHouseGuests}

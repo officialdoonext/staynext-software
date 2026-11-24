@@ -667,8 +667,11 @@ export async function createReservation(
         rate_per_night: payload.room_tariff || payload.total_amount,
       })
 
-      const targetRoomStatus = isImmediateCheckIn ? 'occupied' : 'reserved'
-      await supabase.from('rooms').update({ status: targetRoomStatus }).eq('id', allocatedRoomId)
+      const todayStr = new Date().toISOString().split('T')[0]
+      if (payload.check_in_date <= todayStr) {
+        const targetRoomStatus = isImmediateCheckIn ? 'occupied' : 'reserved'
+        await supabase.from('rooms').update({ status: targetRoomStatus }).eq('id', allocatedRoomId)
+      }
     }
 
     revalidatePath('/reservations')
@@ -1067,7 +1070,8 @@ export async function changeRoomReservation(
 export async function extendStayReservation(
   reservationId: string,
   newCheckOutDate: string,
-  extraCharge: number = 0
+  extraCharge: number = 0,
+  newCheckOutTime?: string
 ) {
   const supabase = await createClient()
   try {
@@ -1075,10 +1079,28 @@ export async function extendStayReservation(
     const currentTotal = Number(res?.total_amount) || 0
     const newTotal = currentTotal + extraCharge
 
-    await supabase.from('reservations').update({
+    const updatePayload: Record<string, any> = {
       check_out_date: newCheckOutDate,
       total_amount: newTotal,
-    }).eq('id', reservationId)
+    }
+    if (newCheckOutTime) {
+      updatePayload.check_out_time = newCheckOutTime
+    }
+
+    await supabase.from('reservations').update(updatePayload).eq('id', reservationId)
+
+    // Also update reservation_rooms for seamless consistency
+    const roomPayload: Record<string, any> = { check_out_date: newCheckOutDate }
+    if (newCheckOutTime) {
+      roomPayload.check_out_time = newCheckOutTime
+    }
+    await supabase.from('reservation_rooms').update(roomPayload).eq('reservation_id', reservationId)
+
+    revalidatePath('/front-desk')
+    revalidatePath('/reservations')
+    revalidatePath('/reservations/calendar')
+    revalidatePath('/rooms')
+    revalidatePath('/dashboard')
 
     return { success: true }
   } catch (err: any) {
