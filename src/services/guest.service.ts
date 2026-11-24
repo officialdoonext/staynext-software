@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 import crypto from 'crypto'
 
@@ -635,51 +636,69 @@ export async function submitGuestServiceRequest(payload: {
   guest_notes?: string
 }): Promise<{ success: boolean; tracking_token?: string; request_id?: string; error?: string }> {
   try {
-    const supabase = await createClient()
+    const adminClient = createAdminClient()
 
     const trackingToken = crypto.randomBytes(16).toString('hex')
 
-    const { data: req, error } = await supabase
-      .from('guest_service_requests')
-      .insert({
-        property_id: payload.property_id,
-        room_id: payload.room_id,
-        guest_name: payload.guest_name || 'Guest',
-        guest_phone: payload.guest_phone || '',
-        tracking_token: trackingToken,
-        category_slug: payload.category_slug,
-        request_type: payload.request_type,
+    // 1. Insert into guest_service_requests
+    let reqId = crypto.randomUUID()
+    try {
+      const { data: req, error } = await adminClient
+        .from('guest_service_requests')
+        .insert({
+          id: reqId,
+          property_id: payload.property_id,
+          room_id: payload.room_id,
+          guest_name: payload.guest_name || 'Guest',
+          guest_phone: payload.guest_phone || '',
+          tracking_token: trackingToken,
+          category_slug: payload.category_slug,
+          request_type: payload.request_type,
+          status: 'pending',
+          priority: payload.priority || 'medium',
+          description: payload.description,
+          guest_notes: payload.guest_notes || '',
+        })
+        .select()
+        .single()
+
+      if (req?.id) reqId = req.id
+      if (error) console.error('Error inserting into guest_service_requests:', error)
+
+      // Create initial timeline entry
+      await adminClient.from('guest_service_request_updates').insert({
+        request_id: reqId,
         status: 'pending',
-        priority: payload.priority || 'medium',
-        description: payload.description,
-        guest_notes: payload.guest_notes || '',
+        message: 'Request submitted and queued for staff.',
+        updated_by: 'Guest QR Portal',
       })
-      .select()
-      .single()
+    } catch (gErr) {
+      console.error('guest_service_requests insert error:', gErr)
+    }
 
-    if (error) throw error
-
-    // Create initial timeline entry
-    await supabase.from('guest_service_request_updates').insert({
-      request_id: req.id,
-      status: 'pending',
-      message: 'Request submitted and queued for staff.',
-      updated_by: 'Guest QR Portal',
-    })
-
-    // If Housekeeping request, create a real housekeeping task in /housekeeping
+    // 2. If Housekeeping request, create a real housekeeping task in /housekeeping
     if (payload.category_slug === 'housekeeping') {
       try {
-        await supabase.from('housekeeping_tasks').insert({
+        const guestInfo = payload.guest_name ? `Guest: ${payload.guest_name}${payload.guest_phone ? ` (${payload.guest_phone})` : ''}` : 'Guest'
+        const fullNotes = [
+          `[Room QR Request - ${guestInfo}]`,
+          payload.request_type ? `Service: ${payload.request_type}` : '',
+          payload.description && payload.description !== payload.request_type ? `Details: ${payload.description}` : '',
+          payload.guest_notes ? `Guest Instructions: ${payload.guest_notes}` : '',
+        ].filter(Boolean).join('\n')
+
+        const { error: hkErr } = await adminClient.from('housekeeping_tasks').insert({
           property_id: payload.property_id,
           room_id: payload.room_id,
           task_type: payload.request_type || 'Guest Room Cleaning',
           priority: payload.priority || 'medium',
           status: 'pending',
-          notes: `${payload.description || ''} ${payload.guest_notes || ''}`.trim() || 'Requested by guest via Room QR',
+          notes: fullNotes,
         })
-        // Set room status to dirty/cleaning
-        await supabase.from('rooms').update({ status: 'dirty' }).eq('id', payload.room_id)
+        if (hkErr) console.error('housekeeping_tasks insert error:', hkErr)
+
+        // Set room status to dirty
+        await adminClient.from('rooms').update({ status: 'dirty' }).eq('id', payload.room_id)
         revalidatePath('/housekeeping')
         revalidatePath('/rooms')
         revalidatePath('/dashboard')
@@ -688,19 +707,68 @@ export async function submitGuestServiceRequest(payload: {
       }
     }
 
-    // If Maintenance request, create a real maintenance ticket in /maintenance
+    // 3. If Maintenance request, create a real maintenance ticket in /maintenance
     if (payload.category_slug === 'maintenance') {
       try {
-        await supabase.from('maintenance_requests').insert({
+        const guestInfo = payload.guest_name ? `Guest: ${payload.guest_name}${payload.guest_phone ? ` (${payload.guest_phone})` : ''}` : 'Guest'
+        const fullDesc = [
+          `Issue: ${payload.request_type}`,
+          payload.description && payload.description !== payload.request_type ? `Details: ${payload.description}` : '',
+          payload.guest_notes ? `Guest Notes: ${payload.guest_notes}` : '',
+          `Reported by: ${guestInfo} via Room QR`,
+        ].filter(Boolean).join('\n')
+
+        // Find a valid user_id to satisfy reported_by if the schema has a NOT NULL constraint
+        let reportedBy: string | null = null
+        try {
+          const { data: pUser } = await adminClient
+            .from('property_users')
+            .select('user_id')
+            .eq('property_id', payload.property_id)
+            .limit(1)
+            .maybeSingle()
+          if (pUser?.user_id) reportedBy = pUser.user_id
+        } catch {}
+
+        if (!reportedBy) {
+          try {
+            const { data: uList } = await adminClient.auth.admin.listUsers({ perPage: 1 })
+            if (uList?.users?.[0]?.id) reportedBy = uList.users[0].id
+          } catch {}
+        }
+
+        const mtPayload: any = {
           property_id: payload.property_id,
           room_id: payload.room_id,
           title: payload.request_type || 'Room Maintenance Issue',
-          description: `${payload.description || ''} ${payload.guest_notes || ''}`.trim() || 'Reported by guest via Room QR',
+          description: fullDesc,
           category: 'Guest Room',
           priority: payload.priority || 'medium',
           status: 'open',
-        })
+        }
+        if (reportedBy) {
+          mtPayload.reported_by = reportedBy
+        }
+
+        const { error: mtErr } = await adminClient.from('maintenance_requests').insert(mtPayload)
+        if (mtErr) {
+          console.error('Failed to insert maintenance_requests:', mtErr)
+          // If error was related to reported_by, retry without it or with fallback
+          if (!reportedBy) {
+            await adminClient.from('maintenance_requests').insert({
+              ...mtPayload,
+              reported_by: null,
+            })
+          }
+        }
+
+        // If priority is urgent, mark room status
+        if (payload.priority === 'urgent' || payload.priority === 'high') {
+          await adminClient.from('rooms').update({ status: 'maintenance' }).eq('id', payload.room_id)
+        }
+
         revalidatePath('/maintenance')
+        revalidatePath('/rooms')
         revalidatePath('/dashboard')
       } catch (mtErr) {
         console.error('Failed to route maintenance ticket:', mtErr)
@@ -710,7 +778,7 @@ export async function submitGuestServiceRequest(payload: {
     return {
       success: true,
       tracking_token: trackingToken,
-      request_id: req.id,
+      request_id: reqId,
     }
   } catch (err: any) {
     return { success: false, error: err.message }

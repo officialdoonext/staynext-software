@@ -31,7 +31,7 @@ export default async function HousekeepingPage() {
   }
 
   const [tasks, { rooms }] = await Promise.all([
-    getHousekeepingTasks(primaryProp.id),
+    getHousekeepingTasks(),
     getRooms(primaryProp.id),
   ])
 

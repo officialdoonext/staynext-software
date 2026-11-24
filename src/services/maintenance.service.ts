@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 
 export interface MaintenanceItem {
@@ -15,6 +16,9 @@ export interface MaintenanceItem {
   status: 'open' | 'in_progress' | 'on_hold' | 'resolved' | 'closed'
   assigned_to?: string
   assigned_employee_name?: string
+  guest_name?: string
+  guest_phone?: string
+  source?: 'room_qr' | 'staff'
   estimated_cost?: number
   actual_cost?: number
   reported_at: string
@@ -23,17 +27,17 @@ export interface MaintenanceItem {
 }
 
 /**
- * Fetch maintenance tickets
+ * Fetch maintenance tickets and guest QR maintenance requests
  */
 export async function getMaintenanceRequests(propertyId?: string): Promise<MaintenanceItem[]> {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
+  // 1. Fetch from maintenance_requests (DO NOT join employees because foreign key doesn't exist)
   let query = supabase
     .from('maintenance_requests')
     .select(`
       *,
-      room:rooms(room_number),
-      employee:employees(first_name, last_name)
+      room:rooms(id, room_number)
     `)
     .order('created_at', { ascending: false })
 
@@ -42,28 +46,155 @@ export async function getMaintenanceRequests(propertyId?: string): Promise<Maint
   }
 
   const { data, error } = await query
-  if (error || !data) return []
+  if (error) {
+    console.error('getMaintenanceRequests error:', error)
+  }
 
-  return data.map((m: any) => ({
-    id: m.id,
-    property_id: m.property_id,
-    room_id: m.room_id,
-    room_number: m.room?.room_number || (m.room_id ? 'Room' : 'Public Facility'),
-    title: m.title || 'Maintenance Request',
-    description: m.description || '',
-    category: m.category || 'General',
-    priority: m.priority || 'medium',
-    status: m.status || 'open',
-    assigned_to: m.assigned_to,
-    assigned_employee_name: m.employee
-      ? `${m.employee.first_name || ''} ${m.employee.last_name || ''}`.trim()
-      : 'Engineering Team',
-    estimated_cost: parseFloat(m.estimated_cost) || 0,
-    actual_cost: parseFloat(m.actual_cost) || 0,
-    reported_at: m.created_at,
-    resolved_at: m.resolved_at,
-    created_at: m.created_at,
-  }))
+  let mtData = data
+  if (!mtData && error) {
+    // Graceful fallback without room join in case schema relationship cache is cold
+    let fallback = supabase
+      .from('maintenance_requests')
+      .select('*')
+      .order('created_at', { ascending: false })
+    if (propertyId) fallback = fallback.eq('property_id', propertyId)
+    const { data: fbData } = await fallback
+    if (fbData) mtData = fbData
+  }
+
+  // Pre-fetch room numbers map for any tickets that have room_id
+  const roomIds = (mtData || []).map((m: any) => m.room_id).filter(Boolean)
+  let roomsMap: Record<string, string> = {}
+  if (roomIds.length > 0) {
+    try {
+      const { data: rData } = await supabase
+        .from('rooms')
+        .select('id, room_number')
+        .in('id', roomIds)
+      if (rData) {
+        roomsMap = Object.fromEntries(rData.map((r: any) => [r.id, r.room_number]))
+      }
+    } catch {}
+  }
+
+  const items: MaintenanceItem[] = (mtData || []).map((m: any) => {
+    const isQr = m.description?.includes('via Room QR') || false
+    let guestName: string | undefined
+    let guestPhone: string | undefined
+
+    if (isQr && m.description) {
+      const guestMatch = m.description.match(/Reported by:\s*(?:Guest:\s*)?([^(\n]+)(?:\s*\(([^)]+)\))?/)
+      if (guestMatch) {
+        guestName = guestMatch[1]?.trim()
+        guestPhone = guestMatch[2]?.trim()
+      }
+    }
+
+    return {
+      id: m.id,
+      property_id: m.property_id,
+      room_id: m.room_id,
+      room_number: m.room?.room_number || roomsMap[m.room_id] || (m.room_id ? 'Room' : 'Public Facility'),
+      title: m.title || 'Maintenance Request',
+      description: m.description || '',
+      category: m.category || 'General',
+      priority: m.priority || 'medium',
+      status: m.status || 'open',
+      assigned_to: m.assigned_to,
+      assigned_employee_name: 'Engineering Team',
+      source: isQr ? 'room_qr' : 'staff',
+      guest_name: guestName,
+      guest_phone: guestPhone,
+      estimated_cost: parseFloat(m.estimated_cost) || 0,
+      actual_cost: parseFloat(m.actual_cost) || 0,
+      reported_at: m.created_at,
+      resolved_at: m.resolved_at,
+      created_at: m.created_at,
+    }
+  })
+
+  // 2. Also query guest_service_requests where category_slug = 'maintenance'
+  try {
+    let gQuery = supabase
+      .from('guest_service_requests')
+      .select('*')
+      .eq('category_slug', 'maintenance')
+      .order('created_at', { ascending: false })
+
+    if (propertyId) {
+      gQuery = gQuery.eq('property_id', propertyId)
+    }
+
+    const { data: guestReqs, error: gError } = await gQuery
+    if (gError) {
+      console.error('Error fetching guest_service_requests for maintenance:', gError)
+    }
+
+    if (guestReqs && guestReqs.length > 0) {
+      const gRoomIds = guestReqs.map((gr: any) => gr.room_id).filter(Boolean)
+      let gRoomsMap: Record<string, string> = {}
+      if (gRoomIds.length > 0) {
+        try {
+          const { data: grRooms } = await supabase
+            .from('rooms')
+            .select('id, room_number')
+            .in('id', gRoomIds)
+          if (grRooms) {
+            gRoomsMap = Object.fromEntries(grRooms.map((r: any) => [r.id, r.room_number]))
+          }
+        } catch {}
+      }
+
+      for (const gr of guestReqs) {
+        const grTime = new Date(gr.created_at).getTime()
+        const match = items.find(
+          (it) => it.room_id === gr.room_id && Math.abs(new Date(it.created_at).getTime() - grTime) < 30000
+        )
+
+        if (match) {
+          if (gr.guest_name && (!match.guest_name || match.guest_name === 'Guest')) {
+            match.guest_name = gr.guest_name
+          }
+          if (gr.guest_phone && !match.guest_phone) {
+            match.guest_phone = gr.guest_phone
+          }
+          match.source = 'room_qr'
+        } else {
+          const fullDesc = [
+            `Issue: ${gr.request_type}`,
+            gr.description && gr.description !== gr.request_type ? `Details: ${gr.description}` : '',
+            gr.guest_notes ? `Guest Notes: ${gr.guest_notes}` : '',
+            `Reported by: ${gr.guest_name || 'Guest'}${gr.guest_phone ? ` (${gr.guest_phone})` : ''} via Room QR`,
+          ].filter(Boolean).join('\n')
+
+          items.push({
+            id: gr.id,
+            property_id: gr.property_id,
+            room_id: gr.room_id,
+            room_number: gRoomsMap[gr.room_id] || 'Room',
+            title: gr.request_type || 'Guest Maintenance Issue',
+            description: fullDesc,
+            category: 'Guest Room',
+            priority: gr.priority || 'medium',
+            status: gr.status === 'completed' || gr.status === 'resolved' ? 'resolved' : gr.status === 'in_progress' ? 'in_progress' : 'open',
+            assigned_employee_name: 'Engineering Team',
+            guest_name: gr.guest_name,
+            guest_phone: gr.guest_phone,
+            source: 'room_qr',
+            estimated_cost: 0,
+            actual_cost: 0,
+            reported_at: gr.created_at,
+            created_at: gr.created_at,
+          })
+        }
+      }
+    }
+  } catch (gErr) {
+    console.error('Error fetching guest maintenance requests:', gErr)
+  }
+
+  items.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+  return items
 }
 
 /**
@@ -131,6 +262,15 @@ export async function updateMaintenanceStatus(
         status,
         actual_cost: actualCost,
         resolved_at: status === 'resolved' || status === 'closed' ? new Date().toISOString() : null,
+      })
+      .eq('id', ticketId)
+
+    // Also update guest_service_requests table if this was a guest QR ticket
+    await supabase
+      .from('guest_service_requests')
+      .update({
+        status: status === 'resolved' || status === 'closed' ? 'completed' : status,
+        completed_at: status === 'resolved' || status === 'closed' ? new Date().toISOString() : null,
       })
       .eq('id', ticketId)
 

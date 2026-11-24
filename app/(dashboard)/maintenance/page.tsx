@@ -29,7 +29,8 @@ export default async function MaintenancePage() {
     )
   }
 
-  const tickets = await getMaintenanceRequests(primaryProp.id)
+  // Fetch all maintenance tickets so tickets across all branches or QR scans are visible
+  const tickets = await getMaintenanceRequests()
 
   return (
     <MaintenanceClient

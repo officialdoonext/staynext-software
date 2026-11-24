@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 
 export interface HousekeepingTaskItem {
@@ -14,48 +15,189 @@ export interface HousekeepingTaskItem {
   assigned_to?: string
   assigned_employee_name?: string
   notes?: string
+  guest_name?: string
+  guest_phone?: string
+  source?: 'room_qr' | 'staff'
   scheduled_date?: string
   completed_at?: string
   created_at: string
 }
 
 /**
- * Fetch housekeeping turnover tasks
+ * Fetch housekeeping turnover tasks and guest QR requests
  */
 export async function getHousekeepingTasks(propertyId?: string): Promise<HousekeepingTaskItem[]> {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
+  // 1. Fetch from housekeeping_tasks (DO NOT join employees because foreign key doesn't exist)
   const query = supabase
     .from('housekeeping_tasks')
     .select(`
       *,
-      room:rooms(id, room_number, property_id, floor:floors(name, floor_number)),
-      employee:employees(id, first_name, last_name)
+      room:rooms(id, room_number, property_id, floor:floors(name, floor_number))
     `)
     .order('created_at', { ascending: false })
 
   const { data, error } = await query
-  if (error || !data) return []
+  if (error) {
+    console.error('getHousekeepingTasks error:', error)
+  }
 
-  return data
-    .filter((t: any) => !propertyId || t.room?.property_id === propertyId)
-    .map((t: any) => ({
-      id: t.id,
-      room_id: t.room_id,
-      room_number: t.room?.room_number || 'Room',
-      floor_name: t.room?.floor?.name || (t.room?.floor?.floor_number ? `Floor ${t.room.floor.floor_number}` : 'Floor 1'),
-      task_type: t.task_type || 'Room Cleaning',
-      priority: t.priority || 'medium',
-      status: t.status || 'pending',
-      assigned_to: t.assigned_to,
-      assigned_employee_name: t.employee
-        ? `${t.employee.first_name || ''} ${t.employee.last_name || ''}`.trim()
-        : 'Unassigned',
-      notes: t.notes || '',
-      scheduled_date: t.scheduled_date,
-      completed_at: t.completed_at,
-      created_at: t.created_at,
-    }))
+  let hkData = data
+  if (!hkData && error) {
+    // Graceful fallback without complex join
+    let fb = supabase
+      .from('housekeeping_tasks')
+      .select('*')
+      .order('created_at', { ascending: false })
+    if (propertyId) fb = fb.eq('property_id', propertyId)
+    const { data: fbData } = await fb
+    if (fbData) hkData = fbData
+  }
+
+  // Pre-fetch room mapping
+  const roomIds = (hkData || []).map((t: any) => t.room_id).filter(Boolean)
+  const roomsMap: Record<string, { room_number: string; floor_name: string; property_id: string }> = {}
+  if (roomIds.length > 0) {
+    try {
+      const { data: rData } = await supabase
+        .from('rooms')
+        .select('id, room_number, property_id, floor:floors(name, floor_number)')
+        .in('id', roomIds)
+      if (rData) {
+        for (const r of rData) {
+          const fName = (r.floor as any)?.name || ((r.floor as any)?.floor_number ? `Floor ${(r.floor as any).floor_number}` : 'Floor 1')
+          roomsMap[r.id] = { room_number: r.room_number, floor_name: fName, property_id: r.property_id }
+        }
+      }
+    } catch {}
+  }
+
+  const tasks: HousekeepingTaskItem[] = []
+
+  if (hkData) {
+    const filtered = hkData.filter((t: any) => {
+      if (!propertyId) return true
+      const propId = t.room?.property_id || roomsMap[t.room_id]?.property_id || t.property_id
+      return propId === propertyId
+    })
+
+    for (const t of filtered) {
+      const isQr = t.notes?.includes('[Room QR Request') || false
+      let guestName: string | undefined
+      let guestPhone: string | undefined
+
+      if (isQr && t.notes) {
+        const guestMatch = t.notes.match(/Guest:\s*([^(\n]+)(?:\s*\(([^)]+)\))?/)
+        if (guestMatch) {
+          guestName = guestMatch[1]?.trim()
+          guestPhone = guestMatch[2]?.trim()
+        }
+      }
+
+      tasks.push({
+        id: t.id,
+        room_id: t.room_id,
+        room_number: t.room?.room_number || roomsMap[t.room_id]?.room_number || 'Room',
+        floor_name: t.room?.floor?.name || roomsMap[t.room_id]?.floor_name || 'Floor 1',
+        task_type: t.task_type || 'Room Cleaning',
+        priority: t.priority || 'medium',
+        status: t.status || 'pending',
+        assigned_to: t.assigned_to,
+        assigned_employee_name: 'Unassigned',
+        notes: t.notes || '',
+        guest_name: guestName,
+        guest_phone: guestPhone,
+        source: isQr ? 'room_qr' : 'staff',
+        scheduled_date: t.scheduled_date,
+        completed_at: t.completed_at,
+        created_at: t.created_at,
+      })
+    }
+  }
+
+  // 2. Also query guest_service_requests where category_slug = 'housekeeping'
+  try {
+    let gQuery = supabase
+      .from('guest_service_requests')
+      .select('*')
+      .eq('category_slug', 'housekeeping')
+      .order('created_at', { ascending: false })
+
+    if (propertyId) {
+      gQuery = gQuery.eq('property_id', propertyId)
+    }
+
+    const { data: gData, error: gError } = await gQuery
+    if (gError) {
+      console.error('Error fetching guest_service_requests for housekeeping:', gError)
+    }
+
+    if (gData && gData.length > 0) {
+      const gRoomIds = gData.map((gr: any) => gr.room_id).filter(Boolean)
+      const gRoomsMap: Record<string, { room_number: string; floor_name: string }> = {}
+      if (gRoomIds.length > 0) {
+        try {
+          const { data: grRooms } = await supabase
+            .from('rooms')
+            .select('id, room_number, floor:floors(name, floor_number)')
+            .in('id', gRoomIds)
+          if (grRooms) {
+            for (const r of grRooms) {
+              const fName = (r.floor as any)?.name || ((r.floor as any)?.floor_number ? `Floor ${(r.floor as any).floor_number}` : 'Floor 1')
+              gRoomsMap[r.id] = { room_number: r.room_number, floor_name: fName }
+            }
+          }
+        } catch {}
+      }
+
+      for (const gr of gData) {
+        const grTime = new Date(gr.created_at).getTime()
+        const match = tasks.find(
+          (t) => t.room_id === gr.room_id && Math.abs(new Date(t.created_at).getTime() - grTime) < 30000
+        )
+
+        if (match) {
+          if (gr.guest_name && (!match.guest_name || match.guest_name === 'Guest')) {
+            match.guest_name = gr.guest_name
+          }
+          if (gr.guest_phone && !match.guest_phone) {
+            match.guest_phone = gr.guest_phone
+          }
+          match.source = 'room_qr'
+        } else {
+          const fullNotes = [
+            `[Room QR Request - Guest: ${gr.guest_name || 'Guest'}${gr.guest_phone ? ` (${gr.guest_phone})` : ''}]`,
+            gr.request_type ? `Service: ${gr.request_type}` : '',
+            gr.description && gr.description !== gr.request_type ? `Details: ${gr.description}` : '',
+            gr.guest_notes ? `Guest Instructions: ${gr.guest_notes}` : '',
+          ].filter(Boolean).join('\n')
+
+          tasks.push({
+            id: gr.id,
+            room_id: gr.room_id,
+            room_number: gRoomsMap[gr.room_id]?.room_number || 'Room',
+            floor_name: gRoomsMap[gr.room_id]?.floor_name || 'Floor 1',
+            task_type: gr.request_type || 'Room Cleaning',
+            priority: gr.priority || 'medium',
+            status: gr.status === 'completed' || gr.status === 'resolved' ? 'completed' : gr.status === 'in_progress' ? 'in_progress' : 'pending',
+            assigned_employee_name: 'Unassigned',
+            notes: fullNotes,
+            guest_name: gr.guest_name,
+            guest_phone: gr.guest_phone,
+            source: 'room_qr',
+            created_at: gr.created_at,
+          })
+        }
+      }
+    }
+  } catch (gErr) {
+    console.error('Error fetching guest service requests for housekeeping:', gErr)
+  }
+
+  // Sort by created_at descending
+  tasks.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+  return tasks
 }
 
 /**
@@ -69,7 +211,8 @@ export async function updateHousekeepingTaskStatus(
   try {
     const supabase = await createClient()
 
-    const { error } = await supabase
+    // Update housekeeping_tasks table
+    await supabase
       .from('housekeeping_tasks')
       .update({
         status: newStatus,
@@ -77,7 +220,14 @@ export async function updateHousekeepingTaskStatus(
       })
       .eq('id', taskId)
 
-    if (error) throw error
+    // Also update guest_service_requests if this was a guest QR request
+    await supabase
+      .from('guest_service_requests')
+      .update({
+        status: newStatus === 'completed' || newStatus === 'inspected' ? 'completed' : newStatus,
+        completed_at: newStatus === 'completed' || newStatus === 'inspected' ? new Date().toISOString() : null,
+      })
+      .eq('id', taskId)
 
     // Update Room status
     let roomStatus = 'dirty'

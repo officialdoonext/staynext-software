@@ -74,6 +74,7 @@ export default function GuestPortalClient({
   const [selectedServiceItem, setSelectedServiceItem] = useState<{
     name: string
     category: string
+    description?: string
     price: number
   } | null>(null)
   const [requestNotes, setRequestNotes] = useState('')
@@ -211,7 +212,8 @@ export default function GuestPortalClient({
         guest_phone: guestPhone.trim(),
         category_slug: selectedServiceItem.category,
         request_type: selectedServiceItem.name,
-        description: requestNotes.trim() || selectedServiceItem.name,
+        description: selectedServiceItem.description || selectedServiceItem.name,
+        guest_notes: requestNotes.trim(),
         priority: requestPriority,
       })
 
@@ -436,6 +438,7 @@ export default function GuestPortalClient({
                 setSelectedServiceItem({
                   name: activeCategorySlug === 'housekeeping' ? 'Custom Housekeeping Request' : 'Custom Maintenance Issue',
                   category: activeCategorySlug,
+                  description: 'Custom request entered by guest',
                   price: 0,
                 })
               }}
@@ -575,6 +578,7 @@ export default function GuestPortalClient({
                           setSelectedServiceItem({
                             name: item.name,
                             category: activeCategorySlug,
+                            description: item.description,
                             price: item.price,
                           })
                         }}
@@ -817,17 +821,32 @@ export default function GuestPortalClient({
                 </select>
               </div>
 
-              <div>
-                <label className="block text-[10px] font-semibold text-gray-700 mb-1">
-                  Mobile Number (Optional)
-                </label>
-                <input
-                  type="tel"
-                  value={guestPhone}
-                  onChange={(e) => setGuestPhone(e.target.value)}
-                  placeholder="+91 98765 43210"
-                  className="w-full px-2.5 py-1.5 text-xs border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-[10px] font-semibold text-gray-700 mb-1">
+                    Your Name (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={guestNameInput}
+                    onChange={(e) => setGuestNameInput(e.target.value)}
+                    placeholder="Guest Name"
+                    className="w-full px-2.5 py-1.5 text-xs border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-semibold text-gray-700 mb-1">
+                    Mobile Number (Optional)
+                  </label>
+                  <input
+                    type="tel"
+                    value={guestPhone}
+                    onChange={(e) => setGuestPhone(e.target.value)}
+                    placeholder="+91 98765 43210"
+                    className="w-full px-2.5 py-1.5 text-xs border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
+                  />
+                </div>
               </div>
 
               <div className="flex items-center justify-end gap-2 pt-2">
