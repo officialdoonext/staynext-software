@@ -46,7 +46,7 @@ export function TablesClient({ initialTables, propertyId }: TablesClientProps) {
 
   const [form, setForm] = useState({
     tableNumber: '',
-    capacity: 4,
+    capacity: '' as any,
     section: 'Main Dining',
   })
 
@@ -75,7 +75,7 @@ export function TablesClient({ initialTables, propertyId }: TablesClientProps) {
     if (res.success) {
       toast.success('Dining table added successfully')
       setIsAddOpen(false)
-      setForm({ tableNumber: '', capacity: 4, section: 'Main Dining' })
+      setForm({ tableNumber: '', capacity: '' as any, section: 'Main Dining' })
       router.refresh()
     } else {
       toast.error(res.error || 'Failed to add table')
@@ -273,7 +273,8 @@ export function TablesClient({ initialTables, propertyId }: TablesClientProps) {
                   min="1"
                   max="50"
                   value={form.capacity}
-                  onChange={(e) => setForm({ ...form, capacity: parseInt(e.target.value) || 2 })}
+                  onChange={(e) => setForm({ ...form, capacity: e.target.value as any })}
+                  placeholder="e.g. 4"
                   className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
                 />
               </div>

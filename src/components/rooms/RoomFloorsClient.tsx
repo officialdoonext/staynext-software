@@ -73,7 +73,7 @@ export default function RoomFloorsClient({
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingFloor, setEditingFloor] = useState<FloorItem | null>(null)
-  const [floorNumber, setFloorNumber] = useState(1)
+  const [floorNumber, setFloorNumber] = useState<number | ''>('')
   const [floorName, setFloorName] = useState('')
   const [buildingId, setBuildingId] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -94,9 +94,8 @@ export default function RoomFloorsClient({
 
   const openCreateModal = () => {
     setEditingFloor(null)
-    const nextNum = floors.length > 0 ? Math.max(...floors.map((f) => f.floor_number)) + 1 : 1
-    setFloorNumber(nextNum)
-    setFloorName(`Floor ${nextNum}`)
+    setFloorNumber('')
+    setFloorName('')
     setBuildingId(buildings.length > 0 ? buildings[0].id : '')
     setIsModalOpen(true)
   }
@@ -429,10 +428,11 @@ export default function RoomFloorsClient({
                 type="number"
                 value={floorNumber}
                 onChange={(e) => {
-                  const val = parseInt(e.target.value) || 0
+                  const val = e.target.value === '' ? '' : parseInt(e.target.value) || 0
                   setFloorNumber(val)
-                  if (!editingFloor) setFloorName(`Floor ${val}`)
+                  if (!editingFloor && val !== '') setFloorName(`Floor ${val}`)
                 }}
+                placeholder="e.g. 1"
                 required
                 className="text-xs rounded-md font-mono"
               />

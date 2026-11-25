@@ -45,15 +45,15 @@ export default function RoomTypesClient({
   const [formData, setFormData] = useState({
     name: '',
     code: '',
-    base_rate: 2500,
-    max_occupancy: 3,
-    base_occupancy: 2,
-    default_adult_count: 2,
-    default_child_count: 1,
+    base_rate: '' as any,
+    max_occupancy: '' as any,
+    base_occupancy: '' as any,
+    default_adult_count: '' as any,
+    default_child_count: '' as any,
     bed_type: 'King Bed',
-    size_sqft: 320,
-    extra_adult_rate: 500,
-    extra_child_rate: 300,
+    size_sqft: '' as any,
+    extra_adult_rate: '' as any,
+    extra_child_rate: '' as any,
     extra_bed_allowed: true,
     default_meal_plan: 'EP',
     gst_rate: 12,
@@ -66,15 +66,15 @@ export default function RoomTypesClient({
     setFormData({
       name: '',
       code: '',
-      base_rate: 2500,
-      max_occupancy: 3,
-      base_occupancy: 2,
-      default_adult_count: 2,
-      default_child_count: 1,
+      base_rate: '' as any,
+      max_occupancy: '' as any,
+      base_occupancy: '' as any,
+      default_adult_count: '' as any,
+      default_child_count: '' as any,
       bed_type: 'King Bed',
-      size_sqft: 320,
-      extra_adult_rate: 500,
-      extra_child_rate: 300,
+      size_sqft: '' as any,
+      extra_adult_rate: '' as any,
+      extra_child_rate: '' as any,
       extra_bed_allowed: true,
       default_meal_plan: 'EP',
       gst_rate: 12,
@@ -332,7 +332,8 @@ export default function RoomTypesClient({
                   <input
                     type="number"
                     value={formData.base_rate}
-                    onChange={(e) => setFormData({ ...formData, base_rate: Number(e.target.value) })}
+                    onChange={(e) => setFormData({ ...formData, base_rate: e.target.value as any })}
+                    placeholder="0.00"
                     className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
                     required
                   />
@@ -343,7 +344,8 @@ export default function RoomTypesClient({
                   <input
                     type="number"
                     value={formData.base_occupancy}
-                    onChange={(e) => setFormData({ ...formData, base_occupancy: Number(e.target.value) })}
+                    onChange={(e) => setFormData({ ...formData, base_occupancy: e.target.value as any })}
+                    placeholder="e.g. 2"
                     className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
                   />
                 </div>
@@ -353,7 +355,8 @@ export default function RoomTypesClient({
                   <input
                     type="number"
                     value={formData.max_occupancy}
-                    onChange={(e) => setFormData({ ...formData, max_occupancy: Number(e.target.value) })}
+                    onChange={(e) => setFormData({ ...formData, max_occupancy: e.target.value as any })}
+                    placeholder="e.g. 3"
                     className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
                   />
                 </div>
@@ -395,7 +398,8 @@ export default function RoomTypesClient({
                   <input
                     type="number"
                     value={formData.extra_adult_rate}
-                    onChange={(e) => setFormData({ ...formData, extra_adult_rate: Number(e.target.value) })}
+                    onChange={(e) => setFormData({ ...formData, extra_adult_rate: e.target.value as any })}
+                    placeholder="0.00"
                     className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
                   />
                 </div>
@@ -405,7 +409,8 @@ export default function RoomTypesClient({
                   <input
                     type="number"
                     value={formData.extra_child_rate}
-                    onChange={(e) => setFormData({ ...formData, extra_child_rate: Number(e.target.value) })}
+                    onChange={(e) => setFormData({ ...formData, extra_child_rate: e.target.value as any })}
+                    placeholder="0.00"
                     className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
                   />
                 </div>
@@ -438,7 +443,8 @@ export default function RoomTypesClient({
                   <input
                     type="number"
                     value={formData.size_sqft}
-                    onChange={(e) => setFormData({ ...formData, size_sqft: Number(e.target.value) })}
+                    onChange={(e) => setFormData({ ...formData, size_sqft: e.target.value as any })}
+                    placeholder="e.g. 320"
                     className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
                   />
                 </div>

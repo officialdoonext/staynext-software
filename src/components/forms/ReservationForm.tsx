@@ -224,7 +224,7 @@ export default function ReservationForm({
     address_in_india: '',
     date_of_arrival_in_india: '',
     arrived_from: '',
-    expected_duration_days: '3',
+    expected_duration_days: '',
     guest_photo_name: '',
 
     // 3. Booking & Stay Details
@@ -235,8 +235,8 @@ export default function ReservationForm({
     check_in_time: initialProp.check_in_time || '14:00',
     check_out_date: defaultEndStr,
     check_out_time: initialProp.check_out_time || '11:00',
-    num_adults: 2,
-    num_children: 0,
+    num_adults: '' as any,
+    num_children: '' as any,
     purpose_of_visit: 'Personal',
     special_requests: '',
     immediate_check_in: true,
@@ -244,16 +244,16 @@ export default function ReservationForm({
     // 4. Room Allocation
     room_id: '',
     selected_room_type_id: roomTypes[0]?.id || '',
-    room_tariff: roomTypes[0]?.base_rate || 2500,
+    room_tariff: '' as any,
     extra_bed: false,
-    extra_bed_charges: 500,
+    extra_bed_charges: '' as any,
 
     // 5. Payment & Billing Details
-    food_charges: 0,
-    other_charges: 0,
-    discount_amount: 0,
+    food_charges: '' as any,
+    other_charges: '' as any,
+    discount_amount: '' as any,
     gst_rate: 12,
-    paid_amount: 0,
+    paid_amount: '' as any,
     payment_mode: 'UPI',
     transaction_reference: '',
 
@@ -1242,6 +1242,7 @@ export default function ReservationForm({
                         name="num_adults"
                         value={formData.num_adults}
                         onChange={handleChange}
+                        placeholder="e.g. 2"
                         className="w-full px-3 py-2 bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
                       />
                     </div>
@@ -1255,6 +1256,7 @@ export default function ReservationForm({
                         name="num_children"
                         value={formData.num_children}
                         onChange={handleChange}
+                        placeholder="e.g. 0"
                         className="w-full px-3 py-2 bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
                       />
                     </div>
@@ -1381,6 +1383,7 @@ export default function ReservationForm({
                         name="room_tariff"
                         value={formData.room_tariff}
                         onChange={handleChange}
+                        placeholder="0.00"
                         className="w-full px-3 py-2 bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] font-semibold text-gray-900"
                       />
                       <span className="text-[10px] text-gray-400 block mt-1">
@@ -1408,6 +1411,7 @@ export default function ReservationForm({
                             name="extra_bed_charges"
                             value={formData.extra_bed_charges}
                             onChange={handleChange}
+                            placeholder="0.00"
                             className="w-full px-3 py-2 bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
                           />
                         </div>
@@ -1463,6 +1467,7 @@ export default function ReservationForm({
                         name="food_charges"
                         value={formData.food_charges}
                         onChange={handleChange}
+                        placeholder="0.00"
                         className="w-full px-3 py-2 bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
                       />
                     </div>
@@ -1475,6 +1480,7 @@ export default function ReservationForm({
                         name="other_charges"
                         value={formData.other_charges}
                         onChange={handleChange}
+                        placeholder="0.00"
                         className="w-full px-3 py-2 bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
                       />
                     </div>
@@ -1487,6 +1493,7 @@ export default function ReservationForm({
                         name="discount_amount"
                         value={formData.discount_amount}
                         onChange={handleChange}
+                        placeholder="0.00"
                         className="w-full px-3 py-2 bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
                       />
                     </div>
@@ -1543,6 +1550,7 @@ export default function ReservationForm({
                         name="paid_amount"
                         value={formData.paid_amount}
                         onChange={handleChange}
+                        placeholder="0.00"
                         className="w-full px-3 py-2 bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] font-semibold text-emerald-700"
                       />
                     </div>

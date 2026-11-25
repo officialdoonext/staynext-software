@@ -65,7 +65,7 @@ export default function PropertyDetailClient({
 
   // Floor modal / inline state
   const [showAddFloor, setShowAddFloor] = useState(false)
-  const [newFloorNumber, setNewFloorNumber] = useState(1)
+  const [newFloorNumber, setNewFloorNumber] = useState<number | string>('')
   const [newFloorName, setNewFloorName] = useState('')
   const [selectedBuildingId, setSelectedBuildingId] = useState('')
 
@@ -100,7 +100,7 @@ export default function PropertyDetailClient({
     const res = await createFloor({
       property_id: property.id,
       building_id: selectedBuildingId || undefined,
-      floor_number: Number(newFloorNumber),
+      floor_number: Number(newFloorNumber) || 1,
       name: newFloorName.trim() || `Floor ${newFloorNumber}`,
     })
 
@@ -115,7 +115,7 @@ export default function PropertyDetailClient({
         },
       ])
       setNewFloorName('')
-      setNewFloorNumber((prev) => prev + 1)
+      setNewFloorNumber('')
       setShowAddFloor(false)
     }
   }
@@ -421,7 +421,8 @@ export default function PropertyDetailClient({
                   <input
                     type="number"
                     value={newFloorNumber}
-                    onChange={(e) => setNewFloorNumber(Number(e.target.value))}
+                    onChange={(e) => setNewFloorNumber(e.target.value === '' ? '' : Number(e.target.value))}
+                    placeholder="e.g. 1"
                     className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
                     required
                   />
@@ -432,7 +433,7 @@ export default function PropertyDetailClient({
                     type="text"
                     value={newFloorName}
                     onChange={(e) => setNewFloorName(e.target.value)}
-                    placeholder={`e.g. Floor ${newFloorNumber}`}
+                    placeholder={newFloorNumber ? `e.g. Floor ${newFloorNumber}` : 'e.g. Floor 1'}
                     className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
                   />
                 </div>

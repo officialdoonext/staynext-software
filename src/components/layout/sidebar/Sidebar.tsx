@@ -155,7 +155,7 @@ export default function Sidebar({ isOpen, mobileOpen, onMobileClose, onToggle }:
 
   // Full Expanded Sidebar Content
   const fullSidebarContent = (
-    <div className="flex h-full flex-col bg-white select-none">
+    <div className="flex h-full flex-col bg-white select-none" style={{borderRight: '1px solid lightgray'}}>
       {/* Brand Header */}
       <div className="flex h-16 items-center justify-between px-4 border-b border-gray-200 bg-white">
         <Link href="/dashboard" className="flex items-center gap-3 cursor-pointer">

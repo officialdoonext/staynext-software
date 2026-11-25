@@ -50,13 +50,13 @@ export function PromotionsClient({ initialPromotions, propertyId }: PromotionsCl
     code: '',
     name: '',
     discountType: 'percentage' as 'percentage' | 'fixed',
-    discountValue: '10',
+    discountValue: '',
     validFrom: new Date().toISOString().split('T')[0],
     validUntil: new Date(new Date().setMonth(new Date().getMonth() + 3))
       .toISOString()
       .split('T')[0],
-    minBookingAmount: '0',
-    usageLimit: '100',
+    minBookingAmount: '',
+    usageLimit: '',
   })
 
   const filtered = promotions.filter((p) => {
@@ -102,13 +102,13 @@ export function PromotionsClient({ initialPromotions, propertyId }: PromotionsCl
         code: '',
         name: '',
         discountType: 'percentage',
-        discountValue: '10',
+        discountValue: '',
         validFrom: new Date().toISOString().split('T')[0],
         validUntil: new Date(new Date().setMonth(new Date().getMonth() + 3))
           .toISOString()
           .split('T')[0],
-        minBookingAmount: '0',
-        usageLimit: '100',
+        minBookingAmount: '',
+        usageLimit: '',
       })
       router.refresh()
     } else {
@@ -309,7 +309,7 @@ export function PromotionsClient({ initialPromotions, propertyId }: PromotionsCl
                   type="number"
                   step="0.01"
                   min="0.01"
-                  placeholder="15"
+                  placeholder="e.g. 15"
                   value={form.discountValue}
                   onChange={(e) => setForm({ ...form, discountValue: e.target.value })}
                   required
@@ -354,7 +354,7 @@ export function PromotionsClient({ initialPromotions, propertyId }: PromotionsCl
                 <label className="block text-xs font-medium text-gray-700 mb-1">Max Redemptions</label>
                 <input
                   type="number"
-                  placeholder="100"
+                  placeholder="e.g. 100"
                   value={form.usageLimit}
                   onChange={(e) => setForm({ ...form, usageLimit: e.target.value })}
                   className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"

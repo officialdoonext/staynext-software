@@ -24,7 +24,7 @@ export default function FloorsClient({
   const [selectedPropertyId, setSelectedPropertyId] = useState(initialProp.id)
   const [floors, setFloors] = useState<FloorItem[]>(initialFloors)
   const [showAdd, setShowAdd] = useState(false)
-  const [floorNumber, setFloorNumber] = useState(1)
+  const [floorNumber, setFloorNumber] = useState<number | string>('')
   const [floorName, setFloorName] = useState('')
   const [buildingId, setBuildingId] = useState('')
 
@@ -34,7 +34,7 @@ export default function FloorsClient({
     const res = await createFloor({
       property_id: selectedPropertyId,
       building_id: buildingId || undefined,
-      floor_number: Number(floorNumber),
+      floor_number: Number(floorNumber) || 1,
       name: floorName.trim() || `Floor ${floorNumber}`,
     })
 
@@ -49,7 +49,7 @@ export default function FloorsClient({
         },
       ])
       setFloorName('')
-      setFloorNumber((prev) => prev + 1)
+      setFloorNumber('')
       setShowAdd(false)
     }
   }
@@ -113,7 +113,8 @@ export default function FloorsClient({
               <input
                 type="number"
                 value={floorNumber}
-                onChange={(e) => setFloorNumber(Number(e.target.value))}
+                onChange={(e) => setFloorNumber(e.target.value === '' ? '' : Number(e.target.value))}
+                placeholder="e.g. 1"
                 className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
                 required
               />
@@ -124,7 +125,7 @@ export default function FloorsClient({
                 type="text"
                 value={floorName}
                 onChange={(e) => setFloorName(e.target.value)}
-                placeholder={`Floor ${floorNumber}`}
+                placeholder={floorNumber ? `Floor ${floorNumber}` : 'Floor name'}
                 className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
               />
             </div>

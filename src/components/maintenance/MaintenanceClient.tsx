@@ -53,29 +53,30 @@ export default function MaintenanceClient({
 
   // Resolve Ticket Modal
   const [resolveModalTicket, setResolveModalTicket] = useState<MaintenanceItem | null>(null)
-  const [actualCost, setActualCost] = useState<number>(0)
+  const [actualCost, setActualCost] = useState<number | string>('')
 
   const handleResolveTicket = async () => {
     if (!resolveModalTicket) return
     setActionLoading(`resolve-${resolveModalTicket.id}`)
     try {
+      const costNum = actualCost === '' ? 0 : Number(actualCost)
       const res = await updateMaintenanceStatus(
         resolveModalTicket.id,
         resolveModalTicket.room_id,
         'resolved',
-        actualCost
+        costNum
       )
       if (res.success) {
         setTickets((prev) =>
           prev.map((t) =>
             t.id === resolveModalTicket.id
-              ? { ...t, status: 'resolved', actual_cost: actualCost }
+              ? { ...t, status: 'resolved', actual_cost: costNum }
               : t
           )
         )
         if (selectedTicketDetail && selectedTicketDetail.id === resolveModalTicket.id) {
           setSelectedTicketDetail((prev) =>
-            prev ? { ...prev, status: 'resolved', actual_cost: actualCost } : null
+            prev ? { ...prev, status: 'resolved', actual_cost: costNum } : null
           )
         }
         setResolveModalTicket(null)
@@ -91,7 +92,7 @@ export default function MaintenanceClient({
   ) => {
     if (status === 'resolved') {
       setResolveModalTicket(ticket)
-      setActualCost(ticket.estimated_cost || 0)
+      setActualCost('')
       return
     }
 
@@ -694,8 +695,9 @@ export default function MaintenanceClient({
                 </label>
                 <input
                   type="number"
+                  placeholder={resolveModalTicket?.estimated_cost ? String(resolveModalTicket.estimated_cost) : '0.00'}
                   value={actualCost}
-                  onChange={(e) => setActualCost(Number(e.target.value))}
+                  onChange={(e) => setActualCost(e.target.value === '' ? '' : Number(e.target.value))}
                   className="w-full px-2.5 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
                 />
               </div>

@@ -50,7 +50,7 @@ export function SeasonalClient({ initialRates, propertyId }: SeasonalClientProps
     endDate: new Date(new Date().setMonth(new Date().getMonth() + 1))
       .toISOString()
       .split('T')[0],
-    multiplier: '1.25',
+    multiplier: '',
   })
 
   const filtered = rates.filter((r) => {
@@ -90,7 +90,7 @@ export function SeasonalClient({ initialRates, propertyId }: SeasonalClientProps
         endDate: new Date(new Date().setMonth(new Date().getMonth() + 1))
           .toISOString()
           .split('T')[0],
-        multiplier: '1.25',
+        multiplier: '',
       })
       router.refresh()
     } else {
@@ -280,6 +280,7 @@ export function SeasonalClient({ initialRates, propertyId }: SeasonalClientProps
                 step="0.05"
                 min="0.1"
                 max="5.0"
+                placeholder="e.g. 1.25"
                 value={form.multiplier}
                 onChange={(e) => setForm({ ...form, multiplier: e.target.value })}
                 required

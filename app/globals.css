@@ -223,3 +223,15 @@ textarea,
 .focus-visible\:ring-indigo-500:focus-visible {
   --tw-ring-color: #5e2b9d !important;
 }
+
+/* 6. HIDE SPINNERS (UP/DOWN BUTTONS) ON NUMBER INPUTS */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none !important;
+  margin: 0 !important;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield !important;
+  appearance: textfield !important;
+}

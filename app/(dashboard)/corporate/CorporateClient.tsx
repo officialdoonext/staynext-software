@@ -54,8 +54,8 @@ export function CorporateClient({ initialAccounts, propertyId }: CorporateClient
     phone: '',
     address: '',
     taxId: '',
-    creditLimit: '50000',
-    discountPercentage: '15',
+    creditLimit: '',
+    discountPercentage: '',
     paymentTerms: 'Net 30',
   })
 
@@ -87,8 +87,8 @@ export function CorporateClient({ initialAccounts, propertyId }: CorporateClient
       phone: form.phone.trim() || undefined,
       address: form.address.trim() || undefined,
       taxId: form.taxId.trim() || undefined,
-      creditLimit: parseFloat(form.creditLimit) || 50000,
-      discountPercentage: parseFloat(form.discountPercentage) || 15,
+      creditLimit: parseFloat(form.creditLimit) || 0,
+      discountPercentage: parseFloat(form.discountPercentage) || 0,
       paymentTerms: form.paymentTerms,
     })
     setIsSubmitting(false)
@@ -103,8 +103,8 @@ export function CorporateClient({ initialAccounts, propertyId }: CorporateClient
         phone: '',
         address: '',
         taxId: '',
-        creditLimit: '50000',
-        discountPercentage: '15',
+        creditLimit: '',
+        discountPercentage: '',
         paymentTerms: 'Net 30',
       })
       router.refresh()
@@ -371,7 +371,7 @@ export function CorporateClient({ initialAccounts, propertyId }: CorporateClient
                 <label className="block text-xs font-medium text-gray-700 mb-1">Credit Limit ($)</label>
                 <input
                   type="number"
-                  placeholder="50000"
+                  placeholder="e.g. 50000"
                   value={form.creditLimit}
                   onChange={(e) => setForm({ ...form, creditLimit: e.target.value })}
                   className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
@@ -384,7 +384,7 @@ export function CorporateClient({ initialAccounts, propertyId }: CorporateClient
                   type="number"
                   min="0"
                   max="50"
-                  placeholder="15"
+                  placeholder="e.g. 15"
                   value={form.discountPercentage}
                   onChange={(e) => setForm({ ...form, discountPercentage: e.target.value })}
                   className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"

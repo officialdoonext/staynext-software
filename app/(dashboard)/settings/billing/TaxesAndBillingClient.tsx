@@ -51,7 +51,7 @@ export function TaxesAndBillingClient({
   const [taxRates, setTaxRates] = useState<TaxRateData[]>(initialTaxRates)
   const [isAddOpen, setIsAddOpen] = useState(false)
   const [name, setName] = useState('')
-  const [ratePercentage, setRatePercentage] = useState('12')
+  const [ratePercentage, setRatePercentage] = useState('')
   const [code, setCode] = useState('')
   const [isDefault, setIsDefault] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -86,7 +86,7 @@ export function TaxesAndBillingClient({
       toast.success('Statutory tax rate registered')
       setIsAddOpen(false)
       setName('')
-      setRatePercentage('12')
+      setRatePercentage('')
       setCode('')
       setIsDefault(false)
       // Optimistic update
@@ -294,6 +294,7 @@ export function TaxesAndBillingClient({
                   <Input
                     type="number"
                     step="0.01"
+                    placeholder="e.g. 12"
                     value={ratePercentage}
                     onChange={(e) => setRatePercentage(e.target.value)}
                     required

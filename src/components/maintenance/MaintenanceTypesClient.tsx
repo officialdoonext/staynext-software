@@ -75,7 +75,7 @@ export default function MaintenanceTypesClient({
     name: '',
     category: 'HVAC',
     description: '',
-    estimated_minutes: 45,
+    estimated_minutes: '' as any,
     priority: 'medium' as 'low' | 'medium' | 'high' | 'urgent',
     is_active: true,
   })
@@ -127,7 +127,7 @@ export default function MaintenanceTypesClient({
         name: '',
         category: 'HVAC',
         description: '',
-        estimated_minutes: 45,
+        estimated_minutes: '' as any,
         priority: 'medium',
         is_active: true,
       })
@@ -358,7 +358,8 @@ export default function MaintenanceTypesClient({
                     max="480"
                     step="5"
                     value={formData.estimated_minutes}
-                    onChange={(e) => setFormData({ ...formData, estimated_minutes: Number(e.target.value) })}
+                    onChange={(e) => setFormData({ ...formData, estimated_minutes: e.target.value as any })}
+                    placeholder="e.g. 45"
                     className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
                   />
                 </div>

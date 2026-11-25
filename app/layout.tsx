@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import localFont from "next/font/local"
 import "./globals.css"
 import { Toaster } from "sonner"
+import { GlobalNumberInputListener } from "@/components/common/GlobalNumberInputListener"
 
 const sora = localFont({
   src: [
@@ -34,6 +35,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning className={`h-full ${sora.variable}`}>
       <body suppressHydrationWarning className={`h-full bg-gray-50 font-sans antialiased ${sora.className}`}>
+        <GlobalNumberInputListener />
         {children}
         <Toaster position="top-right" richColors />
       </body>

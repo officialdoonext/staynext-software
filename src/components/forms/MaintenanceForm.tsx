@@ -43,7 +43,7 @@ export default function MaintenanceForm({
     description: '',
     category: 'hvac',
     priority: 'medium',
-    estimated_cost: 0,
+    estimated_cost: '' as any,
   })
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -214,6 +214,7 @@ export default function MaintenanceForm({
                   name="estimated_cost"
                   value={formData.estimated_cost}
                   onChange={handleChange}
+                  placeholder="0.00"
                   className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
                 />
               </div>

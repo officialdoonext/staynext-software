@@ -45,12 +45,12 @@ export default function RoomBlockingClient({
   const [formData, setFormData] = useState({
     room_id: rooms[0]?.id || '',
     block_type: 'Maintenance',
-    reason: 'AC Compressor Service & Maintenance',
+    reason: '',
     start_date: '',
     end_date: '',
-    blocked_by: 'Duty Manager',
-    approved_by: 'General Manager',
-    maintenance_ticket_number: 'WO-1042',
+    blocked_by: '',
+    approved_by: '',
+    maintenance_ticket_number: '',
     notes: '',
   })
 
@@ -112,6 +112,17 @@ export default function RoomBlockingClient({
       ])
 
       setSuccessMsg(`Room #${roomObj?.room_number} blocked and inventory locked.`)
+      setFormData({
+        room_id: rooms[0]?.id || '',
+        block_type: 'Maintenance',
+        reason: '',
+        start_date: '',
+        end_date: '',
+        blocked_by: '',
+        approved_by: '',
+        maintenance_ticket_number: '',
+        notes: '',
+      })
       setTimeout(() => {
         setShowAddForm(false)
         setSuccessMsg('')
@@ -265,6 +276,7 @@ export default function RoomBlockingClient({
                     type="text"
                     value={formData.approved_by}
                     onChange={(e) => setFormData({ ...formData, approved_by: e.target.value })}
+                    placeholder="e.g. General Manager"
                     className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
                   />
                 </div>
@@ -287,6 +299,7 @@ export default function RoomBlockingClient({
                     type="text"
                     value={formData.blocked_by}
                     onChange={(e) => setFormData({ ...formData, blocked_by: e.target.value })}
+                    placeholder="e.g. Duty Manager"
                     className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
                   />
                 </div>

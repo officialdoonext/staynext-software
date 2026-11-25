@@ -75,13 +75,13 @@ export function BillingClient({
   const [chargeForm, setChargeForm] = useState({
     description: '',
     itemType: 'room_charge' as 'room_charge' | 'f_and_b' | 'tax' | 'service' | 'discount',
-    quantity: 1,
-    unitPrice: 0,
+    quantity: '' as any,
+    unitPrice: '' as any,
   })
 
   // Payment Form State
   const [paymentForm, setPaymentForm] = useState({
-    amount: 0,
+    amount: '' as any,
     paymentMethod: 'card',
     reference: '',
     notes: '',
@@ -119,8 +119,8 @@ export function BillingClient({
     setChargeForm({
       description: '',
       itemType: 'room_charge',
-      quantity: 1,
-      unitPrice: 0,
+      quantity: '' as any,
+      unitPrice: '' as any,
     })
     setIsAddChargeOpen(true)
   }
@@ -135,7 +135,8 @@ export function BillingClient({
       return
     }
 
-    if (chargeForm.unitPrice <= 0) {
+    const price = Number(chargeForm.unitPrice) || 0
+    if (price <= 0) {
       toast.error('Unit price must be greater than 0')
       return
     }
@@ -145,8 +146,8 @@ export function BillingClient({
       folioId: selectedFolio.id,
       description: chargeForm.description,
       itemType: chargeForm.itemType,
-      quantity: Number(chargeForm.quantity),
-      unitPrice: Number(chargeForm.unitPrice),
+      quantity: Number(chargeForm.quantity) || 1,
+      unitPrice: price,
     })
     setIsLoading(false)
 
@@ -169,7 +170,7 @@ export function BillingClient({
   const handleOpenPayment = (folio: FolioRecord) => {
     setSelectedFolio(folio)
     setPaymentForm({
-      amount: Math.max(0, folio.balance),
+      amount: '' as any,
       paymentMethod: 'card',
       reference: `PAY-${Date.now().toString(36).toUpperCase()}`,
       notes: 'Guest folio settlement',
@@ -182,7 +183,8 @@ export function BillingClient({
     e.preventDefault()
     if (!selectedFolio) return
 
-    if (paymentForm.amount <= 0) {
+    const payAmt = Number(paymentForm.amount) || 0
+    if (payAmt <= 0) {
       toast.error('Payment amount must be greater than 0')
       return
     }
@@ -193,7 +195,7 @@ export function BillingClient({
       folioId: selectedFolio.id,
       guestId: selectedFolio.guestId,
       reservationId: selectedFolio.reservationId,
-      amount: Number(paymentForm.amount),
+      amount: payAmt,
       paymentMethod: paymentForm.paymentMethod,
       paymentReference: paymentForm.reference,
       notes: paymentForm.notes,
@@ -759,9 +761,13 @@ export function BillingClient({
                   type="number"
                   min="1"
                   step="1"
-                  value={chargeForm.quantity}
+                  placeholder="e.g. 1"
+                  value={chargeForm.quantity ?? ''}
                   onChange={(e) =>
-                    setChargeForm({ ...chargeForm, quantity: parseInt(e.target.value) || 1 })
+                    setChargeForm({
+                      ...chargeForm,
+                      quantity: e.target.value === '' ? ('' as any) : parseInt(e.target.value) || ('' as any),
+                    })
                   }
                   className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
                 />
@@ -775,15 +781,18 @@ export function BillingClient({
                 min="0.01"
                 step="0.01"
                 placeholder="0.00"
-                value={chargeForm.unitPrice || ''}
+                value={chargeForm.unitPrice ?? ''}
                 onChange={(e) =>
-                  setChargeForm({ ...chargeForm, unitPrice: parseFloat(e.target.value) || 0 })
+                  setChargeForm({
+                    ...chargeForm,
+                    unitPrice: e.target.value === '' ? ('' as any) : parseFloat(e.target.value) || ('' as any),
+                  })
                 }
                 required
                 className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
               />
               <span className="text-[11px] text-gray-400 mt-1 block">
-                Total to post: {formatCurrency((chargeForm.quantity || 1) * (chargeForm.unitPrice || 0))}
+                Total to post: {formatCurrency((Number(chargeForm.quantity) || 1) * (Number(chargeForm.unitPrice) || 0))}
               </span>
             </div>
 
@@ -827,9 +836,13 @@ export function BillingClient({
                 type="number"
                 min="0.01"
                 step="0.01"
-                value={paymentForm.amount || ''}
+                placeholder={selectedFolio ? formatCurrency(selectedFolio.balance) : "0.00"}
+                value={paymentForm.amount ?? ''}
                 onChange={(e) =>
-                  setPaymentForm({ ...paymentForm, amount: parseFloat(e.target.value) || 0 })
+                  setPaymentForm({
+                    ...paymentForm,
+                    amount: e.target.value === '' ? ('' as any) : parseFloat(e.target.value) || ('' as any),
+                  })
                 }
                 required
                 className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"

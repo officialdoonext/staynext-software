@@ -51,7 +51,7 @@ export function TravelAgentsClient({ initialAgents, propertyId }: TravelAgentsCl
     iataNumber: '',
     email: '',
     phone: '',
-    commissionPercentage: '10',
+    commissionPercentage: '',
   })
 
   const filtered = agents.filter((a) => {
@@ -80,7 +80,7 @@ export function TravelAgentsClient({ initialAgents, propertyId }: TravelAgentsCl
       iataNumber: form.iataNumber.trim() || undefined,
       email: form.email.trim() || undefined,
       phone: form.phone.trim() || undefined,
-      commissionPercentage: parseFloat(form.commissionPercentage) || 10,
+      commissionPercentage: parseFloat(form.commissionPercentage) || 0,
     })
     setIsSubmitting(false)
 
@@ -93,7 +93,7 @@ export function TravelAgentsClient({ initialAgents, propertyId }: TravelAgentsCl
         iataNumber: '',
         email: '',
         phone: '',
-        commissionPercentage: '10',
+        commissionPercentage: '',
       })
       router.refresh()
     } else {
@@ -349,7 +349,7 @@ export function TravelAgentsClient({ initialAgents, propertyId }: TravelAgentsCl
                 min="0"
                 max="50"
                 step="0.5"
-                placeholder="10"
+                placeholder="e.g. 10"
                 value={form.commissionPercentage}
                 onChange={(e) => setForm({ ...form, commissionPercentage: e.target.value })}
                 required

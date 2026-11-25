@@ -67,7 +67,7 @@ export function ContractsClient({
     endDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1))
       .toISOString()
       .split('T')[0],
-    roomRateDiscountPercent: '15',
+    roomRateDiscountPercent: '',
     complimentaryBreakfast: true,
     paymentTerms: 'Net 30',
     notes: '',
@@ -95,7 +95,7 @@ export function ContractsClient({
       contractNumber: form.contractNumber.trim() || undefined,
       startDate: form.startDate,
       endDate: form.endDate,
-      roomRateDiscountPercent: parseFloat(form.roomRateDiscountPercent) || 15,
+      roomRateDiscountPercent: parseFloat(form.roomRateDiscountPercent) || 0,
       complimentaryBreakfast: form.complimentaryBreakfast,
       paymentTerms: form.paymentTerms,
       notes: form.notes.trim() || undefined,
@@ -112,7 +112,7 @@ export function ContractsClient({
         endDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1))
           .toISOString()
           .split('T')[0],
-        roomRateDiscountPercent: '15',
+        roomRateDiscountPercent: '',
         complimentaryBreakfast: true,
         paymentTerms: 'Net 30',
         notes: '',
@@ -345,6 +345,7 @@ export function ContractsClient({
                   type="number"
                   min="0"
                   max="60"
+                  placeholder="e.g. 15"
                   value={form.roomRateDiscountPercent}
                   onChange={(e) => setForm({ ...form, roomRateDiscountPercent: e.target.value })}
                   className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"

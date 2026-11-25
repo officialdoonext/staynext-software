@@ -36,8 +36,8 @@ export function BookingEngineClient({ property, channelsCount }: BookingEngineCl
   // Policy settings
   const [checkInTime, setCheckInTime] = useState(property?.settings?.check_in_time || '14:00')
   const [checkOutTime, setCheckOutTime] = useState(property?.settings?.check_out_time || '11:00')
-  const [minDeposit, setMinDeposit] = useState(property?.settings?.min_deposit_percent || '20')
-  const [cancelHours, setCancelHours] = useState(property?.settings?.free_cancel_hours || '48')
+  const [minDeposit, setMinDeposit] = useState(property?.settings?.min_deposit_percent ? String(property.settings.min_deposit_percent) : '')
+  const [cancelHours, setCancelHours] = useState(property?.settings?.free_cancel_hours ? String(property.settings.free_cancel_hours) : '')
   const [isSaving, setIsSaving] = useState(false)
 
   const directUrl = typeof window !== 'undefined'
@@ -190,6 +190,7 @@ export function BookingEngineClient({ property, channelsCount }: BookingEngineCl
                 type="number"
                 min="0"
                 max="100"
+                placeholder="e.g. 20"
                 value={minDeposit}
                 onChange={(e) => setMinDeposit(e.target.value)}
                 className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
@@ -201,6 +202,7 @@ export function BookingEngineClient({ property, channelsCount }: BookingEngineCl
               <input
                 type="number"
                 min="0"
+                placeholder="e.g. 48"
                 value={cancelHours}
                 onChange={(e) => setCancelHours(e.target.value)}
                 className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"

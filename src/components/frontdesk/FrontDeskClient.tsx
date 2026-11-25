@@ -125,7 +125,7 @@ export default function FrontDeskClient({
   } | null>(null)
   const [newCheckoutDate, setNewCheckoutDate] = useState<string>('')
   const [newCheckoutTime, setNewCheckoutTime] = useState<string>('11:00')
-  const [extraStayCharges, setExtraStayCharges] = useState<number>(0)
+  const [extraStayCharges, setExtraStayCharges] = useState<number | string>('')
 
   // Check-Out Confirmation Modal
   const [checkOutItem, setCheckOutItem] = useState<{
@@ -138,7 +138,7 @@ export default function FrontDeskClient({
 
   // Payment Collection Modal
   const [paymentGuest, setPaymentGuest] = useState<any | null>(null)
-  const [collectAmount, setCollectAmount] = useState<number>(0)
+  const [collectAmount, setCollectAmount] = useState<number | string>('')
   const [collectMode, setCollectMode] = useState<string>('UPI')
   const [collectRef, setCollectRef] = useState<string>('')
 
@@ -415,7 +415,7 @@ export default function FrontDeskClient({
     })
     setNewCheckoutDate(nextDayStr)
     setNewCheckoutTime(currentCheckOutTime || '11:00')
-    setExtraStayCharges(baseRate || 2000)
+    setExtraStayCharges('')
   }
 
   // 7. Execute Extend Stay
@@ -423,10 +423,11 @@ export default function FrontDeskClient({
     if (!extendStayItem || !newCheckoutDate) return
     setActionLoading('extend-stay')
     try {
+      const extraNum = Number(extraStayCharges) || 0
       const res = await extendStayReservation(
         extendStayItem.reservationId,
         newCheckoutDate,
-        extraStayCharges,
+        extraNum,
         newCheckoutTime
       )
       if (res.success) {
@@ -438,7 +439,7 @@ export default function FrontDeskClient({
         const updatedQueue = {
           checkOutDate: newCheckoutDate,
           checkOutTime: newCheckoutTime,
-          total: extendStayItem.totalAmount + extraStayCharges,
+          total: extendStayItem.totalAmount + extraNum,
         }
         setInHouse((prev) =>
           prev.map((g) => (g.id === extendStayItem.reservationId ? { ...g, ...updatedQueue } : g))
@@ -455,8 +456,8 @@ export default function FrontDeskClient({
                     ...r.current_reservation,
                     check_out_date: newCheckoutDate,
                     check_out_time: newCheckoutTime,
-                    total_amount: r.current_reservation.total_amount + extraStayCharges,
-                    balance_amount: r.current_reservation.balance_amount + extraStayCharges,
+                    total_amount: r.current_reservation.total_amount + extraNum,
+                    balance_amount: r.current_reservation.balance_amount + extraNum,
                     is_overdue: false,
                     overdue_hours: 0,
                     overdue_text: undefined,
@@ -482,8 +483,8 @@ export default function FrontDeskClient({
                       ...r.current_reservation,
                       check_out_date: newCheckoutDate,
                       check_out_time: newCheckoutTime,
-                      total_amount: r.current_reservation.total_amount + extraStayCharges,
-                      balance_amount: r.current_reservation.balance_amount + extraStayCharges,
+                      total_amount: r.current_reservation.total_amount + extraNum,
+                      balance_amount: r.current_reservation.balance_amount + extraNum,
                       is_overdue: false,
                       overdue_hours: 0,
                       overdue_text: undefined,
@@ -687,21 +688,22 @@ export default function FrontDeskClient({
   }
 
   const handleConfirmPayment = async () => {
-    if (!paymentGuest || collectAmount <= 0) return
+    const colNum = Number(collectAmount) || 0
+    if (!paymentGuest || colNum <= 0) return
     setActionLoading('collect-payment')
     try {
       const res = await recordFrontDeskPayment(
         paymentGuest.id,
-        collectAmount,
+        colNum,
         collectMode,
         collectRef || `RCPT-${Date.now().toString().slice(-6)}`
       )
       if (res.success) {
-        toast.success(`Recorded ₹${collectAmount} payment via ${collectMode}!`)
+        toast.success(`Recorded ₹${colNum} payment via ${collectMode}!`)
         const updated = {
           ...paymentGuest,
-          paid: paymentGuest.paid + collectAmount,
-          balance: Math.max(0, paymentGuest.balance - collectAmount),
+          paid: paymentGuest.paid + colNum,
+          balance: Math.max(0, paymentGuest.balance - colNum),
         }
         setInHouse((prev) => prev.map((g) => (g.id === paymentGuest.id ? updated : g)))
         setArrivals((prev) => prev.map((g) => (g.id === paymentGuest.id ? updated : g)))
@@ -1637,7 +1639,7 @@ export default function FrontDeskClient({
                                 variant="outline"
                                 onClick={() => {
                                   setPaymentGuest(item)
-                                  setCollectAmount(item.balance)
+                                  setCollectAmount('')
                                   setCollectMode('UPI')
                                   setCollectRef('')
                                 }}
@@ -1867,8 +1869,9 @@ export default function FrontDeskClient({
                 </label>
                 <input
                   type="number"
+                  placeholder={extendStayItem?.baseRate ? String(extendStayItem.baseRate) : '0.00'}
                   value={extraStayCharges}
-                  onChange={(e) => setExtraStayCharges(Number(e.target.value))}
+                  onChange={(e) => setExtraStayCharges(e.target.value === '' ? '' : Number(e.target.value))}
                   className="w-full px-2.5 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
                 />
                 <span className="text-[10px] text-gray-400 mt-0.5 block">
@@ -2071,9 +2074,10 @@ export default function FrontDeskClient({
                 </label>
                 <input
                   type="number"
+                  placeholder={paymentGuest ? String(paymentGuest.balance) : '0.00'}
                   value={collectAmount}
                   max={paymentGuest.balance}
-                  onChange={(e) => setCollectAmount(Number(e.target.value))}
+                  onChange={(e) => setCollectAmount(e.target.value === '' ? '' : Number(e.target.value))}
                   className="w-full px-2.5 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] font-semibold text-emerald-700"
                 />
               </div>
