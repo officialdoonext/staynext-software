@@ -764,7 +764,7 @@ export default function FrontDeskClient({
     .filter((g) => g.rooms.length > 0 || !matrixSearch)
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-16 font-sans">
+    <div className="space-y-6 w-full pb-16 font-sans">
       {/* 1. TOP HEADER & CONTROLS */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-2 border-b border-gray-200">
         <div>

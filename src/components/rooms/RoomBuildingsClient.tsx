@@ -184,7 +184,7 @@ export default function RoomBuildingsClient({
   const totalRoomsCount = buildings.reduce((acc, b) => acc + (b.total_rooms || 0), 0)
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-16 font-sora">
+    <div className="space-y-6 w-full pb-16 font-sora">
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-gray-200">
         <div className="flex items-center gap-3">

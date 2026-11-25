@@ -80,7 +80,7 @@ export default function ForeignGuestsClient({ initialGuests }: ForeignGuestsClie
   }
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-12">
+    <div className="space-y-6 w-full pb-12">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-gray-200">
         <div className="flex items-center gap-3">

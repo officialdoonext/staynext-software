@@ -609,7 +609,7 @@ export default function ReservationForm({
   }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6 pb-20 font-sans">
+    <div className="w-full space-y-6 pb-20 font-sans">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-gray-200">
         <div className="flex items-center gap-3">
