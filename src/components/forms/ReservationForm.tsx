@@ -744,30 +744,22 @@ export default function ReservationForm({
 
                     <div>
                       <label className="block text-gray-700 font-medium mb-1">Guest Type *</label>
-                      <select
-                        name="guest_type"
+                      <SearchableSelect
                         value={formData.guest_type}
-                        onChange={handleChange}
-                        className="w-full px-3 py-2 bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-                      >
-                        {GUEST_TYPES.map((t) => (
-                          <option key={t} value={t}>{t}</option>
-                        ))}
-                      </select>
+                        onChange={(val) => setFormData((prev) => ({ ...prev, guest_type: val }))}
+                        options={GUEST_TYPES.map((t) => ({ value: t, label: t }))}
+                        allowAdd={true}
+                        addNewLabel="Add Guest Type"
+                      />
                     </div>
 
                     <div>
                       <label className="block text-gray-700 font-medium mb-1">Gender *</label>
-                      <select
-                        name="gender"
+                      <SearchableSelect
                         value={formData.gender}
-                        onChange={handleChange}
-                        className="w-full px-3 py-2 bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-                      >
-                        {GENDER_OPTIONS.map((g) => (
-                          <option key={g} value={g}>{g}</option>
-                        ))}
-                      </select>
+                        onChange={(val) => setFormData((prev) => ({ ...prev, gender: val }))}
+                        options={GENDER_OPTIONS.map((g) => ({ value: g, label: g }))}
+                      />
                     </div>
                   </div>
 
@@ -800,12 +792,10 @@ export default function ReservationForm({
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div>
                       <label className="block text-gray-700 font-medium mb-1">Date of Birth</label>
-                      <input
-                        type="date"
-                        name="date_of_birth"
+                      <CustomDatePicker
                         value={formData.date_of_birth}
-                        onChange={(e) => handleDobChange(e.target.value)}
-                        className="w-full px-3 py-2 bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
+                        onChange={(val) => handleDobChange(val)}
+                        placeholder="Select DOB..."
                       />
                     </div>
 
@@ -823,16 +813,13 @@ export default function ReservationForm({
 
                     <div>
                       <label className="block text-gray-700 font-medium mb-1">Nationality *</label>
-                      <select
-                        name="nationality"
+                      <SearchableSelect
                         value={formData.nationality}
-                        onChange={handleChange}
-                        className="w-full px-3 py-2 bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-                      >
-                        {COUNTRIES.map((c) => (
-                          <option key={c} value={c}>{c}</option>
-                        ))}
-                      </select>
+                        onChange={(val) => setFormData((prev) => ({ ...prev, nationality: val }))}
+                        options={COUNTRIES.map((c) => ({ value: c, label: c }))}
+                        allowAdd={true}
+                        addNewLabel="Add Nationality"
+                      />
                     </div>
                   </div>
 
@@ -925,16 +912,13 @@ export default function ReservationForm({
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div>
                       <label className="block text-gray-700 font-medium mb-1">ID Proof Type *</label>
-                      <select
-                        name="id_type"
+                      <SearchableSelect
                         value={formData.id_type}
-                        onChange={handleChange}
-                        className="w-full px-3 py-2 bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-                      >
-                        {ID_TYPES.map((id) => (
-                          <option key={id} value={id}>{id}</option>
-                        ))}
-                      </select>
+                        onChange={(val) => setFormData((prev) => ({ ...prev, id_type: val }))}
+                        options={ID_TYPES.map((id) => ({ value: id, label: id }))}
+                        allowAdd={true}
+                        addNewLabel="Add ID Type"
+                      />
                     </div>
 
                     <div>
@@ -951,16 +935,15 @@ export default function ReservationForm({
 
                     <div>
                       <label className="block text-gray-700 font-medium mb-1">ID Verification Status *</label>
-                      <select
-                        name="id_verification_status"
+                      <SearchableSelect
                         value={formData.id_verification_status}
-                        onChange={handleChange}
-                        className="w-full px-3 py-2 bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-                      >
-                        <option value="Verified">Verified (Original Inspected)</option>
-                        <option value="Pending">Pending Physical Verification</option>
-                        <option value="Rejected">Document Rejected</option>
-                      </select>
+                        onChange={(val) => setFormData((prev) => ({ ...prev, id_verification_status: val }))}
+                        options={[
+                          { value: 'Verified', label: 'Verified (Original Inspected)' },
+                          { value: 'Pending', label: 'Pending Physical Verification' },
+                          { value: 'Rejected', label: 'Document Rejected' },
+                        ]}
+                      />
                     </div>
                   </div>
 
@@ -984,23 +967,19 @@ export default function ReservationForm({
 
                     <div>
                       <label className="block text-gray-700 font-medium mb-1">ID Issue Date</label>
-                      <input
-                        type="date"
-                        name="id_issue_date"
+                      <CustomDatePicker
                         value={formData.id_issue_date}
-                        onChange={handleChange}
-                        className="w-full px-3 py-2 bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
+                        onChange={(val) => setFormData((prev) => ({ ...prev, id_issue_date: val }))}
+                        placeholder="Select issue date..."
                       />
                     </div>
 
                     <div>
                       <label className="block text-gray-700 font-medium mb-1">ID Expiry Date</label>
-                      <input
-                        type="date"
-                        name="id_expiry_date"
+                      <CustomDatePicker
                         value={formData.id_expiry_date}
-                        onChange={handleChange}
-                        className="w-full px-3 py-2 bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
+                        onChange={(val) => setFormData((prev) => ({ ...prev, id_expiry_date: val }))}
+                        placeholder="Select expiry date..."
                       />
                     </div>
                   </div>
@@ -1047,16 +1026,13 @@ export default function ReservationForm({
 
                           <div>
                             <label className="block text-gray-700 font-medium mb-1">Passport Issue Country</label>
-                            <select
-                              name="passport_issue_country"
+                            <SearchableSelect
                               value={formData.passport_issue_country || formData.nationality}
-                              onChange={handleChange}
-                              className="w-full px-3 py-2 bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-                            >
-                              {COUNTRIES.map((c) => (
-                                <option key={c} value={c}>{c}</option>
-                              ))}
-                            </select>
+                              onChange={(val) => setFormData((prev) => ({ ...prev, passport_issue_country: val }))}
+                              options={COUNTRIES.map((c) => ({ value: c, label: c }))}
+                              allowAdd={true}
+                              addNewLabel="Add Country"
+                            />
                           </div>
 
                           <div>
@@ -1075,22 +1051,18 @@ export default function ReservationForm({
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           <div>
                             <label className="block text-gray-700 font-medium mb-1">Passport Issue Date</label>
-                            <input
-                              type="date"
-                              name="passport_issue_date"
+                            <CustomDatePicker
                               value={formData.passport_issue_date}
-                              onChange={handleChange}
-                              className="w-full px-3 py-2 bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
+                              onChange={(val) => setFormData((prev) => ({ ...prev, passport_issue_date: val }))}
+                              placeholder="Select issue date..."
                             />
                           </div>
                           <div>
                             <label className="block text-gray-700 font-medium mb-1">Passport Expiry Date</label>
-                            <input
-                              type="date"
-                              name="passport_expiry_date"
+                            <CustomDatePicker
                               value={formData.passport_expiry_date}
-                              onChange={handleChange}
-                              className="w-full px-3 py-2 bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
+                              onChange={(val) => setFormData((prev) => ({ ...prev, passport_expiry_date: val }))}
+                              placeholder="Select expiry date..."
                             />
                           </div>
                         </div>
@@ -1110,26 +1082,21 @@ export default function ReservationForm({
 
                           <div>
                             <label className="block text-gray-700 font-medium mb-1">Visa Type</label>
-                            <select
-                              name="visa_type"
+                            <SearchableSelect
                               value={formData.visa_type}
-                              onChange={handleChange}
-                              className="w-full px-3 py-2 bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-                            >
-                              {VISA_TYPES.map((v) => (
-                                <option key={v} value={v}>{v}</option>
-                              ))}
-                            </select>
+                              onChange={(val) => setFormData((prev) => ({ ...prev, visa_type: val }))}
+                              options={VISA_TYPES.map((v) => ({ value: v, label: v }))}
+                              allowAdd={true}
+                              addNewLabel="Add Visa Type"
+                            />
                           </div>
 
                           <div>
                             <label className="block text-gray-700 font-medium mb-1">Date of Arrival in India</label>
-                            <input
-                              type="date"
-                              name="date_of_arrival_in_india"
+                            <CustomDatePicker
                               value={formData.date_of_arrival_in_india}
-                              onChange={handleChange}
-                              className="w-full px-3 py-2 bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
+                              onChange={(val) => setFormData((prev) => ({ ...prev, date_of_arrival_in_india: val }))}
+                              placeholder="Select arrival date..."
                             />
                           </div>
                         </div>
@@ -1532,17 +1499,20 @@ export default function ReservationForm({
                         <label className="block text-gray-800 font-semibold text-xs">GST Rate (Indian Hospitality Standard) *</label>
                         <span className="text-[10px] text-gray-500">Avoid hardcoding; configurable based on tariff threshold.</span>
                       </div>
-                      <select
-                        name="gst_rate"
-                        value={formData.gst_rate}
-                        onChange={handleChange}
-                        className="px-3 py-1.5 bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer font-semibold text-xs text-[#5e2b9d]"
-                      >
-                        <option value="0">0% (Exempt)</option>
-                        <option value="5">5% (Economy)</option>
-                        <option value="12">12% (Standard Room &lt; ₹7,500)</option>
-                        <option value="18">18% (Luxury Room &ge; ₹7,500)</option>
-                      </select>
+                      <div className="w-60">
+                        <SearchableSelect
+                          value={String(formData.gst_rate)}
+                          onChange={(val) => setFormData((prev) => ({ ...prev, gst_rate: Number(val) }))}
+                          options={[
+                            { value: '0', label: '0% (Exempt)' },
+                            { value: '5', label: '5% (Economy)' },
+                            { value: '12', label: '12% (Standard Room < ₹7,500)' },
+                            { value: '18', label: '18% (Luxury Room ≥ ₹7,500)' },
+                          ]}
+                          allowAdd={true}
+                          addNewLabel="Add GST Slab"
+                        />
+                      </div>
                     </div>
 
                     <div className="grid grid-cols-3 gap-2 pt-1 text-[11px] text-gray-700">
@@ -1556,16 +1526,13 @@ export default function ReservationForm({
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
                     <div>
                       <label className="block text-gray-700 font-medium mb-1">Payment Mode *</label>
-                      <select
-                        name="payment_mode"
+                      <SearchableSelect
                         value={formData.payment_mode}
-                        onChange={handleChange}
-                        className="w-full px-3 py-2 bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-                      >
-                        {PAYMENT_MODES.map((pm) => (
-                          <option key={pm} value={pm}>{pm}</option>
-                        ))}
-                      </select>
+                        onChange={(val) => setFormData((prev) => ({ ...prev, payment_mode: val }))}
+                        options={PAYMENT_MODES.map((pm) => ({ value: pm, label: pm }))}
+                        allowAdd={true}
+                        addNewLabel="Add Payment Mode"
+                      />
                     </div>
 
                     <div>
@@ -1683,28 +1650,22 @@ export default function ReservationForm({
 
                             <div>
                               <label className="block text-gray-600 text-[11px] mb-1">Gender</label>
-                              <select
+                              <SearchableSelect
                                 value={guest.gender}
-                                onChange={(e) => handleUpdateAccompanyingGuest(idx, 'gender', e.target.value)}
-                                className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-                              >
-                                {GENDER_OPTIONS.map((g) => (
-                                  <option key={g} value={g}>{g}</option>
-                                ))}
-                              </select>
+                                onChange={(val) => handleUpdateAccompanyingGuest(idx, 'gender', val)}
+                                options={GENDER_OPTIONS.map((g) => ({ value: g, label: g }))}
+                              />
                             </div>
 
                             <div>
                               <label className="block text-gray-600 text-[11px] mb-1">Relationship</label>
-                              <select
+                              <SearchableSelect
                                 value={guest.relationship}
-                                onChange={(e) => handleUpdateAccompanyingGuest(idx, 'relationship', e.target.value)}
-                                className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-                              >
-                                {RELATIONSHIPS.map((r) => (
-                                  <option key={r} value={r}>{r}</option>
-                                ))}
-                              </select>
+                                onChange={(val) => handleUpdateAccompanyingGuest(idx, 'relationship', val)}
+                                options={RELATIONSHIPS.map((r) => ({ value: r, label: r }))}
+                                allowAdd={true}
+                                addNewLabel="Add Relationship"
+                              />
                             </div>
                           </div>
 
@@ -1722,15 +1683,13 @@ export default function ReservationForm({
 
                             <div>
                               <label className="block text-gray-600 text-[11px] mb-1">ID Type</label>
-                              <select
+                              <SearchableSelect
                                 value={guest.id_type}
-                                onChange={(e) => handleUpdateAccompanyingGuest(idx, 'id_type', e.target.value)}
-                                className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-                              >
-                                {ID_TYPES.map((id) => (
-                                  <option key={id} value={id}>{id}</option>
-                                ))}
-                              </select>
+                                onChange={(val) => handleUpdateAccompanyingGuest(idx, 'id_type', val)}
+                                options={ID_TYPES.map((id) => ({ value: id, label: id }))}
+                                allowAdd={true}
+                                addNewLabel="Add ID Type"
+                              />
                             </div>
 
                             <div>

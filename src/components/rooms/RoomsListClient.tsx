@@ -403,19 +403,22 @@ export default function RoomsListClient({
 
                 {/* Quick Status Action Controls */}
                 <div className="pt-2 border-t border-gray-100 flex items-center justify-between gap-1">
-                  <select
-                    value={room.status}
-                    onChange={(e) => handleQuickStatus(room.id, e.target.value as any)}
-                    disabled={updatingId === room.id}
-                    className="text-[10px] py-1 px-1.5 bg-gray-50 border border-gray-200 rounded-sm focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-                  >
-                    <option value="available">Mark Available</option>
-                    <option value="dirty">Mark Dirty</option>
-                    <option value="cleaning">Cleaning</option>
-                    <option value="maintenance">Maintenance</option>
-                    <option value="blocked">Block</option>
-                    <option value="out_of_order">Out of Order</option>
-                  </select>
+                  <div className="w-36">
+                    <SearchableSelect
+                      value={room.status}
+                      onChange={(val) => handleQuickStatus(room.id, val as any)}
+                      disabled={updatingId === room.id}
+                      options={[
+                        { value: 'available', label: 'Mark Available' },
+                        { value: 'dirty', label: 'Mark Dirty' },
+                        { value: 'cleaning', label: 'Cleaning' },
+                        { value: 'maintenance', label: 'Maintenance' },
+                        { value: 'blocked', label: 'Block' },
+                        { value: 'out_of_order', label: 'Out of Order' },
+                      ]}
+                      className="text-[10px]"
+                    />
+                  </div>
 
                   <div className="flex items-center gap-1">
                     <Link href={`/rooms/qr-codes?roomId=${room.id}`}>
@@ -545,19 +548,22 @@ export default function RoomsListClient({
                   {/* Actions */}
                   <td className="px-3.5 py-3 text-right">
                     <div className="flex items-center justify-end gap-1.5">
-                      <select
-                        value={room.status}
-                        onChange={(e) => handleQuickStatus(room.id, e.target.value as any)}
-                        disabled={updatingId === room.id}
-                        className="text-[10px] py-1 px-1.5 bg-white border border-gray-200 rounded-sm focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-                      >
-                        <option value="available">Available</option>
-                        <option value="dirty">Dirty</option>
-                        <option value="cleaning">Cleaning</option>
-                        <option value="maintenance">Maintenance</option>
-                        <option value="blocked">Blocked</option>
-                        <option value="out_of_order">Out of Order</option>
-                      </select>
+                      <div className="w-32">
+                        <SearchableSelect
+                          value={room.status}
+                          onChange={(val) => handleQuickStatus(room.id, val as any)}
+                          disabled={updatingId === room.id}
+                          options={[
+                            { value: 'available', label: 'Available' },
+                            { value: 'dirty', label: 'Dirty' },
+                            { value: 'cleaning', label: 'Cleaning' },
+                            { value: 'maintenance', label: 'Maintenance' },
+                            { value: 'blocked', label: 'Blocked' },
+                            { value: 'out_of_order', label: 'Out of Order' },
+                          ]}
+                          className="text-[10px]"
+                        />
+                      </div>
 
                       <Link href={`/rooms/qr-codes?roomId=${room.id}`}>
                         <Button

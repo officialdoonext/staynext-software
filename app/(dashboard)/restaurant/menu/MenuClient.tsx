@@ -681,7 +681,7 @@ export function MenuClient({ initialItems, categories, propertyId, properties = 
                   placeholder="Select category..."
                   allowAdd={true}
                   addNewLabel="Add Menu Category"
-                  onAddClick={() => setIsAddCategoryOpen(true)}
+                  onAddClick={() => setIsAddCatOpen(true)}
                   required
                 />
               </div>

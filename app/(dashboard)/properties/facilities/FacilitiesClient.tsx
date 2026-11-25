@@ -6,6 +6,7 @@ import { ArrowLeft, Sparkles, Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
+import { SearchableSelect } from '@/components/ui/searchable-select'
 import { FacilityItem, PropertyItem, togglePropertyFacility } from '@/services/property.service'
 
 interface FacilitiesClientProps {
@@ -58,15 +59,14 @@ export default function FacilitiesClient({
         </div>
 
         {properties.length > 1 && (
-          <select
-            value={selectedPropertyId}
-            onChange={(e) => setSelectedPropertyId(e.target.value)}
-            className="px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-          >
-            {properties.map((p) => (
-              <option key={p.id} value={p.id}>{p.name}</option>
-            ))}
-          </select>
+          <div className="w-52">
+            <SearchableSelect
+              value={selectedPropertyId}
+              onChange={(val) => setSelectedPropertyId(val)}
+              options={properties.map((p) => ({ value: p.id, label: p.name }))}
+              placeholder="Select property..."
+            />
+          </div>
         )}
       </div>
 

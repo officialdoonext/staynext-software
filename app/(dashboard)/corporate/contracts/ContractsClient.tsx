@@ -31,6 +31,8 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { formatDate } from '@/lib/utils'
+import { SearchableSelect } from '@/components/ui/searchable-select'
+import { CustomDatePicker } from '@/components/ui/custom-date-picker'
 import {
   CorporateContractRecord,
   CorporateAccountRecord,
@@ -304,44 +306,34 @@ export function ContractsClient({
           <form onSubmit={handleAddSubmit} className="space-y-4 pt-2">
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">Corporate Client *</label>
-              <select
+              <SearchableSelect
                 value={form.corporateAccountId}
-                onChange={(e) => setForm({ ...form, corporateAccountId: e.target.value })}
-                className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
+                onChange={(val) => setForm({ ...form, corporateAccountId: val })}
+                options={accounts.map((a) => ({
+                  value: a.id,
+                  label: `${a.companyName} (${a.paymentTerms})`,
+                }))}
+                placeholder="Select corporate client..."
                 required
-              >
-                {accounts.length === 0 ? (
-                  <option value="">No corporate clients found (create one first)</option>
-                ) : (
-                  accounts.map((a) => (
-                    <option key={a.id} value={a.id}>
-                      {a.companyName} ({a.paymentTerms})
-                    </option>
-                  ))
-                )}
-              </select>
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Start Date</label>
-                <input
-                  type="date"
+                <CustomDatePicker
                   value={form.startDate}
-                  onChange={(e) => setForm({ ...form, startDate: e.target.value })}
-                  className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
-                  required
+                  onChange={(val) => setForm({ ...form, startDate: val })}
+                  placeholder="Select start date..."
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Expiration Date</label>
-                <input
-                  type="date"
+                <CustomDatePicker
                   value={form.endDate}
-                  onChange={(e) => setForm({ ...form, endDate: e.target.value })}
-                  className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
-                  required
+                  onChange={(val) => setForm({ ...form, endDate: val })}
+                  placeholder="Select end date..."
                 />
               </div>
             </div>
@@ -361,15 +353,17 @@ export function ContractsClient({
 
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Payment Terms</label>
-                <select
+                <SearchableSelect
                   value={form.paymentTerms}
-                  onChange={(e) => setForm({ ...form, paymentTerms: e.target.value })}
-                  className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-                >
-                  <option value="Net 15">Net 15 Days</option>
-                  <option value="Net 30">Net 30 Days</option>
-                  <option value="Direct Bill">Direct Company Billing</option>
-                </select>
+                  onChange={(val) => setForm({ ...form, paymentTerms: val })}
+                  options={[
+                    { value: 'Net 15', label: 'Net 15 Days' },
+                    { value: 'Net 30', label: 'Net 30 Days' },
+                    { value: 'Direct Bill', label: 'Direct Company Billing' },
+                  ]}
+                  allowAdd={true}
+                  addNewLabel="Add Payment Term"
+                />
               </div>
             </div>
 

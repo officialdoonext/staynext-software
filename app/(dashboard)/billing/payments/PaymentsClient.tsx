@@ -30,6 +30,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog'
+import { SearchableSelect } from '@/components/ui/searchable-select'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { PaymentRecord, recordPayment } from '@/services/billing.service'
 import { toast } from 'sonner'
@@ -323,18 +324,20 @@ export function PaymentsClient({ initialPayments, propertyId }: PaymentsClientPr
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Payment Method</label>
-                <select
+                <SearchableSelect
                   value={form.paymentMethod}
-                  onChange={(e) => setForm({ ...form, paymentMethod: e.target.value })}
-                  className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-                >
-                  <option value="upi">UPI / Instant QR (GPay / PhonePe / Paytm)</option>
-                  <option value="cash">Cash Settlement</option>
-                  <option value="card">Credit / Debit Card</option>
-                  <option value="bank_transfer">Bank Transfer (NEFT / RTGS)</option>
-                  <option value="pos">POS EDC Machine</option>
-                  <option value="stripe">Online Gateway</option>
-                </select>
+                  onChange={(val) => setForm({ ...form, paymentMethod: val })}
+                  options={[
+                    { value: 'upi', label: 'UPI / Instant QR (GPay / PhonePe / Paytm)' },
+                    { value: 'cash', label: 'Cash Settlement' },
+                    { value: 'card', label: 'Credit / Debit Card' },
+                    { value: 'bank_transfer', label: 'Bank Transfer (NEFT / RTGS)' },
+                    { value: 'pos', label: 'POS EDC Machine' },
+                    { value: 'stripe', label: 'Online Gateway' },
+                  ]}
+                  allowAdd={true}
+                  addNewLabel="Add Payment Method"
+                />
               </div>
 
               <div>

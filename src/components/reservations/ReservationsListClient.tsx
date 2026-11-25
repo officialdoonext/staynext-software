@@ -508,19 +508,17 @@ export default function ReservationsListClient({
                 <label className="block text-xs font-medium text-gray-700 mb-1">
                   Select Room for Check-In *
                 </label>
-                <select
+                <SearchableSelect
                   value={selectedRoomId}
-                  onChange={(e) => setSelectedRoomId(e.target.value)}
-                  className="w-full px-2.5 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-                >
-                  {availableRooms
+                  onChange={(val) => setSelectedRoomId(val)}
+                  options={availableRooms
                     .filter((r) => r.status === 'available')
-                    .map((r) => (
-                      <option key={r.id} value={r.id}>
-                        Room {r.room_number} ({r.floor_name}) - Available
-                      </option>
-                    ))}
-                </select>
+                    .map((r) => ({
+                      value: r.id,
+                      label: `Room ${r.room_number} (${r.floor_name}) - Available`,
+                    }))}
+                  placeholder="Select room..."
+                />
               </div>
             </div>
 

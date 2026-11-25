@@ -252,15 +252,14 @@ export default function RoomTypesClient({
 
         <div className="flex items-center gap-2">
           {properties.length > 1 && (
-            <select
-              value={selectedPropertyId}
-              onChange={(e) => setSelectedPropertyId(e.target.value)}
-              className="px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-            >
-              {properties.map((p) => (
-                <option key={p.id} value={p.id}>{p.name}</option>
-              ))}
-            </select>
+            <div className="w-52">
+              <SearchableSelect
+                value={selectedPropertyId}
+                onChange={(val) => setSelectedPropertyId(val)}
+                options={properties.map((p) => ({ value: p.id, label: p.name }))}
+                placeholder="Select property..."
+              />
+            </div>
           )}
 
           <Button
@@ -361,30 +360,34 @@ export default function RoomTypesClient({
 
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">Default Meal Plan</label>
-                  <select
+                  <SearchableSelect
                     value={formData.default_meal_plan}
-                    onChange={(e) => setFormData({ ...formData, default_meal_plan: e.target.value })}
-                    className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-                  >
-                    <option value="EP">EP - Room Only (European Plan)</option>
-                    <option value="CP">CP - Bed &amp; Breakfast (Continental)</option>
-                    <option value="MAP">MAP - Half Board / Breakfast + Meal</option>
-                    <option value="AP">AP - Full Board / All Meals (American)</option>
-                  </select>
+                    onChange={(val) => setFormData({ ...formData, default_meal_plan: val })}
+                    options={[
+                      { value: 'EP', label: 'EP - Room Only (European Plan)' },
+                      { value: 'CP', label: 'CP - Bed & Breakfast (Continental)' },
+                      { value: 'MAP', label: 'MAP - Half Board / Breakfast + Meal' },
+                      { value: 'AP', label: 'AP - Full Board / All Meals (American)' },
+                    ]}
+                    allowAdd={true}
+                    addNewLabel="Add Meal Plan"
+                  />
                 </div>
 
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">GST Tax Slab</label>
-                  <select
-                    value={formData.gst_rate}
-                    onChange={(e) => setFormData({ ...formData, gst_rate: Number(e.target.value) })}
-                    className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-                  >
-                    <option value="12">12% GST (Room tariff &le; ₹7,500)</option>
-                    <option value="18">18% GST (Luxury tariff &gt; ₹7,500)</option>
-                    <option value="5">5% GST (No ITC eligible)</option>
-                    <option value="0">0% GST (Exempt)</option>
-                  </select>
+                  <SearchableSelect
+                    value={String(formData.gst_rate)}
+                    onChange={(val) => setFormData({ ...formData, gst_rate: Number(val) })}
+                    options={[
+                      { value: '12', label: '12% GST (Room tariff ≤ ₹7,500)' },
+                      { value: '18', label: '18% GST (Luxury tariff > ₹7,500)' },
+                      { value: '5', label: '5% GST (No ITC eligible)' },
+                      { value: '0', label: '0% GST (Exempt)' },
+                    ]}
+                    allowAdd={true}
+                    addNewLabel="Add GST Rate"
+                  />
                 </div>
 
                 <div>
@@ -409,14 +412,14 @@ export default function RoomTypesClient({
 
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">Extra Bed Allowed</label>
-                  <select
+                  <SearchableSelect
                     value={formData.extra_bed_allowed ? 'yes' : 'no'}
-                    onChange={(e) => setFormData({ ...formData, extra_bed_allowed: e.target.value === 'yes' })}
-                    className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-                  >
-                    <option value="yes">Yes - Rollaway bed permitted</option>
-                    <option value="no">No extra bed</option>
-                  </select>
+                    onChange={(val) => setFormData({ ...formData, extra_bed_allowed: val === 'yes' })}
+                    options={[
+                      { value: 'yes', label: 'Yes - Rollaway bed permitted' },
+                      { value: 'no', label: 'No extra bed' },
+                    ]}
+                  />
                 </div>
 
                 <div>

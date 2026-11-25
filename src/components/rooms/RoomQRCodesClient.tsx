@@ -279,42 +279,42 @@ export default function RoomQRCodesClient({
           </div>
 
           <div>
-            <select
+            <SearchableSelect
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as any)}
-              className="w-full px-3 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-            >
-              <option value="all">All QR Statuses</option>
-              <option value="active">Active Only</option>
-              <option value="missing">Missing / Not Generated</option>
-              <option value="revoked">Revoked</option>
-            </select>
+              onChange={(val) => setStatusFilter(val as any)}
+              options={[
+                { value: 'all', label: 'All QR Statuses' },
+                { value: 'active', label: 'Active Only' },
+                { value: 'missing', label: 'Missing / Not Generated' },
+                { value: 'revoked', label: 'Revoked' },
+              ]}
+            />
           </div>
 
           <div>
-            <select
+            <SearchableSelect
               value={selectedTemplate}
-              onChange={(e) => setSelectedTemplate(e.target.value as any)}
-              className="w-full px-3 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-            >
-              <option value="table_tent">Template: Table Tent</option>
-              <option value="wall_sticker">Template: Wall Sticker</option>
-              <option value="keycard">Template: Keycard Pocket</option>
-              <option value="directory_insert">Template: Directory Insert</option>
-            </select>
+              onChange={(val) => setSelectedTemplate(val as any)}
+              options={[
+                { value: 'table_tent', label: 'Template: Table Tent' },
+                { value: 'wall_sticker', label: 'Template: Wall Sticker' },
+                { value: 'keycard', label: 'Template: Keycard Pocket' },
+                { value: 'directory_insert', label: 'Template: Directory Insert' },
+              ]}
+            />
           </div>
 
           <div>
-            <select
-              value={printLayout}
-              onChange={(e) => setPrintLayout(Number(e.target.value) as any)}
-              className="w-full px-3 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-            >
-              <option value={1}>1 Sticker / Page (Large A4)</option>
-              <option value={2}>2 Stickers / Page (Half Sheet)</option>
-              <option value={4}>4 Stickers / Page (Quarter A4)</option>
-              <option value={8}>8 Stickers / Page (Compact Badges)</option>
-            </select>
+            <SearchableSelect
+              value={String(printLayout)}
+              onChange={(val) => setPrintLayout(Number(val) as any)}
+              options={[
+                { value: '1', label: '1 Sticker / Page (Large A4)' },
+                { value: '2', label: '2 Stickers / Page (Half Sheet)' },
+                { value: '4', label: '4 Stickers / Page (Quarter A4)' },
+                { value: '8', label: '8 Stickers / Page (Compact Badges)' },
+              ]}
+            />
           </div>
         </div>
 

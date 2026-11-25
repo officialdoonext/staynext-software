@@ -23,6 +23,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog'
+import { SearchableSelect } from '@/components/ui/searchable-select'
 import {
   RatePlanRecord,
   createRatePlan,
@@ -295,16 +296,18 @@ export function RatesClient({ initialPlans, propertyId }: RatesClientProps) {
 
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Meal Package</label>
-                <select
+                <SearchableSelect
                   value={form.mealPlan}
-                  onChange={(e) => setForm({ ...form, mealPlan: e.target.value as any })}
-                  className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-                >
-                  <option value="ep">EP - European Plan (Room Only)</option>
-                  <option value="cp">CP - Continental Plan (Breakfast)</option>
-                  <option value="map">MAP - Modified American (Breakfast + Lunch/Dinner)</option>
-                  <option value="ap">AP - American Plan (All Meals)</option>
-                </select>
+                  onChange={(val) => setForm({ ...form, mealPlan: val as any })}
+                  options={[
+                    { value: 'ep', label: 'EP - European Plan (Room Only)' },
+                    { value: 'cp', label: 'CP - Continental Plan (Breakfast)' },
+                    { value: 'map', label: 'MAP - Modified American (Breakfast + Lunch/Dinner)' },
+                    { value: 'ap', label: 'AP - American Plan (All Meals)' },
+                  ]}
+                  allowAdd={true}
+                  addNewLabel="Add Meal Plan"
+                />
               </div>
             </div>
 

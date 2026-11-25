@@ -20,6 +20,8 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { PropertyLicenseRecord, savePropertyLicense } from '@/services/compliance.service'
 import { formatDate } from '@/lib/utils'
+import { SearchableSelect } from '@/components/ui/searchable-select'
+import { CustomDatePicker } from '@/components/ui/custom-date-picker'
 
 interface PropertyLicensesClientProps {
   initialLicenses: PropertyLicenseRecord[]
@@ -166,20 +168,22 @@ export default function PropertyLicensesClient({ initialLicenses }: PropertyLice
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">Permit / License Type *</label>
-                  <select
+                  <SearchableSelect
                     value={formData.license_type}
-                    onChange={(e) => setFormData({ ...formData, license_type: e.target.value })}
-                    className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-                  >
-                    <option value="Municipal Corporation Trade Licence">Municipal Corporation Trade Licence</option>
-                    <option value="Fire Safety NOC (Form 15)">Fire Safety NOC (Form 15)</option>
-                    <option value="FSSAI Food Business Operator Licence">FSSAI Food Business Licence</option>
-                    <option value="State Pollution Control Board Consent (CTO)">Pollution Control Board Consent (CTO)</option>
-                    <option value="Lift Safety & Maintenance Certificate">Lift Safety &amp; Inspectorate Certificate</option>
-                    <option value="State Tourism Department Registration">State Tourism Department Registration</option>
-                    <option value="Bar / Liquor Service Licence (Form 2B)">Bar / Liquor Service Licence</option>
-                    <option value="Swimming Pool Safety NOC">Swimming Pool Safety NOC</option>
-                  </select>
+                    onChange={(val) => setFormData({ ...formData, license_type: val })}
+                    options={[
+                      { value: 'Municipal Corporation Trade Licence', label: 'Municipal Corporation Trade Licence' },
+                      { value: 'Fire Safety NOC (Form 15)', label: 'Fire Safety NOC (Form 15)' },
+                      { value: 'FSSAI Food Business Operator Licence', label: 'FSSAI Food Business Licence' },
+                      { value: 'State Pollution Control Board Consent (CTO)', label: 'Pollution Control Board Consent (CTO)' },
+                      { value: 'Lift Safety & Maintenance Certificate', label: 'Lift Safety & Inspectorate Certificate' },
+                      { value: 'State Tourism Department Registration', label: 'State Tourism Department Registration' },
+                      { value: 'Bar / Liquor Service Licence (Form 2B)', label: 'Bar / Liquor Service Licence' },
+                      { value: 'Swimming Pool Safety NOC', label: 'Swimming Pool Safety NOC' },
+                    ]}
+                    allowAdd={true}
+                    addNewLabel="Add License Type"
+                  />
                 </div>
 
                 <div>
@@ -208,35 +212,33 @@ export default function PropertyLicensesClient({ initialLicenses }: PropertyLice
 
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">Date of Issue</label>
-                  <input
-                    type="date"
+                  <CustomDatePicker
                     value={formData.issue_date}
-                    onChange={(e) => setFormData({ ...formData, issue_date: e.target.value })}
-                    className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
+                    onChange={(val) => setFormData({ ...formData, issue_date: val })}
+                    placeholder="Select issue date..."
                   />
                 </div>
 
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">Date of Expiry</label>
-                  <input
-                    type="date"
+                  <CustomDatePicker
                     value={formData.expiry_date}
-                    onChange={(e) => setFormData({ ...formData, expiry_date: e.target.value })}
-                    className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
+                    onChange={(val) => setFormData({ ...formData, expiry_date: val })}
+                    placeholder="Select expiry date..."
                   />
                 </div>
 
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">Alert Days Before Expiry</label>
-                  <select
-                    value={formData.alert_days}
-                    onChange={(e) => setFormData({ ...formData, alert_days: Number(e.target.value) })}
-                    className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-                  >
-                    <option value="30">30 Days Prior</option>
-                    <option value="60">60 Days Prior</option>
-                    <option value="90">90 Days Prior</option>
-                  </select>
+                  <SearchableSelect
+                    value={String(formData.alert_days)}
+                    onChange={(val) => setFormData({ ...formData, alert_days: Number(val) })}
+                    options={[
+                      { value: '30', label: '30 Days Prior' },
+                      { value: '60', label: '60 Days Prior' },
+                      { value: '90', label: '90 Days Prior' },
+                    ]}
+                  />
                 </div>
               </div>
 

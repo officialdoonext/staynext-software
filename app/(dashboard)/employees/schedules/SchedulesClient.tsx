@@ -30,6 +30,9 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { formatDate } from '@/lib/utils'
+import { SearchableSelect } from '@/components/ui/searchable-select'
+import { CustomDatePicker } from '@/components/ui/custom-date-picker'
+import { CustomTimePicker } from '@/components/ui/custom-time-picker'
 import {
   ShiftScheduleRecord,
   EmployeeRecord,
@@ -269,38 +272,33 @@ export function SchedulesClient({
           <form onSubmit={handleAssignSubmit} className="space-y-4 pt-2">
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">Staff Member *</label>
-              <select
+              <SearchableSelect
                 value={form.employeeId}
-                onChange={(e) => setForm({ ...form, employeeId: e.target.value })}
-                className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
+                onChange={(val) => setForm({ ...form, employeeId: val })}
+                options={employees.map((e) => ({
+                  value: e.id,
+                  label: `${e.fullName} (${e.role.replace('_', ' ')})`,
+                }))}
+                placeholder="Select staff member..."
                 required
-              >
-                {employees.map((e) => (
-                  <option key={e.id} value={e.id}>
-                    {e.fullName} ({e.role.replace('_', ' ')})
-                  </option>
-                ))}
-              </select>
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Shift Date *</label>
-                <input
-                  type="date"
+                <CustomDatePicker
                   value={form.shiftDate}
-                  onChange={(e) => setForm({ ...form, shiftDate: e.target.value })}
-                  required
-                  className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
+                  onChange={(val) => setForm({ ...form, shiftDate: val })}
+                  placeholder="Select shift date..."
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Shift Type</label>
-                <select
+                <SearchableSelect
                   value={form.shiftType}
-                  onChange={(e) => {
-                    const st = e.target.value
+                  onChange={(st) => {
                     let start = '07:00'
                     let end = '15:30'
                     if (st === 'afternoon') {
@@ -315,35 +313,33 @@ export function SchedulesClient({
                     }
                     setForm({ ...form, shiftType: st, startTime: start, endTime: end })
                   }}
-                  className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer capitalize"
-                >
-                  <option value="morning">Morning (07:00 - 15:30)</option>
-                  <option value="afternoon">Afternoon / Evening (15:00 - 23:30)</option>
-                  <option value="night">Night Audit (23:00 - 07:30)</option>
-                  <option value="general">General (09:00 - 18:00)</option>
-                  <option value="off">Day Off (Rest)</option>
-                </select>
+                  options={[
+                    { value: 'morning', label: 'Morning (07:00 - 15:30)' },
+                    { value: 'afternoon', label: 'Afternoon / Evening (15:00 - 23:30)' },
+                    { value: 'night', label: 'Night Audit (23:00 - 07:30)' },
+                    { value: 'general', label: 'General (09:00 - 18:00)' },
+                    { value: 'off', label: 'Day Off (Rest)' },
+                  ]}
+                  allowAdd={true}
+                  addNewLabel="Add Shift Type"
+                />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Start Time</label>
-                <input
-                  type="time"
+                <CustomTimePicker
                   value={form.startTime}
-                  onChange={(e) => setForm({ ...form, startTime: e.target.value })}
-                  className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
+                  onChange={(val) => setForm({ ...form, startTime: val })}
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">End Time</label>
-                <input
-                  type="time"
+                <CustomTimePicker
                   value={form.endTime}
-                  onChange={(e) => setForm({ ...form, endTime: e.target.value })}
-                  className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
+                  onChange={(val) => setForm({ ...form, endTime: val })}
                 />
               </div>
             </div>

@@ -22,6 +22,7 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { ForeignGuestRecord, submitFormIIIAcknowledgment } from '@/services/compliance.service'
 import { formatDate } from '@/lib/utils'
+import { SearchableSelect } from '@/components/ui/searchable-select'
 
 interface FormIIIWorkflowClientProps {
   foreignGuests: ForeignGuestRecord[]
@@ -168,17 +169,15 @@ export default function FormIIIWorkflowClient({
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-white p-4 rounded-md border border-gray-200 shadow-2xs">
         <div className="sm:col-span-2">
           <label className="block text-xs font-semibold text-gray-700 mb-1">Select Foreign Guest Manifest</label>
-          <select
+          <SearchableSelect
             value={selectedGuestId}
-            onChange={(e) => setSelectedGuestId(e.target.value)}
-            className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-          >
-            {foreignGuests.map((g) => (
-              <option key={g.id} value={g.id}>
-                {g.guest_name} ({g.passport_issue_country}) - Passport: {g.passport_number} - Status: {g.form_iii_status}
-              </option>
-            ))}
-          </select>
+            onChange={(val) => setSelectedGuestId(val)}
+            options={foreignGuests.map((g) => ({
+              value: g.id,
+              label: `${g.guest_name} (${g.passport_issue_country}) - Passport: ${g.passport_number} - Status: ${g.form_iii_status}`,
+            }))}
+            placeholder="Select guest manifest..."
+          />
         </div>
 
         <div>

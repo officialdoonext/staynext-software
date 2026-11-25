@@ -256,7 +256,7 @@ export default function RoomForm({
                 </label>
                 <SearchableSelect
                   value={formData.status}
-                  onChange={(val) => setFormData((prev) => ({ ...prev, status: val }))}
+                  onChange={(val) => setFormData((prev) => ({ ...prev, status: val as any }))}
                   options={statusOptions}
                   placeholder="Select status..."
                 />

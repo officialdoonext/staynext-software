@@ -23,6 +23,8 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { formatCurrency, formatDate } from '@/lib/utils'
+import { SearchableSelect } from '@/components/ui/searchable-select'
+import { CustomDatePicker } from '@/components/ui/custom-date-picker'
 import {
   RatePromotionRecord,
   createRatePromotion,
@@ -289,14 +291,14 @@ export function PromotionsClient({ initialPromotions, propertyId }: PromotionsCl
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Discount Type</label>
-                <select
+                <SearchableSelect
                   value={form.discountType}
-                  onChange={(e) => setForm({ ...form, discountType: e.target.value as any })}
-                  className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-                >
-                  <option value="percentage">Percentage Discount (%)</option>
-                  <option value="fixed">Fixed Cash Voucher ($)</option>
-                </select>
+                  onChange={(val) => setForm({ ...form, discountType: val as any })}
+                  options={[
+                    { value: 'percentage', label: 'Percentage Discount (%)' },
+                    { value: 'fixed', label: 'Fixed Cash Voucher ($)' },
+                  ]}
+                />
               </div>
 
               <div>
@@ -319,21 +321,19 @@ export function PromotionsClient({ initialPromotions, propertyId }: PromotionsCl
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Valid From</label>
-                <input
-                  type="date"
+                <CustomDatePicker
                   value={form.validFrom}
-                  onChange={(e) => setForm({ ...form, validFrom: e.target.value })}
-                  className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
+                  onChange={(val) => setForm({ ...form, validFrom: val })}
+                  placeholder="Select valid from..."
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Valid Until</label>
-                <input
-                  type="date"
+                <CustomDatePicker
                   value={form.validUntil}
-                  onChange={(e) => setForm({ ...form, validUntil: e.target.value })}
-                  className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
+                  onChange={(val) => setForm({ ...form, validUntil: val })}
+                  placeholder="Select valid until..."
                 />
               </div>
             </div>

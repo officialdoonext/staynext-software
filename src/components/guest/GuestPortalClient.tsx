@@ -22,6 +22,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+import { SearchableSelect } from '@/components/ui/searchable-select'
 import {
   GuestRoomContext,
   GuestServiceCategoryWithItems,
@@ -831,15 +832,15 @@ export default function GuestPortalClient({
                   <label className="block text-[10px] font-semibold text-gray-700 mb-1">
                     Payment Preference
                   </label>
-                  <select
+                  <SearchableSelect
                     value={paymentMethod}
-                    onChange={(e) => setPaymentMethod(e.target.value)}
-                    className="w-full px-2.5 py-1.5 text-xs border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-                  >
-                    <option value="pay_at_checkout">Bill to Room (Pay at Checkout)</option>
-                    <option value="cash_on_delivery">Cash on Room Delivery</option>
-                    <option value="upi_qr_on_delivery">UPI / Card Machine on Delivery</option>
-                  </select>
+                    onChange={(val) => setPaymentMethod(val)}
+                    options={[
+                      { value: 'pay_at_checkout', label: 'Bill to Room (Pay at Checkout)' },
+                      { value: 'cash_on_delivery', label: 'Cash on Room Delivery' },
+                      { value: 'upi_qr_on_delivery', label: 'UPI / Card Machine on Delivery' },
+                    ]}
+                  />
                 </div>
               </div>
             </div>
@@ -905,15 +906,15 @@ export default function GuestPortalClient({
                 <label className="block text-[10px] font-semibold text-gray-700 mb-1">
                   Urgency / Priority
                 </label>
-                <select
+                <SearchableSelect
                   value={requestPriority}
-                  onChange={(e) => setRequestPriority(e.target.value)}
-                  className="w-full px-2.5 py-1.5 text-xs border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-                >
-                  <option value="low">Standard (Within 30-45 mins)</option>
-                  <option value="medium">Prompt (Within 15-20 mins)</option>
-                  <option value="urgent">Urgent Assistance Needed</option>
-                </select>
+                  onChange={(val) => setRequestPriority(val)}
+                  options={[
+                    { value: 'low', label: 'Standard (Within 30-45 mins)' },
+                    { value: 'medium', label: 'Prompt (Within 15-20 mins)' },
+                    { value: 'urgent', label: 'Urgent Assistance Needed' },
+                  ]}
+                />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">

@@ -25,6 +25,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+import { SearchableSelect } from '@/components/ui/searchable-select'
 import {
   PropertyItem,
   BuildingItem,
@@ -437,16 +438,16 @@ export default function PropertyDetailClient({
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">Building Mapping</label>
-                  <select
+                  <SearchableSelect
                     value={selectedBuildingId}
-                    onChange={(e) => setSelectedBuildingId(e.target.value)}
-                    className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-                  >
-                    <option value="">Main Building</option>
-                    {buildings.map((b) => (
-                      <option key={b.id} value={b.id}>{b.name}</option>
-                    ))}
-                  </select>
+                    onChange={(val) => setSelectedBuildingId(val)}
+                    options={[
+                      { value: '', label: 'Main Building' },
+                      ...buildings.map((b) => ({ value: b.id, label: b.name })),
+                    ]}
+                    allowAdd={true}
+                    addNewLabel="Add Building Block"
+                  />
                 </div>
                 <Button type="submit" size="sm" className="bg-[#5e2b9d] text-white text-xs h-8 rounded-md cursor-pointer">
                   Save Floor

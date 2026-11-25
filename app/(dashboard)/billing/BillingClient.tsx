@@ -34,6 +34,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog'
+import { SearchableSelect } from '@/components/ui/searchable-select'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import Link from 'next/link'
 import {
@@ -732,22 +733,24 @@ export function BillingClient({
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Charge Type</label>
-                <select
+                <SearchableSelect
                   value={chargeForm.itemType}
-                  onChange={(e) =>
+                  onChange={(val) =>
                     setChargeForm({
                       ...chargeForm,
-                      itemType: e.target.value as any,
+                      itemType: val as any,
                     })
                   }
-                  className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-                >
-                  <option value="room_charge">Room Charge</option>
-                  <option value="f_and_b">Food &amp; Beverage</option>
-                  <option value="service">Service &amp; Spa</option>
-                  <option value="tax">Tax / Surcharge</option>
-                  <option value="discount">Special Discount</option>
-                </select>
+                  options={[
+                    { value: 'room_charge', label: 'Room Charge' },
+                    { value: 'f_and_b', label: 'Food & Beverage' },
+                    { value: 'service', label: 'Service & Spa' },
+                    { value: 'tax', label: 'Tax / Surcharge' },
+                    { value: 'discount', label: 'Special Discount' },
+                  ]}
+                  allowAdd={true}
+                  addNewLabel="Add Charge Type"
+                />
               </div>
 
               <div>
@@ -836,17 +839,19 @@ export function BillingClient({
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Payment Method</label>
-                <select
+                <SearchableSelect
                   value={paymentForm.paymentMethod}
-                  onChange={(e) => setPaymentForm({ ...paymentForm, paymentMethod: e.target.value })}
-                  className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-                >
-                  <option value="card">Credit / Debit Card</option>
-                  <option value="cash">Cash Settlement</option>
-                  <option value="bank_transfer">Bank Wire / UPI</option>
-                  <option value="stripe">Online Gateway</option>
-                  <option value="pos">POS Terminal</option>
-                </select>
+                  onChange={(val) => setPaymentForm({ ...paymentForm, paymentMethod: val })}
+                  options={[
+                    { value: 'card', label: 'Credit / Debit Card' },
+                    { value: 'cash', label: 'Cash Settlement' },
+                    { value: 'bank_transfer', label: 'Bank Wire / UPI' },
+                    { value: 'stripe', label: 'Online Gateway' },
+                    { value: 'pos', label: 'POS Terminal' },
+                  ]}
+                  allowAdd={true}
+                  addNewLabel="Add Payment Method"
+                />
               </div>
 
               <div>

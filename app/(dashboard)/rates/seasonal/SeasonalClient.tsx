@@ -22,6 +22,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { formatDate } from '@/lib/utils'
+import { CustomDatePicker } from '@/components/ui/custom-date-picker'
 import {
   SeasonalRateRecord,
   createSeasonalRate,
@@ -253,23 +254,19 @@ export function SeasonalClient({ initialRates, propertyId }: SeasonalClientProps
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Start Date *</label>
-                <input
-                  type="date"
+                <CustomDatePicker
                   value={form.startDate}
-                  onChange={(e) => setForm({ ...form, startDate: e.target.value })}
-                  required
-                  className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
+                  onChange={(val) => setForm({ ...form, startDate: val })}
+                  placeholder="Select start date..."
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">End Date *</label>
-                <input
-                  type="date"
+                <CustomDatePicker
                   value={form.endDate}
-                  onChange={(e) => setForm({ ...form, endDate: e.target.value })}
-                  required
-                  className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
+                  onChange={(val) => setForm({ ...form, endDate: val })}
+                  placeholder="Select end date..."
                 />
               </div>
             </div>

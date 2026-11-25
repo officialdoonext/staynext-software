@@ -223,22 +223,17 @@ export function TablesClient({ initialTables, propertyId }: TablesClientProps) {
               </div>
 
               <div className="pt-2 border-t border-gray-100">
-                <select
+                <SearchableSelect
                   value={t.status}
-                  onChange={(e) => handleStatusChange(t.id, e.target.value)}
-                  className={`w-full text-[11px] py-1 px-1.5 rounded-sm border focus:outline-none cursor-pointer capitalize font-medium ${
-                    t.status === 'occupied'
-                      ? 'bg-rose-100 text-rose-800 border-rose-300'
-                      : t.status === 'reserved'
-                      ? 'bg-amber-100 text-amber-800 border-amber-300'
-                      : 'bg-emerald-50 text-emerald-800 border-emerald-300'
-                  }`}
-                >
-                  <option value="available">Available</option>
-                  <option value="occupied">Occupied</option>
-                  <option value="reserved">Reserved</option>
-                  <option value="billing">Billing</option>
-                </select>
+                  onChange={(val) => handleStatusChange(t.id, val)}
+                  options={[
+                    { value: 'available', label: 'Available' },
+                    { value: 'occupied', label: 'Occupied' },
+                    { value: 'reserved', label: 'Reserved' },
+                    { value: 'billing', label: 'Billing' },
+                  ]}
+                  className="text-[11px]"
+                />
               </div>
             </div>
           ))}

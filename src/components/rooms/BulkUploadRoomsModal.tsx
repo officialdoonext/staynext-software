@@ -339,15 +339,14 @@ export default function BulkUploadRoomsModal({
             <div className="flex flex-wrap items-center justify-between gap-3 bg-gray-50 p-3 rounded-md border border-gray-200">
               <div className="flex items-center gap-2">
                 <span className="text-gray-600 font-medium">Target Property:</span>
-                <select
-                  value={selectedPropId}
-                  onChange={(e) => setSelectedPropId(e.target.value)}
-                  className="px-2.5 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-                >
-                  {properties.map((p) => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
-                  ))}
-                </select>
+                <div className="w-52">
+                  <SearchableSelect
+                    value={selectedPropId}
+                    onChange={(val) => setSelectedPropId(val)}
+                    options={properties.map((p) => ({ value: p.id, label: p.name }))}
+                    placeholder="Select property..."
+                  />
+                </div>
               </div>
 
               <div className="flex items-center gap-2">

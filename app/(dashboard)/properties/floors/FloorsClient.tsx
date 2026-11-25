@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { ArrowLeft, Layers, Plus, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { SearchableSelect } from '@/components/ui/searchable-select'
 import { FloorItem, BuildingItem, PropertyItem, createFloor, deleteFloor } from '@/services/property.service'
 
 interface FloorsClientProps {
@@ -83,15 +84,14 @@ export default function FloorsClient({
 
         <div className="flex items-center gap-2">
           {properties.length > 1 && (
-            <select
-              value={selectedPropertyId}
-              onChange={(e) => setSelectedPropertyId(e.target.value)}
-              className="px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-            >
-              {properties.map((p) => (
-                <option key={p.id} value={p.id}>{p.name}</option>
-              ))}
-            </select>
+            <div className="w-52">
+              <SearchableSelect
+                value={selectedPropertyId}
+                onChange={(val) => setSelectedPropertyId(val)}
+                options={properties.map((p) => ({ value: p.id, label: p.name }))}
+                placeholder="Select property..."
+              />
+            </div>
           )}
 
           <Button
@@ -130,16 +130,16 @@ export default function FloorsClient({
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">Building</label>
-              <select
+              <SearchableSelect
                 value={buildingId}
-                onChange={(e) => setBuildingId(e.target.value)}
-                className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-              >
-                <option value="">Main Building</option>
-                {buildings.map((b) => (
-                  <option key={b.id} value={b.id}>{b.name}</option>
-                ))}
-              </select>
+                onChange={(val) => setBuildingId(val)}
+                options={[
+                  { value: '', label: 'Main Building' },
+                  ...buildings.map((b) => ({ value: b.id, label: b.name })),
+                ]}
+                allowAdd={true}
+                addNewLabel="Add Building Block"
+              />
             </div>
             <Button type="submit" size="sm" className="bg-[#5e2b9d] text-white text-xs h-8 rounded-md cursor-pointer">
               Save Floor

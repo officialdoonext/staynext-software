@@ -20,6 +20,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { FloorItem, PropertyItem } from '@/services/property.service'
 import { RoomItem, updateRoomStatus } from '@/services/room.service'
 import { formatCurrency } from '@/lib/utils'
+import { SearchableSelect } from '@/components/ui/searchable-select'
 
 interface FloorPlanClientProps {
   property: PropertyItem
@@ -174,17 +175,18 @@ export default function FloorPlanClient({
                 </div>
 
                 <div className="pt-2 border-t border-gray-100 flex items-center justify-between">
-                  <select
+                  <SearchableSelect
                     value={room.status}
-                    onChange={(e) => handleStatusChange(room.id, e.target.value as any)}
-                    className="text-[9px] py-1 px-1 bg-white border border-gray-200 rounded-sm focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer w-full"
-                  >
-                    <option value="available">Available</option>
-                    <option value="dirty">Dirty</option>
-                    <option value="cleaning">Cleaning</option>
-                    <option value="maintenance">Maintenance</option>
-                    <option value="blocked">Blocked</option>
-                  </select>
+                    onChange={(val) => handleStatusChange(room.id, val as any)}
+                    options={[
+                      { value: 'available', label: 'Available' },
+                      { value: 'dirty', label: 'Dirty' },
+                      { value: 'cleaning', label: 'Cleaning' },
+                      { value: 'maintenance', label: 'Maintenance' },
+                      { value: 'blocked', label: 'Blocked' },
+                    ]}
+                    className="text-[9px] w-full"
+                  />
                 </div>
               </CardContent>
             </Card>

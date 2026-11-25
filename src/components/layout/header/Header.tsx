@@ -118,7 +118,7 @@ export default function Header({
             <Search className="h-3.5 w-3.5 text-gray-400" />
             <span className="hidden lg:inline-block">Search everything...</span>
             <kbd className="hidden lg:inline-block text-[10px] font-mono px-1.5 py-0.5 bg-white border border-gray-200 rounded-md text-gray-400">
-              ⌘K
+              ⌘ K
             </kbd>
           </button>
 

@@ -91,10 +91,19 @@ export function ExpenseForm({ categories: initialCategories, propertyId }: Expen
     })
     setIsCreatingCategory(false)
 
-    if (res.success && res.data) {
-      toast.success(`Category "${res.data.name}" created!`)
-      setCategories((prev) => [...prev, res.data!])
-      setForm((prev) => ({ ...prev, categoryId: res.data!.id }))
+    if (res.success && res.categoryId) {
+      const newCat: any = {
+        id: res.categoryId,
+        name: newCategoryForm.name.trim(),
+        code: newCategoryForm.code.trim() || undefined,
+        description: newCategoryForm.description.trim() || undefined,
+        budget: parseFloat(newCategoryForm.budget) || 0,
+        spent: 0,
+        transactionCount: 0,
+      }
+      toast.success(`Category "${newCat.name}" created!`)
+      setCategories((prev) => [...prev, newCat])
+      setForm((prev) => ({ ...prev, categoryId: newCat.id }))
       setIsAddCategoryOpen(false)
       setNewCategoryForm({ name: '', code: '', description: '', budget: '' })
     } else {

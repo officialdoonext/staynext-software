@@ -18,6 +18,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+import { CustomTimePicker } from '@/components/ui/custom-time-picker'
 import { toast } from 'sonner'
 
 interface BookingEngineClientProps {
@@ -169,21 +170,17 @@ export function BookingEngineClient({ property, channelsCount }: BookingEngineCl
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">Standard Check-In Time</label>
-              <input
-                type="time"
+              <CustomTimePicker
                 value={checkInTime}
-                onChange={(e) => setCheckInTime(e.target.value)}
-                className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
+                onChange={(val) => setCheckInTime(val)}
               />
             </div>
 
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">Standard Check-Out Time</label>
-              <input
-                type="time"
+              <CustomTimePicker
                 value={checkOutTime}
-                onChange={(e) => setCheckOutTime(e.target.value)}
-                className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
+                onChange={(val) => setCheckOutTime(val)}
               />
             </div>
 
