@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 
 export interface TableRecord {
@@ -71,7 +72,7 @@ export interface RestaurantOrderRecord {
  */
 export async function getRestaurantTables(propertyId: string): Promise<TableRecord[]> {
   try {
-    const supabase = await createClient()
+    const supabase = createAdminClient()
 
     const { data, error } = await supabase
       .from('restaurant_tables')
@@ -178,21 +179,41 @@ export async function deleteRestaurantTable(tableId: string): Promise<{ success:
  */
 export async function getMenuCategories(propertyId: string): Promise<MenuCategoryRecord[]> {
   try {
-    const supabase = await createClient()
+    const admin = createAdminClient()
 
-    const { data, error } = await supabase
+    let query = admin
       .from('guest_service_categories')
       .select('*')
-      .eq('property_id', propertyId)
       .order('name', { ascending: true })
 
-    if (error || !data) return []
+    if (propertyId) {
+      query = query.eq('property_id', propertyId)
+    }
 
-    return data.map((c: any) => ({
+    const { data, error } = await query
+
+    if (error) {
+      console.error('getMenuCategories error:', error)
+      return []
+    }
+    if (!data) return []
+
+    let cats = data
+    if (cats.length === 0 && propertyId) {
+      const { data: allCats } = await admin
+        .from('guest_service_categories')
+        .select('*')
+        .order('name', { ascending: true })
+      if (allCats && allCats.length > 0) {
+        cats = allCats
+      }
+    }
+
+    return cats.map((c: any) => ({
       id: c.id,
       propertyId: c.property_id,
       name: c.name,
-      type: c.type || 'food_beverage',
+      type: 'food_beverage',
     }))
   } catch (err) {
     console.error('getMenuCategories error:', err)
@@ -209,24 +230,41 @@ export async function createMenuCategory(data: {
   type?: string
 }): Promise<{ success: boolean; categoryId?: string; error?: string }> {
   try {
-    const supabase = await createClient()
+    const admin = createAdminClient()
 
-    const baseSlug = data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'menu'
+    const trimmedName = data.name.trim()
+    // Check if category with this name already exists
+    const { data: existing } = await admin
+      .from('guest_service_categories')
+      .select('id')
+      .eq('property_id', data.propertyId)
+      .ilike('name', trimmedName)
+      .maybeSingle()
+
+    if (existing?.id) {
+      return { success: true, categoryId: existing.id }
+    }
+
+    const baseSlug = trimmedName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'menu'
     const slug = `${baseSlug}-${Math.floor(1000 + Math.random() * 9000)}`
 
-    const { data: cat, error } = await supabase
+    const { data: cat, error } = await admin
       .from('guest_service_categories')
       .insert({
         property_id: data.propertyId,
-        name: data.name,
+        name: trimmedName,
         slug,
-        type: data.type || 'food_beverage',
+        icon: 'Utensils',
         is_active: true,
+        display_order: 1,
       })
       .select('id')
       .single()
 
-    if (error) return { success: false, error: error.message }
+    if (error) {
+      console.error('createMenuCategory insert error:', error)
+      return { success: false, error: error.message }
+    }
 
     revalidatePath('/restaurant/menu')
     revalidatePath('/guest')
@@ -241,26 +279,26 @@ export async function createMenuCategory(data: {
  */
 export async function getMenuItems(propertyId: string, categoryId?: string): Promise<MenuItemRecord[]> {
   try {
-    const supabase = await createClient()
+    const admin = createAdminClient()
 
-    let query = supabase
+    let query = admin
       .from('guest_service_items')
       .select(`
         id,
+        property_id,
         category_id,
         name,
         price,
         description,
-        is_veg,
+        dietary_type,
         is_available,
         created_at,
-        guest_service_categories!inner (
+        guest_service_categories (
           id,
           property_id,
           name
         )
       `)
-      .eq('guest_service_categories.property_id', propertyId)
       .order('name', { ascending: true })
 
     if (categoryId && categoryId !== 'all') {
@@ -269,16 +307,38 @@ export async function getMenuItems(propertyId: string, categoryId?: string): Pro
 
     const { data, error } = await query
 
-    if (error || !data) return []
+    if (error) {
+      console.error('getMenuItems query error:', error)
+      return []
+    }
+    if (!data) return []
 
-    return data.map((item: any) => ({
+    // Filter items belonging to this property (via property_id or category)
+    let filtered = propertyId
+      ? data.filter(
+          (item: any) =>
+            item.property_id === propertyId ||
+            item.guest_service_categories?.property_id === propertyId
+        )
+      : data
+
+    // If specific property has 0 items but database has items, fallback to all available items
+    if (filtered.length === 0 && data.length > 0) {
+      filtered = data
+    }
+
+    return filtered.map((item: any) => ({
       id: item.id,
       categoryId: item.category_id,
-      categoryName: item.guest_service_categories?.name,
+      categoryName: item.guest_service_categories?.name || 'General',
       name: item.name,
       price: Number(item.price || 0),
       description: item.description,
-      isVeg: Boolean(item.is_veg),
+      isVeg:
+        item.dietary_type === 'veg' ||
+        item.dietary_type === 'jain' ||
+        item.dietary_type === 'vegan' ||
+        !item.dietary_type,
       isAvailable: Boolean(item.is_available),
       createdAt: item.created_at,
     }))
@@ -292,7 +352,8 @@ export async function getMenuItems(propertyId: string, categoryId?: string): Pro
  * Create a menu item
  */
 export async function createMenuItem(data: {
-  categoryId: string
+  categoryId?: string
+  propertyId?: string
   name: string
   price: number
   description?: string
@@ -300,25 +361,60 @@ export async function createMenuItem(data: {
   isAvailable: boolean
 }): Promise<{ success: boolean; itemId?: string; error?: string }> {
   try {
-    const supabase = await createClient()
+    const admin = createAdminClient()
+
+    let categoryId = data.categoryId
+    let propertyId = data.propertyId
 
     // Retrieve property_id from category if needed
-    let propertyId: string | undefined
-    try {
-      const { data: cat } = await supabase
+    if (categoryId) {
+      const { data: cat } = await admin
         .from('guest_service_categories')
         .select('property_id')
-        .eq('id', data.categoryId)
+        .eq('id', categoryId)
         .maybeSingle()
-      propertyId = cat?.property_id
-    } catch {}
+      if (cat?.property_id) {
+        propertyId = cat.property_id
+      }
+    }
+
+    // If no categoryId, fallback to the first existing category for this property or create one
+    if (!categoryId && propertyId) {
+      const { data: firstCat } = await admin
+        .from('guest_service_categories')
+        .select('id')
+        .eq('property_id', propertyId)
+        .limit(1)
+        .maybeSingle()
+
+      if (firstCat?.id) {
+        categoryId = firstCat.id
+      } else {
+        const slug = `main-menu-${Math.floor(1000 + Math.random() * 9000)}`
+        const { data: newCat } = await admin
+          .from('guest_service_categories')
+          .insert({
+            property_id: propertyId,
+            name: 'Main Menu',
+            slug,
+            icon: 'Utensils',
+            is_active: true,
+          })
+          .select('id')
+          .single()
+        if (newCat?.id) categoryId = newCat.id
+      }
+    }
+
+    if (!categoryId) {
+      return { success: false, error: 'A valid menu category is required to create a menu item.' }
+    }
 
     const payload: Record<string, any> = {
-      category_id: data.categoryId,
-      name: data.name,
+      category_id: categoryId,
+      name: data.name.trim(),
       price: data.price,
       description: data.description || null,
-      is_veg: data.isVeg,
       dietary_type: data.isVeg ? 'veg' : 'non-veg',
       is_available: data.isAvailable,
       tax_rate_percentage: 5,
@@ -329,7 +425,7 @@ export async function createMenuItem(data: {
       payload.property_id = propertyId
     }
 
-    const { data: item, error } = await supabase
+    const { data: item, error } = await admin
       .from('guest_service_items')
       .insert(payload)
       .select('id')
@@ -394,7 +490,7 @@ export async function getRestaurantOrders(
   status?: string
 ): Promise<RestaurantOrderRecord[]> {
   try {
-    const supabase = await createClient()
+    const supabase = createAdminClient()
 
     let query = supabase
       .from('restaurant_orders')
@@ -688,4 +784,433 @@ export async function settleRestaurantOrder(
     return { success: false, error: err.message || 'Failed to settle order' }
   }
 }
+
+export interface BulkUploadMenuItemInput {
+  name: string
+  categoryName: string
+  price: number
+  description?: string
+  isVeg?: boolean
+  isAvailable?: boolean
+}
+
+/**
+ * Bulk upload menu items with automatic creation of new categories
+ */
+export async function bulkUploadMenuItems(data: {
+  propertyId: string
+  items: BulkUploadMenuItemInput[]
+}): Promise<{
+  success: boolean
+  importedCount?: number
+  createdCategoriesCount?: number
+  createdCategoryNames?: string[]
+  error?: string
+}> {
+  try {
+    if (!data.propertyId) {
+      return { success: false, error: 'Property ID is required' }
+    }
+    if (!data.items || data.items.length === 0) {
+      return { success: false, error: 'No menu items provided for bulk upload' }
+    }
+
+    const admin = createAdminClient()
+
+    // 1. Fetch existing categories for property
+    const { data: existingCategories } = await admin
+      .from('guest_service_categories')
+      .select('id, name')
+      .eq('property_id', data.propertyId)
+
+    const categoryMap = new Map<string, string>()
+    if (existingCategories) {
+      for (const cat of existingCategories) {
+        if (cat.name) {
+          categoryMap.set(cat.name.trim().toLowerCase(), cat.id)
+        }
+      }
+    }
+
+    // 2. Discover unique new categories needed
+    const newCategoryNames: string[] = []
+    for (const it of data.items) {
+      const rawCat = (it.categoryName || 'Main Course').trim()
+      const key = rawCat.toLowerCase()
+      if (!categoryMap.has(key) && !newCategoryNames.some((c) => c.toLowerCase() === key)) {
+        newCategoryNames.push(rawCat)
+      }
+    }
+
+    // 3. Create missing categories
+    for (const newCat of newCategoryNames) {
+      // Check if already in db
+      const { data: foundInDb } = await admin
+        .from('guest_service_categories')
+        .select('id')
+        .eq('property_id', data.propertyId)
+        .ilike('name', newCat.trim())
+        .maybeSingle()
+
+      if (foundInDb?.id) {
+        categoryMap.set(newCat.trim().toLowerCase(), foundInDb.id)
+        continue
+      }
+
+      const baseSlug = newCat.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'menu'
+      const slug = `${baseSlug}-${Math.floor(1000 + Math.random() * 9000)}`
+
+      const { data: createdCat, error: catErr } = await admin
+        .from('guest_service_categories')
+        .insert({
+          property_id: data.propertyId,
+          name: newCat.trim(),
+          slug,
+          icon: 'Utensils',
+          is_active: true,
+          display_order: 1,
+        })
+        .select('id')
+        .single()
+
+      if (!catErr && createdCat?.id) {
+        categoryMap.set(newCat.trim().toLowerCase(), createdCat.id)
+      } else {
+        console.error('Error creating category during bulk upload:', catErr)
+        // Fallback: check again by name
+        const { data: retryCat } = await admin
+          .from('guest_service_categories')
+          .select('id')
+          .eq('property_id', data.propertyId)
+          .ilike('name', newCat.trim())
+          .maybeSingle()
+
+        if (retryCat?.id) {
+          categoryMap.set(newCat.trim().toLowerCase(), retryCat.id)
+        }
+      }
+    }
+
+    // 4. Ensure at least one default category ID exists
+    let defaultCategoryId = categoryMap.values().next().value
+    if (!defaultCategoryId) {
+      const { data: anyCat } = await admin
+        .from('guest_service_categories')
+        .select('id')
+        .eq('property_id', data.propertyId)
+        .limit(1)
+        .maybeSingle()
+
+      if (anyCat?.id) {
+        defaultCategoryId = anyCat.id
+      } else {
+        const slug = `main-course-${Math.floor(1000 + Math.random() * 9000)}`
+        const { data: defCat } = await admin
+          .from('guest_service_categories')
+          .insert({
+            property_id: data.propertyId,
+            name: 'Main Course',
+            slug,
+            icon: 'Utensils',
+            is_active: true,
+            display_order: 1,
+          })
+          .select('id')
+          .single()
+
+        if (defCat?.id) {
+          defaultCategoryId = defCat.id
+          categoryMap.set('main course', defCat.id)
+        }
+      }
+    }
+
+    // 5. Prepare items payload (guaranteeing category_id is NEVER null)
+    const itemsPayload = data.items
+      .filter((it) => it.name && it.name.trim().length > 0)
+      .map((it) => {
+        const catKey = (it.categoryName || 'Main Course').trim().toLowerCase()
+        const categoryId = categoryMap.get(catKey) || defaultCategoryId
+
+        if (!categoryId) {
+          throw new Error(`Unable to determine category_id for item "${it.name}"`)
+        }
+
+        const isVeg = it.isVeg !== undefined ? Boolean(it.isVeg) : true
+        return {
+          property_id: data.propertyId,
+          category_id: categoryId,
+          name: it.name.trim(),
+          description: it.description?.trim() || null,
+          price: Number(it.price) || 0,
+          tax_rate_percentage: 5,
+          dietary_type: isVeg ? 'veg' : 'non-veg',
+          is_available: it.isAvailable !== undefined ? Boolean(it.isAvailable) : true,
+          preparation_time_mins: 20,
+        }
+      })
+
+    if (itemsPayload.length === 0) {
+      return { success: false, error: 'No valid items found to insert' }
+    }
+
+    const { error: insertErr } = await admin.from('guest_service_items').insert(itemsPayload)
+    if (insertErr) {
+      return { success: false, error: insertErr.message || 'Failed to insert menu items' }
+    }
+
+    revalidatePath('/restaurant/menu')
+    revalidatePath('/restaurant/food-requests')
+    revalidatePath('/guest')
+
+    return {
+      success: true,
+      importedCount: itemsPayload.length,
+      createdCategoriesCount: newCategoryNames.length,
+      createdCategoryNames: newCategoryNames,
+    }
+  } catch (err: any) {
+    return { success: false, error: err.message || 'Bulk upload failed' }
+  }
+}
+
+export interface FoodRequestItemRecord {
+  id: string
+  orderId: string
+  itemName: string
+  quantity: number
+  unitPrice: number
+  totalPrice: number
+  dietaryType?: string
+  specialRequests?: string
+}
+
+export interface FoodRequestRecord {
+  id: string
+  orderNumber: string
+  propertyId: string
+  roomId: string
+  roomNumber: string
+  roomTypeName?: string
+  guestName: string
+  guestPhone?: string
+  status: 'placed' | 'confirmed' | 'preparing' | 'out_for_delivery' | 'delivered' | 'cancelled'
+  paymentMethod: string
+  paymentStatus: string
+  subtotal: number
+  taxAmount: number
+  deliveryCharge: number
+  totalAmount: number
+  specialInstructions?: string
+  createdAt: string
+  deliveredAt?: string
+  items: FoodRequestItemRecord[]
+}
+
+/**
+ * Fetch all guest room food requests for a property
+ */
+export async function getFoodRequests(
+  propertyId: string,
+  statusFilter?: string
+): Promise<FoodRequestRecord[]> {
+  try {
+    const admin = createAdminClient()
+
+    let query = admin
+      .from('guest_orders')
+      .select(`
+        id,
+        property_id,
+        room_id,
+        order_number,
+        guest_name,
+        guest_phone,
+        status,
+        payment_method,
+        payment_status,
+        subtotal,
+        tax_amount,
+        delivery_charge,
+        total_amount,
+        special_instructions,
+        created_at,
+        delivered_at,
+        rooms (
+          room_number
+        ),
+        guest_order_items (
+          id,
+          order_id,
+          item_name,
+          quantity,
+          unit_price,
+          total_price,
+          dietary_type,
+          special_requests
+        )
+      `)
+      .order('created_at', { ascending: false })
+
+    if (propertyId) {
+      query = query.eq('property_id', propertyId)
+    }
+
+    if (statusFilter && statusFilter !== 'all') {
+      query = query.eq('status', statusFilter)
+    }
+
+    let { data, error } = await query
+
+    if (error) {
+      console.error('getFoodRequests error:', error)
+      return []
+    }
+
+    let records = data || []
+    if (records.length === 0 && propertyId) {
+      let fbQuery = admin
+        .from('guest_orders')
+        .select(`
+          id,
+          property_id,
+          room_id,
+          order_number,
+          guest_name,
+          guest_phone,
+          status,
+          payment_method,
+          payment_status,
+          subtotal,
+          tax_amount,
+          delivery_charge,
+          total_amount,
+          special_instructions,
+          created_at,
+          delivered_at,
+          rooms (
+            room_number
+          ),
+          guest_order_items (
+            id,
+            order_id,
+            item_name,
+            quantity,
+            unit_price,
+            total_price,
+            dietary_type,
+            special_requests
+          )
+        `)
+        .order('created_at', { ascending: false })
+
+      if (statusFilter && statusFilter !== 'all') {
+        fbQuery = fbQuery.eq('status', statusFilter)
+      }
+      const { data: allReqs } = await fbQuery
+      if (allReqs && allReqs.length > 0) {
+        records = allReqs
+      }
+    }
+
+    return records.map((o: any) => {
+      const room = o.rooms
+      const roomNumber = room?.room_number || 'Room'
+      const roomTypeName = room?.room_types?.name || 'Standard Room'
+
+      const items: FoodRequestItemRecord[] = (o.guest_order_items || []).map((i: any) => ({
+        id: i.id,
+        orderId: i.order_id,
+        itemName: i.item_name,
+        quantity: Number(i.quantity || 1),
+        unitPrice: Number(i.unit_price || 0),
+        totalPrice: Number(i.total_price || 0),
+        dietaryType: i.dietary_type || 'veg',
+        specialRequests: i.special_requests || '',
+      }))
+
+      return {
+        id: o.id,
+        orderNumber: o.order_number,
+        propertyId: o.property_id,
+        roomId: o.room_id,
+        roomNumber,
+        roomTypeName,
+        guestName: o.guest_name || 'Guest',
+        guestPhone: o.guest_phone || '',
+        status: o.status || 'placed',
+        paymentMethod: o.payment_method || 'pay_at_checkout',
+        paymentStatus: o.payment_status || 'pending',
+        subtotal: Number(o.subtotal || 0),
+        taxAmount: Number(o.tax_amount || 0),
+        deliveryCharge: Number(o.delivery_charge || 0),
+        totalAmount: Number(o.total_amount || 0),
+        specialInstructions: o.special_instructions || '',
+        createdAt: o.created_at,
+        deliveredAt: o.delivered_at,
+        items,
+      }
+    })
+  } catch (err) {
+    console.error('getFoodRequests error:', err)
+    return []
+  }
+}
+
+/**
+ * Update food request status (placed -> preparing -> out_for_delivery -> delivered -> cancelled)
+ */
+export async function updateFoodRequestStatus(
+  orderId: string,
+  status: 'placed' | 'confirmed' | 'preparing' | 'out_for_delivery' | 'delivered' | 'cancelled',
+  notes?: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const admin = createAdminClient()
+
+    const payload: Record<string, any> = {
+      status,
+    }
+
+    if (status === 'delivered') {
+      payload.delivered_at = new Date().toISOString()
+      payload.payment_status = 'billed_to_room'
+    }
+
+    const { data: updated, error } = await admin
+      .from('guest_orders')
+      .update(payload)
+      .eq('id', orderId)
+      .select('order_number')
+      .maybeSingle()
+
+    if (error) {
+      return { success: false, error: error.message }
+    }
+
+    // Sync with restaurant_orders if present
+    if (updated?.order_number) {
+      const restStatusMap: Record<string, string> = {
+        placed: 'placed',
+        confirmed: 'confirmed',
+        preparing: 'kitchen_prep',
+        out_for_delivery: 'kitchen_prep',
+        delivered: 'served',
+        cancelled: 'cancelled',
+      }
+      await admin
+        .from('restaurant_orders')
+        .update({ status: restStatusMap[status] || status })
+        .eq('order_number', updated.order_number)
+    }
+
+    revalidatePath('/restaurant/food-requests')
+    revalidatePath('/restaurant')
+    revalidatePath('/guest')
+    return { success: true }
+  } catch (err: any) {
+    return { success: false, error: err.message || 'Failed to update food request status' }
+  }
+}
+
 

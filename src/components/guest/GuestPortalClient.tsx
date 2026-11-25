@@ -63,6 +63,7 @@ export default function GuestPortalClient({
   const { property, room, guestName, isValid, errorMessage } = context
 
   const [activeCategorySlug, setActiveCategorySlug] = useState<string>('food-beverage')
+  const [selectedFoodCategory, setSelectedFoodCategory] = useState<string>('all')
   const [dietaryFilter, setDietaryFilter] = useState<string>('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [cart, setCart] = useState<CartItem[]>([])
@@ -311,8 +312,24 @@ export default function GuestPortalClient({
 
   const activeCategory = catalog.find((c) => c.slug === activeCategorySlug) || catalog[0]
 
+  // Extract unique menu categories for food & beverage
+  const foodCategories = React.useMemo(() => {
+    const fnb = catalog.find((c) => c.slug === 'food-beverage')
+    if (!fnb || !fnb.items) return []
+    const cats = new Set<string>()
+    fnb.items.forEach((it) => {
+      if (it.category_name) cats.add(it.category_name)
+    })
+    return Array.from(cats)
+  }, [catalog])
+
   // Filter category items
   const filteredItems = (activeCategory?.items || []).filter((it) => {
+    const matchesCategory =
+      activeCategorySlug !== 'food-beverage' ||
+      selectedFoodCategory === 'all' ||
+      (it.category_name && it.category_name.toLowerCase() === selectedFoodCategory.toLowerCase())
+
     const matchesSearch =
       searchQuery === '' ||
       it.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -322,7 +339,7 @@ export default function GuestPortalClient({
       dietaryFilter === 'all' ||
       it.dietary_type?.toLowerCase() === dietaryFilter.toLowerCase()
 
-    return matchesSearch && matchesDietary
+    return matchesCategory && matchesSearch && matchesDietary
   })
 
   return (
@@ -505,6 +522,37 @@ export default function GuestPortalClient({
               />
             </div>
 
+            {/* Category Pills (Dynamic from Restaurant Catalog) */}
+            {foodCategories.length > 0 && (
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setSelectedFoodCategory('all')}
+                  className={`px-3 py-1 rounded-md text-[11px] font-medium transition-colors cursor-pointer whitespace-nowrap ${
+                    selectedFoodCategory === 'all'
+                      ? 'bg-[#5e2b9d] text-white shadow-2xs'
+                      : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  All Menu ({activeCategory.items.length})
+                </button>
+                {foodCategories.map((fc) => (
+                  <button
+                    key={fc}
+                    type="button"
+                    onClick={() => setSelectedFoodCategory(fc)}
+                    className={`px-3 py-1 rounded-md text-[11px] font-medium transition-colors cursor-pointer whitespace-nowrap ${
+                      selectedFoodCategory === fc
+                        ? 'bg-[#5e2b9d] text-white shadow-2xs'
+                        : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    {fc}
+                  </button>
+                ))}
+              </div>
+            )}
+
             <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
               {[
                 { id: 'all', label: 'All Items' },
@@ -559,6 +607,12 @@ export default function GuestPortalClient({
                     )}
 
                     <div className="flex items-center gap-3 pt-1 text-[10px] text-gray-500">
+                      {item.category_name && (
+                        <span className="text-[10px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-sm font-medium">
+                          {item.category_name}
+                        </span>
+                      )}
+
                       {item.price > 0 ? (
                         <span className="font-semibold text-gray-900 text-xs">
                           {formatCurrency(item.price)}

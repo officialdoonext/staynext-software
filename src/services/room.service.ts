@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 import { generateRoomQRCode } from '@/services/qr.service'
 
@@ -146,7 +147,55 @@ export async function getRooms(
 
   query = query.range(from, to)
 
-  const { data, count, error } = await query
+  let { data, count, error } = await query
+
+  if (error || !data || data.length === 0) {
+    try {
+      const admin = createAdminClient()
+      let adminQuery = admin
+        .from('rooms')
+        .select(
+          `
+          *,
+          floor:floors(id, name, floor_number),
+          building:buildings(id, name),
+          room_type:room_types(id, name, base_rate, max_occupancy),
+          qr_code:room_qr_codes(token_hash, is_active)
+        `,
+          { count: 'exact' }
+        )
+        .order('room_number', { ascending: true })
+
+      if (propertyId) {
+        adminQuery = adminQuery.eq('property_id', propertyId)
+      }
+      if (options?.search) {
+        adminQuery = adminQuery.ilike('room_number', `%${options.search}%`)
+      }
+      if (options?.buildingId && options.buildingId !== 'all') {
+        adminQuery = adminQuery.eq('building_id', options.buildingId)
+      }
+      if (options?.floorId && options.floorId !== 'all') {
+        adminQuery = adminQuery.eq('floor_id', options.floorId)
+      }
+      if (options?.roomTypeId && options.roomTypeId !== 'all') {
+        adminQuery = adminQuery.eq('room_type_id', options.roomTypeId)
+      }
+      if (options?.status && options.status !== 'all') {
+        adminQuery = adminQuery.eq('status', options.status)
+      }
+      adminQuery = adminQuery.range(from, to)
+
+      const adminRes = await adminQuery
+      if (adminRes.data && adminRes.data.length > 0) {
+        data = adminRes.data
+        count = adminRes.count
+        error = null
+      }
+    } catch (e) {
+      console.error('getRooms admin fallback error:', e)
+    }
+  }
 
   if (error || !data) {
     return { rooms: [], totalCount: 0 }

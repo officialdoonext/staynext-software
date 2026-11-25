@@ -2,6 +2,8 @@ import React from 'react'
 import { validateGuestRoom, getGuestServiceCatalog } from '@/services/guest.service'
 import GuestPortalClient from '@/components/guest/GuestPortalClient'
 
+export const dynamic = 'force-dynamic'
+
 interface PageProps {
   params: Promise<{ propertyId: string; roomId: string }>
   searchParams: Promise<{ token?: string }>

@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 
 export interface PropertyItem {
@@ -152,13 +153,44 @@ export async function getProperties(search?: string, propertyType?: string, stat
     query = query.eq('is_active', status === 'active')
   }
 
-  const { data, error } = await query
+  let { data, error } = await query
+
+  if (error || !data || data.length === 0) {
+    try {
+      const admin = createAdminClient()
+      let adminQuery = admin
+        .from('properties')
+        .select(`
+          *,
+          rooms:rooms(id, status)
+        `)
+        .order('created_at', { ascending: false })
+
+      if (search) {
+        adminQuery = adminQuery.or(`name.ilike.%${search}%,city.ilike.%${search}%,address.ilike.%${search}%`)
+      }
+      if (propertyType && propertyType !== 'all') {
+        adminQuery = adminQuery.eq('property_type', propertyType)
+      }
+      if (status && status !== 'all') {
+        adminQuery = adminQuery.eq('is_active', status === 'active')
+      }
+
+      const adminRes = await adminQuery
+      if (adminRes.data && adminRes.data.length > 0) {
+        data = adminRes.data
+        error = null
+      }
+    } catch (adminErr) {
+      console.error('getProperties admin fallback error:', adminErr)
+    }
+  }
 
   if (error || !data) {
     return []
   }
 
-  return data.map((p: any) => {
+  const list = data.map((p: any) => {
     const rooms = p.rooms || []
     const totalRooms = rooms.length
     const occupiedRooms = rooms.filter((r: any) => r.status === 'occupied').length
@@ -198,6 +230,14 @@ export async function getProperties(search?: string, propertyType?: string, stat
       occupied_rooms: occupiedRooms,
       created_at: p.created_at,
     }
+  })
+
+  // Prioritize properties with rooms/active data first, then earliest created
+  return list.sort((a, b) => {
+    if ((b.total_rooms || 0) !== (a.total_rooms || 0)) {
+      return (b.total_rooms || 0) - (a.total_rooms || 0)
+    }
+    return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
   })
 }
 

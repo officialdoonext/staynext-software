@@ -1,29 +1,25 @@
 import React from 'react'
-import { createClient } from '@/lib/supabase/server'
+import { getProperties } from '@/services/property.service'
 import { getMenuItems, getMenuCategories } from '@/services/restaurant.service'
 import { MenuClient } from './MenuClient'
 
+export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Menu Items | StayNext' }
 
 export default async function MenuPage() {
-  const supabase = await createClient()
+  const properties = await getProperties()
+  const primaryProp = properties[0]
+  const propertyId = primaryProp?.id || ''
 
-  let propertyId = ''
-  try {
-    const { data: props } = await supabase.from('properties').select('id').limit(1)
-    if (props && props.length > 0) {
-      propertyId = props[0].id
-    }
-  } catch {}
-
-  const items = propertyId ? await getMenuItems(propertyId) : []
-  const categories = propertyId ? await getMenuCategories(propertyId) : []
+  const items = await getMenuItems(propertyId)
+  const categories = await getMenuCategories(propertyId)
 
   return (
     <MenuClient
       initialItems={items}
       categories={categories}
       propertyId={propertyId}
+      properties={properties}
     />
   )
 }

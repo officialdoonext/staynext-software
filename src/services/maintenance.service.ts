@@ -410,7 +410,37 @@ export async function getMaintenanceTypes(params: {
       query = query.eq('category', params.category)
     }
 
-    const { data, count, error } = await query
+    let { data, count, error } = await query
+
+    if (error || !data || data.length === 0) {
+      try {
+        const admin = createAdminClient()
+        let adminQuery = admin
+          .from('maintenance_types')
+          .select('*', { count: 'exact' })
+          .order('created_at', { ascending: false })
+          .range(from, to)
+
+        if (params.propertyId) {
+          adminQuery = adminQuery.eq('property_id', params.propertyId)
+        }
+        if (params.search && params.search.trim()) {
+          adminQuery = adminQuery.ilike('name', `%${params.search.trim()}%`)
+        }
+        if (params.category && params.category !== 'all') {
+          adminQuery = adminQuery.eq('category', params.category)
+        }
+
+        const adminRes = await adminQuery
+        if (adminRes.data && adminRes.data.length > 0) {
+          data = adminRes.data
+          count = adminRes.count
+          error = null
+        }
+      } catch (adminErr) {
+        console.warn('maintenance_types admin fallback error:', adminErr)
+      }
+    }
 
     if (error) {
       console.warn('maintenance_types table query error, falling back to samples:', error.message)

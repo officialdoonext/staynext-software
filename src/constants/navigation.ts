@@ -136,6 +136,7 @@ export const navigationSections: NavSection[] = [
         icon: 'UtensilsCrossed',
         children: [
           { title: 'Orders', href: '/restaurant' },
+          { title: 'Food Requests', href: '/restaurant/food-requests' },
           { title: 'Menu', href: '/restaurant/menu' },
           { title: 'Tables', href: '/restaurant/tables' },
           { title: 'Reports', href: '/restaurant/reports' },

@@ -39,6 +39,7 @@ export interface GuestServiceCategoryWithItems {
   items: Array<{
     id: string
     name: string
+    category_name?: string
     description?: string
     price: number
     tax_rate_percentage: number
@@ -195,7 +196,7 @@ export async function validateGuestRoom(
  * Specifically configured for Room QR scanning
  */
 export async function getGuestServiceCatalog(propertyId: string): Promise<GuestServiceCategoryWithItems[]> {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   // 1. Fetch live food menu items from the Restaurant section
   let dbFoodItems: any[] = []
@@ -204,38 +205,51 @@ export async function getGuestServiceCatalog(propertyId: string): Promise<GuestS
       .from('guest_service_items')
       .select(`
         id,
+        property_id,
         name,
         description,
         price,
         tax_rate_percentage,
         dietary_type,
-        is_veg,
         is_available,
         preparation_time_mins,
         image_url,
         display_order,
-        guest_service_categories!inner (
+        guest_service_categories (
           id,
           property_id,
           name
         )
       `)
-      .eq('guest_service_categories.property_id', propertyId)
       .eq('is_available', true)
       .order('name', { ascending: true })
 
     if (items && items.length > 0) {
-      dbFoodItems = items.map((i: any) => ({
-        id: i.id,
-        name: i.name,
-        description: i.description || (i.guest_service_categories?.name ? `From ${i.guest_service_categories.name} menu` : 'Freshly prepared specialty dish'),
-        price: parseFloat(i.price) || 0,
-        tax_rate_percentage: parseFloat(i.tax_rate_percentage) || 5,
-        dietary_type: i.is_veg !== undefined ? (i.is_veg ? 'veg' : 'non-veg') : (i.dietary_type || 'veg'),
-        is_available: true,
-        preparation_time_mins: i.preparation_time_mins || 20,
-        image_url: i.image_url || '',
-      }))
+      let candidateItems = items.filter(
+        (i: any) =>
+          i.guest_service_categories?.property_id === propertyId ||
+          i.property_id === propertyId
+      )
+
+      if (candidateItems.length === 0) {
+        // Fallback to all database items so live restaurant dishes are never empty on QR
+        candidateItems = items
+      }
+
+      if (candidateItems.length > 0) {
+        dbFoodItems = candidateItems.map((i: any) => ({
+          id: i.id,
+          name: i.name,
+          category_name: i.guest_service_categories?.name || 'Main Course',
+          description: i.description || (i.guest_service_categories?.name ? `From ${i.guest_service_categories.name} menu` : 'Freshly prepared specialty dish'),
+          price: parseFloat(i.price) || 0,
+          tax_rate_percentage: parseFloat(i.tax_rate_percentage) || 5,
+          dietary_type: i.dietary_type || 'veg',
+          is_available: true,
+          preparation_time_mins: i.preparation_time_mins || 20,
+          image_url: i.image_url || '',
+        }))
+      }
     }
   } catch (e) {
     console.error('getGuestServiceCatalog food items error:', e)
@@ -245,6 +259,7 @@ export async function getGuestServiceCatalog(propertyId: string): Promise<GuestS
     {
       id: 'item-fnb-1',
       name: 'Classic Club Sandwich with Golden Fries',
+      category_name: 'Sandwiches & Snacks',
       description: 'Triple-decker sandwich with toasted bread, cheddar cheese, crisp lettuce, tomato and golden fries.',
       price: 280,
       tax_rate_percentage: 5,
@@ -255,6 +270,7 @@ export async function getGuestServiceCatalog(propertyId: string): Promise<GuestS
     {
       id: 'item-fnb-2',
       name: 'Paneer Butter Masala with 2 Butter Naan',
+      category_name: 'Main Course',
       description: 'Cottage cheese simmered in a rich tomato, butter, and cashew gravy served with clay-oven naan.',
       price: 360,
       tax_rate_percentage: 5,
@@ -265,6 +281,7 @@ export async function getGuestServiceCatalog(propertyId: string): Promise<GuestS
     {
       id: 'item-fnb-3',
       name: 'Hyderabadi Chicken Dum Biryani',
+      category_name: 'Main Course',
       description: 'Fragrant basmati rice layered with spiced chicken, mint, saffron and served with mirchi ka salan & raita.',
       price: 420,
       tax_rate_percentage: 5,
@@ -275,6 +292,7 @@ export async function getGuestServiceCatalog(propertyId: string): Promise<GuestS
     {
       id: 'item-fnb-4',
       name: 'Margherita Pizza (10-inch)',
+      category_name: 'Pizza & Pasta',
       description: 'Hand-stretched sourdough crust with San Marzano tomato sauce, fresh mozzarella, and aromatic basil.',
       price: 390,
       tax_rate_percentage: 5,
@@ -285,6 +303,7 @@ export async function getGuestServiceCatalog(propertyId: string): Promise<GuestS
     {
       id: 'item-fnb-5',
       name: 'Fresh Cold Pressed Watermelon Juice',
+      category_name: 'Beverages',
       description: 'Pure 100% freshly pressed watermelon with a hint of mint and black salt.',
       price: 140,
       tax_rate_percentage: 5,
@@ -295,6 +314,7 @@ export async function getGuestServiceCatalog(propertyId: string): Promise<GuestS
     {
       id: 'item-fnb-6',
       name: 'Filter Coffee / Masala Chai Flask (Serves 2)',
+      category_name: 'Beverages',
       description: 'Freshly brewed aromatic South Indian filter coffee or spiced ginger-cardamom tea.',
       price: 120,
       tax_rate_percentage: 5,
@@ -519,7 +539,7 @@ export async function submitGuestOrder(payload: {
   }>
 }): Promise<{ success: boolean; order?: any; tracking_token?: string; error?: string }> {
   try {
-    const supabase = await createClient()
+    const supabase = createAdminClient()
 
     if (!payload.items || payload.items.length === 0) {
       return { success: false, error: 'Your cart is empty. Please add items before placing order.' }
@@ -601,6 +621,7 @@ export async function submitGuestOrder(payload: {
         await supabase.from('restaurant_order_items').insert(restOrderItems)
       }
       revalidatePath('/restaurant')
+      revalidatePath('/restaurant/food-requests')
       revalidatePath('/restaurant/reports')
     } catch (restErr) {
       console.error('Restaurant order dispatch error:', restErr)
