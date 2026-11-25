@@ -50,7 +50,7 @@ export async function getAuthenticatedTenantId(): Promise<string | null> {
       const { data: tenant } = await admin
         .from('tenants')
         .select('id')
-        .eq('email', user.email)
+        .ilike('email', user.email.trim())
         .limit(1)
         .maybeSingle()
 

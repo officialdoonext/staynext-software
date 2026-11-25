@@ -39,21 +39,61 @@ export interface AccessCheckResult {
  * Rule: Access is granted ONLY IF status is active AND expiry date is in the future.
  */
 export function checkTenantAccess(data: {
-  is_active?: boolean | null
+  is_active?: boolean | string | number | null
   status?: string | null
-  subscription_expires_at?: string | null
-  expiry_date?: string | null
+  subscription_expires_at?: string | Date | null
+  expiry_date?: string | Date | null
 }): AccessCheckResult {
-  const isActive = data.is_active === true || data.status === 'active'
+  const statusStr = String(data.status || '').toLowerCase().trim()
+  const rawIsActive = data.is_active
+
+  const isStatusActive =
+    statusStr === 'active' ||
+    statusStr === 'approved' ||
+    statusStr === 'trial' ||
+    statusStr === 'enabled' ||
+    statusStr === 'valid' ||
+    statusStr === 'paid'
+
+  const isFlagActive =
+    rawIsActive === true ||
+    rawIsActive === 'true' ||
+    rawIsActive === 1 ||
+    rawIsActive === '1'
+
+  const isExplicitlyInactive =
+    rawIsActive === false ||
+    rawIsActive === 'false' ||
+    rawIsActive === 0 ||
+    rawIsActive === '0' ||
+    statusStr === 'inactive' ||
+    statusStr === 'suspended' ||
+    statusStr === 'blocked' ||
+    statusStr === 'cancelled' ||
+    statusStr === 'expired'
+
+  const isActive = isFlagActive || isStatusActive || (!isExplicitlyInactive && Boolean(statusStr))
 
   const rawExpiry = data.subscription_expires_at || data.expiry_date
   let isExpired = true
-  const expiryDate = rawExpiry || ''
+  let expiryDate = ''
 
   if (rawExpiry) {
-    const exp = new Date(rawExpiry)
-    if (!isNaN(exp.getTime())) {
-      isExpired = exp.getTime() < Date.now()
+    if (rawExpiry instanceof Date) {
+      expiryDate = rawExpiry.toISOString()
+      isExpired = rawExpiry.getTime() < Date.now()
+    } else {
+      const strExpiry = String(rawExpiry).trim()
+      expiryDate = strExpiry
+      let exp: Date
+      if (/^\d{4}-\d{2}-\d{2}$/.test(strExpiry)) {
+        exp = new Date(`${strExpiry}T23:59:59.999Z`)
+      } else {
+        exp = new Date(strExpiry)
+      }
+      if (!isNaN(exp.getTime())) {
+        isExpired = exp.getTime() < Date.now()
+      }
     }
   }
 
@@ -227,7 +267,7 @@ export async function signInTenant(identifier: string, password: string) {
       const { data: tenantData } = await supabase
         .from('tenants')
         .select('email')
-        .eq('username', email)
+        .ilike('username', email)
         .maybeSingle()
 
       if (tenantData?.email) {
@@ -271,16 +311,52 @@ export async function checkUserAccess(user: any): Promise<AccessCheckResult> {
 
   try {
     const supabase = createBrowserClient()
-    const { data: tenant } = await supabase
-      .from('tenants')
-      .select('status, is_active, subscription_expires_at')
-      .maybeSingle()
+    let tenantRecord: any = null
 
-    if (tenant) {
+    // 1. Direct tenant_id from metadata
+    if (meta.tenant_id) {
+      const { data } = await supabase
+        .from('tenants')
+        .select('id, status, is_active, subscription_expires_at, expiry_date')
+        .eq('id', meta.tenant_id)
+        .maybeSingle()
+      if (data) tenantRecord = data
+    }
+
+    // 2. Search by user email
+    if (!tenantRecord && user.email) {
+      const { data } = await supabase
+        .from('tenants')
+        .select('id, status, is_active, subscription_expires_at, expiry_date')
+        .ilike('email', user.email.trim())
+        .maybeSingle()
+      if (data) tenantRecord = data
+    }
+
+    // 3. Search via tenant_users mapping
+    if (!tenantRecord && user.id) {
+      const { data: mapping } = await supabase
+        .from('tenant_users')
+        .select('tenant_id')
+        .eq('user_id', user.id)
+        .maybeSingle()
+
+      if (mapping?.tenant_id) {
+        const { data } = await supabase
+          .from('tenants')
+          .select('id, status, is_active, subscription_expires_at, expiry_date')
+          .eq('id', mapping.tenant_id)
+          .maybeSingle()
+        if (data) tenantRecord = data
+      }
+    }
+
+    if (tenantRecord) {
       return checkTenantAccess({
-        is_active: tenant.is_active,
-        status: tenant.status,
-        subscription_expires_at: tenant.subscription_expires_at,
+        is_active: tenantRecord.is_active,
+        status: tenantRecord.status,
+        subscription_expires_at: tenantRecord.subscription_expires_at,
+        expiry_date: tenantRecord.expiry_date,
       })
     }
   } catch {

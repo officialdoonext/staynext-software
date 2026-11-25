@@ -71,7 +71,12 @@ export default function OnboardingClient({
         router.push('/dashboard')
         router.refresh()
       } else {
-        toast.info('Status updated: Account is Inactive & Expired. Waiting for administrator activation.')
+        const reason = !res.profile.isActive && res.profile.isExpired
+          ? 'Account is Inactive & Expired.'
+          : !res.profile.isActive
+          ? 'Account is Inactive.'
+          : 'Subscription is Expired.'
+        toast.info(`Status updated: ${reason} Waiting for administrator activation.`)
       }
     } catch {
       toast.error('Unable to refresh status. Please try again.')
@@ -155,11 +160,25 @@ export default function OnboardingClient({
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Badge variant="destructive" className="bg-rose-100 text-rose-800 border-rose-200 text-xs rounded-md">
-              Status: {status === 'active' ? 'Active' : 'Inactive'}
+            <Badge
+              variant="outline"
+              className={
+                currentProfile?.isActive
+                  ? 'bg-emerald-50 text-emerald-800 border-emerald-200 text-xs rounded-md'
+                  : 'bg-rose-100 text-rose-800 border-rose-200 text-xs rounded-md'
+              }
+            >
+              Status: {currentProfile?.isActive ? 'Active' : 'Inactive'}
             </Badge>
-            <Badge variant="outline" className="bg-amber-50 text-amber-800 border-amber-200 text-xs rounded-md">
-              Subscription: Expired
+            <Badge
+              variant="outline"
+              className={
+                !currentProfile?.isExpired
+                  ? 'bg-emerald-50 text-emerald-800 border-emerald-200 text-xs rounded-md'
+                  : 'bg-amber-50 text-amber-800 border-amber-200 text-xs rounded-md'
+              }
+            >
+              Subscription: {currentProfile?.isExpired ? 'Expired' : 'Active'}
             </Badge>
           </div>
         </div>
@@ -221,14 +240,36 @@ export default function OnboardingClient({
           </div>
 
           {/* Expiry Date */}
-          <div className="flex items-start gap-3 p-3.5 rounded-md bg-rose-50/60 border border-rose-100">
-            <div className="p-2 bg-rose-100 text-rose-700 rounded-md shrink-0">
+          <div
+            className={`flex items-start gap-3 p-3.5 rounded-md border ${
+              currentProfile?.isExpired
+                ? 'bg-rose-50/60 border-rose-100'
+                : 'bg-emerald-50/60 border-emerald-100'
+            }`}
+          >
+            <div
+              className={`p-2 rounded-md shrink-0 ${
+                currentProfile?.isExpired
+                  ? 'bg-rose-100 text-rose-700'
+                  : 'bg-emerald-100 text-emerald-700'
+              }`}
+            >
               <CalendarX className="h-4 w-4" />
             </div>
             <div className="min-w-0">
-              <p className="text-[11px] font-medium text-rose-500 uppercase tracking-wider">Subscription Expiry</p>
-              <p className="text-sm font-medium text-rose-900 truncate mt-0.5">
-                {formatDate(expiryDate)} (Expired Yesterday)
+              <p
+                className={`text-[11px] font-medium uppercase tracking-wider ${
+                  currentProfile?.isExpired ? 'text-rose-500' : 'text-emerald-600'
+                }`}
+              >
+                Subscription Expiry
+              </p>
+              <p
+                className={`text-sm font-medium truncate mt-0.5 ${
+                  currentProfile?.isExpired ? 'text-rose-900' : 'text-emerald-900'
+                }`}
+              >
+                {formatDate(expiryDate)} ({currentProfile?.isExpired ? 'Expired' : 'Active'})
               </p>
             </div>
           </div>

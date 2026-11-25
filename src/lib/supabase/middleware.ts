@@ -62,33 +62,84 @@ export async function updateSession(request: NextRequest) {
     }
 
     // 2. Authenticated user: Check tenant status & expiry
-    let isActive =
-      user.user_metadata?.is_active === true ||
-      user.user_metadata?.status === 'active'
-
-    let rawExpiry =
-      user.user_metadata?.subscription_expires_at ||
-      user.user_metadata?.expiry_date
+    const meta = user.user_metadata || {}
+    let tenantRecord: any = null
 
     try {
-      const { data: tenant } = await supabase
-        .from('tenants')
-        .select('status, is_active, subscription_expires_at')
-        .maybeSingle()
+      if (meta.tenant_id) {
+        const { data: t } = await supabase
+          .from('tenants')
+          .select('id, status, is_active, subscription_expires_at, expiry_date')
+          .eq('id', meta.tenant_id)
+          .maybeSingle()
+        if (t) tenantRecord = t
+      }
 
-      if (tenant) {
-        isActive = tenant.is_active === true || tenant.status === 'active'
-        if (tenant.subscription_expires_at) {
-          rawExpiry = tenant.subscription_expires_at
-        }
+      if (!tenantRecord && user.email) {
+        const { data: t } = await supabase
+          .from('tenants')
+          .select('id, status, is_active, subscription_expires_at, expiry_date')
+          .ilike('email', user.email.trim())
+          .maybeSingle()
+        if (t) tenantRecord = t
+      }
+
+      if (!tenantRecord && meta.username) {
+        const { data: t } = await supabase
+          .from('tenants')
+          .select('id, status, is_active, subscription_expires_at, expiry_date')
+          .ilike('username', meta.username.trim())
+          .maybeSingle()
+        if (t) tenantRecord = t
       }
     } catch {
       // Use metadata if query fails
     }
 
+    const statusStr = String(tenantRecord?.status || meta.status || '').toLowerCase().trim()
+    const rawIsActive = tenantRecord?.is_active !== undefined ? tenantRecord.is_active : meta.is_active
+    const isStatusActive =
+      statusStr === 'active' ||
+      statusStr === 'approved' ||
+      statusStr === 'trial' ||
+      statusStr === 'enabled' ||
+      statusStr === 'valid' ||
+      statusStr === 'paid'
+
+    const isFlagActive =
+      rawIsActive === true ||
+      rawIsActive === 'true' ||
+      rawIsActive === 1 ||
+      rawIsActive === '1'
+
+    const isExplicitlyInactive =
+      rawIsActive === false ||
+      rawIsActive === 'false' ||
+      rawIsActive === 0 ||
+      rawIsActive === '0' ||
+      statusStr === 'inactive' ||
+      statusStr === 'suspended' ||
+      statusStr === 'blocked' ||
+      statusStr === 'cancelled' ||
+      statusStr === 'expired'
+
+    const isActive = isFlagActive || isStatusActive || (!isExplicitlyInactive && Boolean(statusStr))
+
+    const rawExpiry =
+      tenantRecord?.subscription_expires_at ||
+      tenantRecord?.expiry_date ||
+      meta.subscription_expires_at ||
+      meta.expiry_date
+
     let isExpired = true
     if (rawExpiry) {
-      const exp = new Date(rawExpiry)
+      const strExpiry = String(rawExpiry).trim()
+      let exp: Date
+      if (/^\d{4}-\d{2}-\d{2}$/.test(strExpiry)) {
+        exp = new Date(`${strExpiry}T23:59:59.999Z`)
+      } else {
+        exp = new Date(strExpiry)
+      }
       if (!isNaN(exp.getTime())) {
         isExpired = exp.getTime() < Date.now()
       }

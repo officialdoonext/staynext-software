@@ -11,6 +11,102 @@ import {
 } from './auth.service'
 
 /**
+ * Robust hierarchical lookup to find the tenant record for a user.
+ * Bypasses RLS using the admin client.
+ */
+async function lookupTenantRecord(
+  admin: any,
+  user: { id: string; email?: string | null; user_metadata?: any },
+  identifier?: string
+): Promise<any | null> {
+  const meta = user.user_metadata || {}
+
+  try {
+    // 1. Fetch via tenant_users mapping
+    if (user.id) {
+      const { data: mapping } = await admin
+        .from('tenant_users')
+        .select('tenant_id')
+        .eq('user_id', user.id)
+        .maybeSingle()
+
+      if (mapping?.tenant_id) {
+        const { data: tenant } = await admin
+          .from('tenants')
+          .select('*')
+          .eq('id', mapping.tenant_id)
+          .maybeSingle()
+
+        if (tenant) return tenant
+      }
+    }
+
+    // 2. Fetch via user_metadata tenant_id
+    if (meta.tenant_id) {
+      const { data: tenant } = await admin
+        .from('tenants')
+        .select('*')
+        .eq('id', meta.tenant_id)
+        .maybeSingle()
+
+      if (tenant) return tenant
+    }
+
+    // 3. Fallback search by email (case-insensitive)
+    const emailToSearch = user.email || (identifier && identifier.includes('@') ? identifier : null)
+    if (emailToSearch) {
+      const { data: tenant } = await admin
+        .from('tenants')
+        .select('*')
+        .ilike('email', emailToSearch.trim())
+        .maybeSingle()
+
+      if (tenant) return tenant
+    }
+
+    // 4. Fallback search by username (case-insensitive)
+    const usernameToSearch =
+      meta.username ||
+      (identifier && !identifier.includes('@') ? identifier : null) ||
+      (user.email ? user.email.split('@')[0] : null)
+    if (usernameToSearch) {
+      const { data: tenant } = await admin
+        .from('tenants')
+        .select('*')
+        .ilike('username', usernameToSearch.trim())
+        .maybeSingle()
+
+      if (tenant) return tenant
+    }
+
+    // 5. Fallback via property_users -> properties
+    if (user.id) {
+      const { data: propUser } = await admin
+        .from('property_users')
+        .select('property_id, properties(tenant_id)')
+        .eq('user_id', user.id)
+        .limit(1)
+        .maybeSingle()
+
+      const propTenantId = (propUser as any)?.properties?.tenant_id
+      if (propTenantId) {
+        const { data: tenant } = await admin
+          .from('tenants')
+          .select('*')
+          .eq('id', propTenantId)
+          .maybeSingle()
+
+        if (tenant) return tenant
+      }
+    }
+  } catch (err) {
+    console.warn('Error during lookupTenantRecord:', err)
+  }
+
+  return null
+}
+
+/**
  * Server-side tenant profile retrieval for /onboarding and dashboard layout.
  */
 export async function getServerTenantProfile(): Promise<TenantProfile | null> {
@@ -24,39 +120,7 @@ export async function getServerTenantProfile(): Promise<TenantProfile | null> {
   if (!user) return null
 
   const meta = user.user_metadata || {}
-
-  let tenantRecord: any = null
-  try {
-    // 1. Fetch via tenant_users mapping (using admin client to bypass RLS)
-    const { data: mapping } = await admin
-      .from('tenant_users')
-      .select('tenant_id')
-      .eq('user_id', user.id)
-      .maybeSingle()
-
-    if (mapping?.tenant_id) {
-      const { data: tenant } = await admin
-        .from('tenants')
-        .select('*')
-        .eq('id', mapping.tenant_id)
-        .maybeSingle()
-
-      tenantRecord = tenant
-    }
-
-    // 2. Fallback search by email
-    if (!tenantRecord && user.email) {
-      const { data: tenant } = await admin
-        .from('tenants')
-        .select('*')
-        .eq('email', user.email)
-        .maybeSingle()
-
-      tenantRecord = tenant
-    }
-  } catch (err) {
-    console.warn('Error reading tenant record:', err)
-  }
+  const tenantRecord = await lookupTenantRecord(admin, user)
 
   const propertyName =
     tenantRecord?.name || meta.property_name || 'My Hotel / Property'
@@ -72,15 +136,45 @@ export async function getServerTenantProfile(): Promise<TenantProfile | null> {
 
   const rawExpiry =
     tenantRecord?.subscription_expires_at ||
+    tenantRecord?.expiry_date ||
     meta.subscription_expires_at ||
     meta.expiry_date ||
     getYesterdayIso()
-  const expDate = new Date(rawExpiry)
-  const isExpired = !isNaN(expDate.getTime()) ? expDate.getTime() < Date.now() : true
 
-  const isActive = tenantRecord
-    ? tenantRecord.is_active === true || tenantRecord.status === 'active'
-    : meta.is_active === true || meta.status === 'active'
+  const access = checkTenantAccess({
+    is_active: tenantRecord?.is_active ?? meta.is_active,
+    status: tenantRecord?.status ?? meta.status,
+    subscription_expires_at: tenantRecord?.subscription_expires_at ?? meta.subscription_expires_at,
+    expiry_date: tenantRecord?.expiry_date ?? meta.expiry_date,
+  })
+
+  // Synchronize and self-heal tenant_users and auth user_metadata if tenant is found
+  if (tenantRecord?.id && user.id) {
+    try {
+      await admin.from('tenant_users').upsert(
+        {
+          tenant_id: tenantRecord.id,
+          user_id: user.id,
+          role: 'hotel_owner',
+          is_active: access.isActive,
+        },
+        { onConflict: 'tenant_id,user_id' }
+      )
+    } catch {}
+
+    try {
+      await admin.auth.admin.updateUserById(user.id, {
+        user_metadata: {
+          ...meta,
+          tenant_id: tenantRecord.id,
+          status: access.status,
+          is_active: access.isActive,
+          subscription_expires_at: access.expiryDate || rawExpiry,
+          expiry_date: access.expiryDate || rawExpiry,
+        },
+      })
+    } catch {}
+  }
 
   return {
     id: tenantRecord?.id,
@@ -90,10 +184,10 @@ export async function getServerTenantProfile(): Promise<TenantProfile | null> {
     email,
     city,
     address,
-    status: isActive ? 'active' : 'inactive',
-    isActive,
-    expiryDate: rawExpiry,
-    isExpired,
+    status: access.status,
+    isActive: access.isActive,
+    expiryDate: access.expiryDate || rawExpiry,
+    isExpired: access.isExpired,
     subscriptionPlan: tenantRecord?.subscription_plan || 'trial',
   }
 }
@@ -347,7 +441,7 @@ export async function signInTenantAction(identifier: string, password: string) {
       const { data: tenantData } = await admin
         .from('tenants')
         .select('email')
-        .eq('username', email)
+        .ilike('username', email)
         .maybeSingle()
 
       if (tenantData?.email) {
@@ -372,27 +466,56 @@ export async function signInTenantAction(identifier: string, password: string) {
     }
 
     const meta = authData.user.user_metadata || {}
-    let isActive = meta.is_active === true || meta.status === 'active'
-    let rawExpiry = meta.subscription_expires_at || meta.expiry_date
-
-    try {
-      const { data: tenant } = await supabase
-        .from('tenants')
-        .select('status, is_active, subscription_expires_at')
-        .maybeSingle()
-
-      if (tenant) {
-        isActive = tenant.is_active === true || tenant.status === 'active'
-        if (tenant.subscription_expires_at) {
-          rawExpiry = tenant.subscription_expires_at
-        }
-      }
-    } catch {}
+    const tenantRecord = await lookupTenantRecord(admin, authData.user, identifier)
 
     const access = checkTenantAccess({
-      is_active: isActive,
-      subscription_expires_at: rawExpiry,
+      is_active: tenantRecord?.is_active ?? meta.is_active,
+      status: tenantRecord?.status ?? meta.status,
+      subscription_expires_at: tenantRecord?.subscription_expires_at ?? meta.subscription_expires_at,
+      expiry_date: tenantRecord?.expiry_date ?? meta.expiry_date,
     })
+
+    // Synchronize tenant_users and auth user_metadata if tenant is found
+    if (tenantRecord?.id && authData.user.id) {
+      try {
+        await admin.from('tenant_users').upsert(
+          {
+            tenant_id: tenantRecord.id,
+            user_id: authData.user.id,
+            role: 'hotel_owner',
+            is_active: access.isActive,
+          },
+          { onConflict: 'tenant_id,user_id' }
+        )
+      } catch {}
+
+      try {
+        await admin.auth.admin.updateUserById(authData.user.id, {
+          user_metadata: {
+            ...meta,
+            tenant_id: tenantRecord.id,
+            status: access.status,
+            is_active: access.isActive,
+            subscription_expires_at: access.expiryDate,
+            expiry_date: access.expiryDate,
+          },
+        })
+      } catch {}
+
+      if (access.isActive) {
+        try {
+          await admin
+            .from('properties')
+            .update({ is_active: true })
+            .eq('tenant_id', tenantRecord.id)
+
+          await admin
+            .from('property_users')
+            .update({ is_active: true })
+            .eq('user_id', authData.user.id)
+        } catch {}
+      }
+    }
 
     return {
       success: true,
