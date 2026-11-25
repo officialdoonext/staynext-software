@@ -3,6 +3,8 @@ import { createClient } from "@/lib/supabase/server"
 import { getServerTenantProfile } from "@/services/auth.server"
 import DashboardShell from "@/components/layout/DashboardShell"
 
+export const dynamic = 'force-dynamic'
+
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()

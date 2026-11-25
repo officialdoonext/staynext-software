@@ -88,7 +88,8 @@ export async function getAuthenticatedTenantId(): Promise<string | null> {
     }
 
     return null
-  } catch (err) {
+  } catch (err: any) {
+    if (err?.digest === 'DYNAMIC_SERVER_USAGE') throw err
     console.error('getAuthenticatedTenantId error:', err)
     return null
   }
@@ -110,7 +111,8 @@ export async function getTenantPropertyIds(): Promise<string[]> {
 
     if (error || !props) return []
     return props.map((p: any) => p.id)
-  } catch (err) {
+  } catch (err: any) {
+    if (err?.digest === 'DYNAMIC_SERVER_USAGE') throw err
     console.error('getTenantPropertyIds error:', err)
     return []
   }
