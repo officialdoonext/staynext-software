@@ -22,7 +22,11 @@ import {
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
-import { playNotificationChime } from '@/lib/sound'
+import {
+  playNotificationChime,
+  startContinuousNotificationChime,
+  stopContinuousNotificationChime,
+} from '@/lib/sound'
 import {
   RequestNotification,
   getRecentRequestNotifications,
@@ -86,9 +90,7 @@ export default function NotificationPanel() {
         const incomingNew = data.filter((item) => !knownIdsRef.current.has(item.id))
         if (incomingNew.length > 0) {
           const newest = incomingNew[0]
-          // Play notification chime
-          playNotificationChime()
-          // Show immediate alert modal/card
+          // Show immediate alert modal/card (continuous sound is managed reactively by useEffect)
           setActiveAlert(newest)
           // Trigger bell wiggle animation
           setHasNewAlertAnimation(true)
@@ -108,7 +110,20 @@ export default function NotificationPanel() {
     }
   }, [])
 
-  // 3. Mark a notification as read and persist to localStorage ("on click on ok mark that as read dont show again")
+  // 3. Continuous sound alert: plays continuously until the user clicks OK, View, or dismisses
+  useEffect(() => {
+    if (activeAlert) {
+      startContinuousNotificationChime(1800)
+    } else {
+      stopContinuousNotificationChime()
+    }
+
+    return () => {
+      stopContinuousNotificationChime()
+    }
+  }, [activeAlert])
+
+  // 4. Mark a notification as read and persist to localStorage ("on click on ok mark that as read dont show again")
   const markAsRead = useCallback((id: string) => {
     setReadIds((prev) => {
       const updated = new Set(prev)
@@ -121,12 +136,19 @@ export default function NotificationPanel() {
       return updated
     })
 
-    // If active alert matches this notification, dismiss it immediately
-    setActiveAlert((curr) => (curr?.id === id ? null : curr))
+    // If active alert matches this notification, dismiss it and immediately silence continuous sound
+    setActiveAlert((curr) => {
+      if (curr?.id === id) {
+        stopContinuousNotificationChime()
+        return null
+      }
+      return curr
+    })
   }, [])
 
   // Mark all as read
   const markAllAsRead = useCallback(() => {
+    stopContinuousNotificationChime()
     const allIds = new Set([...Array.from(readIds), ...notifications.map((n) => n.id)])
     setReadIds(allIds)
     try {
@@ -137,7 +159,7 @@ export default function NotificationPanel() {
     setActiveAlert(null)
   }, [notifications, readIds])
 
-  // 4. Initial fetch and Realtime + Polling subscription
+  // 5. Initial fetch and Realtime + Polling subscription
   useEffect(() => {
     loadNotifications(true)
 
@@ -171,7 +193,6 @@ export default function NotificationPanel() {
     const handleCustomEvent = (e: Event) => {
       const detail = (e as CustomEvent).detail
       if (detail) {
-        playNotificationChime()
         setActiveAlert(detail)
         loadNotifications(false)
       }
@@ -228,7 +249,6 @@ export default function NotificationPanel() {
 
   // Trigger test simulation for user verification
   const handleTestChime = () => {
-    playNotificationChime()
     const testItem: RequestNotification = {
       id: `test_${Date.now()}`,
       rawId: `${Date.now()}`,
@@ -268,12 +288,19 @@ export default function NotificationPanel() {
                 <span className="text-[11px] font-bold tracking-wider uppercase text-[#5e2b9d]">
                   New Request Alert!
                 </span>
+                <span className="inline-flex items-center gap-1 text-[10px] text-amber-700 bg-amber-100/90 px-1.5 py-0.5 rounded-full font-medium animate-pulse border border-amber-200">
+                  <Volume2 className="h-3 w-3 text-amber-700 animate-bounce" />
+                  Ringing
+                </span>
               </div>
               <button
                 type="button"
-                onClick={() => setActiveAlert(null)}
+                onClick={() => {
+                  stopContinuousNotificationChime()
+                  setActiveAlert(null)
+                }}
                 className="text-gray-400 hover:text-gray-600 p-0.5 rounded-md cursor-pointer transition-colors"
-                title="Dismiss Alert"
+                title="Dismiss Alert & Silence Sound"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -328,6 +355,7 @@ export default function NotificationPanel() {
                 size="sm"
                 variant="outline"
                 onClick={() => {
+                  stopContinuousNotificationChime()
                   markAsRead(activeAlert.id)
                 }}
                 className="h-7 text-xs px-3 border-gray-300 text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer font-medium"
@@ -339,6 +367,7 @@ export default function NotificationPanel() {
               <Link
                 href={activeAlert.targetUrl}
                 onClick={() => {
+                  stopContinuousNotificationChime()
                   markAsRead(activeAlert.id)
                   setActiveAlert(null)
                 }}

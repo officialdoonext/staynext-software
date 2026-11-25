@@ -4,6 +4,9 @@
  */
 
 let sharedAudioCtx: AudioContext | null = null
+let masterGain: GainNode | null = null
+let continuousTimer: ReturnType<typeof setInterval> | null = null
+let isContinuousPlaying = false
 
 function getAudioContext(): AudioContext | null {
   if (typeof window === 'undefined') return null
@@ -12,9 +15,15 @@ function getAudioContext(): AudioContext | null {
     if (!AudioCtx) return null
     if (!sharedAudioCtx || sharedAudioCtx.state === 'closed') {
       sharedAudioCtx = new AudioCtx()
+      masterGain = null
     }
     if (sharedAudioCtx.state === 'suspended') {
       sharedAudioCtx.resume().catch(() => {})
+    }
+    if (!masterGain && sharedAudioCtx) {
+      masterGain = sharedAudioCtx.createGain()
+      masterGain.gain.setValueAtTime(1, sharedAudioCtx.currentTime)
+      masterGain.connect(sharedAudioCtx.destination)
     }
     return sharedAudioCtx
   } catch (err) {
@@ -48,6 +57,14 @@ export function playNotificationChime(): void {
   if (!ctx) return
 
   try {
+    if (ctx.state === 'suspended') {
+      ctx.resume().catch(() => {})
+    }
+
+    if (masterGain) {
+      masterGain.gain.setValueAtTime(1, ctx.currentTime)
+    }
+
     const now = ctx.currentTime
     // Chime notes: D5 (587.33Hz), F#5 (739.99Hz), A5 (880.00Hz)
     const notes = [
@@ -55,6 +72,8 @@ export function playNotificationChime(): void {
       { freq: 739.99, start: now + 0.12, duration: 0.45, gain: 0.28 },
       { freq: 880.0, start: now + 0.24, duration: 0.8, gain: 0.35 },
     ]
+
+    const destination = masterGain || ctx.destination
 
     notes.forEach(({ freq, start, duration, gain: peakGain }) => {
       // Primary sine oscillator
@@ -79,10 +98,10 @@ export function playNotificationChime(): void {
       overtoneGain.gain.exponentialRampToValueAtTime(0.0001, start + duration * 0.6)
 
       osc.connect(gain)
-      gain.connect(ctx.destination)
+      gain.connect(destination)
 
       overtoneOsc.connect(overtoneGain)
-      overtoneGain.connect(ctx.destination)
+      overtoneGain.connect(destination)
 
       osc.start(start)
       osc.stop(start + duration)
@@ -93,4 +112,69 @@ export function playNotificationChime(): void {
   } catch (err) {
     console.warn('Failed to play notification chime:', err)
   }
+}
+
+/**
+ * Continuously play the notification chime on repeat until explicitly stopped.
+ * Repeats every intervalMs (default 1800ms) to ensure continuous audible alerting.
+ */
+export function startContinuousNotificationChime(intervalMs: number = 1800): void {
+  if (typeof window === 'undefined') return
+
+  const ctx = getAudioContext()
+  if (ctx && ctx.state === 'suspended') {
+    ctx.resume().catch(() => {})
+  }
+
+  // Restore master gain volume
+  if (ctx && masterGain) {
+    try {
+      masterGain.gain.setValueAtTime(1, ctx.currentTime)
+    } catch {}
+  }
+
+  if (isContinuousPlaying) return
+  isContinuousPlaying = true
+
+  // Play first chime immediately
+  playNotificationChime()
+
+  if (continuousTimer) {
+    clearInterval(continuousTimer)
+    continuousTimer = null
+  }
+
+  continuousTimer = setInterval(() => {
+    if (!isContinuousPlaying) {
+      if (continuousTimer) clearInterval(continuousTimer)
+      continuousTimer = null
+      return
+    }
+    playNotificationChime()
+  }, intervalMs)
+}
+
+/**
+ * Immediately stop the continuous notification chime and silence any active bell notes.
+ */
+export function stopContinuousNotificationChime(): void {
+  isContinuousPlaying = false
+  if (continuousTimer) {
+    clearInterval(continuousTimer)
+    continuousTimer = null
+  }
+
+  // Instantly silence master gain node to cut off any ringing notes
+  if (sharedAudioCtx && masterGain) {
+    try {
+      masterGain.gain.setValueAtTime(0, sharedAudioCtx.currentTime)
+    } catch {}
+  }
+}
+
+/**
+ * Check if continuous notification chime is currently active.
+ */
+export function isContinuousChimePlaying(): boolean {
+  return isContinuousPlaying
 }
