@@ -1,7 +1,7 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
-import { Building2, Check, ChevronsUpDown } from 'lucide-react'
+import React, { useState, useEffect, useMemo } from 'react'
+import { Building2, Check, ChevronsUpDown, Search } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,11 +21,18 @@ interface Property {
 
 export default function PropertySelector() {
   const [properties, setProperties] = useState<Property[]>([])
+  const [searchQuery, setSearchQuery] = useState('')
   const [selected, setSelected] = useState<Property>({
     id: 'primary',
     name: 'Loading Property...',
     type: 'Hotel',
   })
+
+  const filteredProperties = useMemo(() => {
+    if (!searchQuery.trim()) return properties
+    const q = searchQuery.toLowerCase().trim()
+    return properties.filter((p) => p.name.toLowerCase().includes(q) || p.type.toLowerCase().includes(q))
+  }, [properties, searchQuery])
 
   useEffect(() => {
     async function loadProperties() {
@@ -87,33 +94,57 @@ export default function PropertySelector() {
         </button>
       </DropdownMenuTrigger>
       {properties.length > 1 && (
-        <DropdownMenuContent align="start" className="w-64 rounded-md">
-          <DropdownMenuLabel className="font-medium">Select Active Property</DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          {properties.map((property) => (
-            <DropdownMenuItem
-              key={property.id}
-              onClick={() => setSelected(property)}
-              className="flex items-center justify-between py-2 cursor-pointer rounded-sm"
-            >
-              <div className="flex flex-col">
-                <span
-                  className={cn(
-                    'text-xs font-medium',
-                    selected.id === property.id
-                      ? 'text-[#5e2b9d]'
-                      : 'text-gray-800'
-                  )}
+        <DropdownMenuContent align="start" className="w-68 rounded-md p-1.5">
+          <DropdownMenuLabel className="font-semibold text-xs px-2 py-1 text-gray-900">
+            Select Active Property
+          </DropdownMenuLabel>
+          <div className="px-1.5 py-1">
+            <div className="relative flex items-center">
+              <Search className="absolute left-2.5 h-3.5 w-3.5 text-gray-400 pointer-events-none" />
+              <input
+                type="text"
+                placeholder="Search properties..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onClick={(e) => e.stopPropagation()}
+                onKeyDown={(e) => e.stopPropagation()}
+                className="w-full pl-8 pr-2 py-1 text-xs border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] placeholder:text-gray-400"
+              />
+            </div>
+          </div>
+          <DropdownMenuSeparator className="my-1" />
+          <div className="max-h-56 overflow-y-auto">
+            {filteredProperties.length > 0 ? (
+              filteredProperties.map((property) => (
+                <DropdownMenuItem
+                  key={property.id}
+                  onClick={() => setSelected(property)}
+                  className="flex items-center justify-between py-2 px-2.5 cursor-pointer rounded-md hover:bg-gray-50"
                 >
-                  {property.name}
-                </span>
-                <span className="text-[10px] text-gray-400 font-normal">{property.type}</span>
+                  <div className="flex flex-col">
+                    <span
+                      className={cn(
+                        'text-xs font-medium',
+                        selected.id === property.id
+                          ? 'text-[#5e2b9d] font-semibold'
+                          : 'text-gray-800'
+                      )}
+                    >
+                      {property.name}
+                    </span>
+                    <span className="text-[10px] text-gray-400 font-normal">{property.type}</span>
+                  </div>
+                  {selected.id === property.id && (
+                    <Check className="h-3.5 w-3.5 text-[#5e2b9d] shrink-0" />
+                  )}
+                </DropdownMenuItem>
+              ))
+            ) : (
+              <div className="py-4 text-center text-xs text-gray-400">
+                No matching properties
               </div>
-              {selected.id === property.id && (
-                <Check className="h-3.5 w-3.5 text-[#5e2b9d] shrink-0" />
-              )}
-            </DropdownMenuItem>
-          ))}
+            )}
+          </div>
         </DropdownMenuContent>
       )}
     </DropdownMenu>

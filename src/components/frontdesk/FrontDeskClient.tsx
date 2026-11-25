@@ -39,6 +39,9 @@ import {
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+import { SearchableSelect } from '@/components/ui/searchable-select'
+import { CustomDatePicker } from '@/components/ui/custom-date-picker'
+import { CustomTimePicker } from '@/components/ui/custom-time-picker'
 import { toast } from 'sonner'
 import {
   checkInReservation,
@@ -776,17 +779,19 @@ export default function FrontDeskClient({
         <div className="flex flex-wrap items-center gap-2.5">
           {/* Property Selector */}
           {properties.length > 1 && (
-            <select
-              value={selectedPropertyId}
-              onChange={(e) => setSelectedPropertyId(e.target.value)}
-              className="px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-            >
-              {properties.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
+            <div className="w-52">
+              <SearchableSelect
+                value={selectedPropertyId}
+                onChange={(val) => setSelectedPropertyId(val)}
+                placeholder="Switch Property..."
+              >
+                {properties.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </SearchableSelect>
+            </div>
           )}
 
           {/* View Mode Switcher */}
@@ -1747,19 +1752,19 @@ export default function FrontDeskClient({
                 <label className="block text-xs font-medium text-gray-700 mb-1">
                   Assign Room Unit *
                 </label>
-                <select
+                <SearchableSelect
                   value={selectedRoomId}
-                  onChange={(e) => setSelectedRoomId(e.target.value)}
-                  className="w-full px-2.5 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
+                  onChange={setSelectedRoomId}
+                  placeholder="Choose an available room..."
                 >
                   {availableRooms
                     .filter((r) => r.status === 'available')
                     .map((r) => (
                       <option key={r.id} value={r.id}>
-                        Room {r.room_number} ({r.floor_name}) - Available
+                        Room {r.room_number} ({r.floor_name || 'Standard'}) - Available
                       </option>
                     ))}
-                </select>
+                </SearchableSelect>
               </div>
 
               <div>
@@ -1837,12 +1842,11 @@ export default function FrontDeskClient({
                 <label className="block text-xs font-medium text-gray-700 mb-1">
                   New Departure Date *
                 </label>
-                <input
-                  type="date"
+                <CustomDatePicker
                   value={newCheckoutDate}
-                  min={extendStayItem.currentCheckOutDate}
-                  onChange={(e) => setNewCheckoutDate(e.target.value)}
-                  className="w-full px-2.5 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
+                  minDate={extendStayItem.currentCheckOutDate}
+                  onChange={setNewCheckoutDate}
+                  placeholder="Select new checkout date..."
                 />
               </div>
 
@@ -1850,17 +1854,11 @@ export default function FrontDeskClient({
                 <label className="block text-xs font-medium text-gray-700 mb-1">
                   New Departure Time *
                 </label>
-                <select
+                <CustomTimePicker
                   value={newCheckoutTime}
-                  onChange={(e) => setNewCheckoutTime(e.target.value)}
-                  className="w-full px-2.5 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-                >
-                  <option value="11:00">11:00 AM (Standard Checkout)</option>
-                  <option value="12:00">12:00 PM (Noon Late Checkout)</option>
-                  <option value="14:00">02:00 PM (Late Checkout)</option>
-                  <option value="18:00">06:00 PM (Half-Day Evening Extension)</option>
-                  <option value="20:00">08:00 PM (Night Checkout)</option>
-                </select>
+                  onChange={setNewCheckoutTime}
+                  placeholder="Select checkout time..."
+                />
               </div>
 
               <div>
@@ -2002,19 +2000,19 @@ export default function FrontDeskClient({
                 <label className="block text-xs font-medium text-gray-700 mb-1">
                   Select New Available Room *
                 </label>
-                <select
+                <SearchableSelect
                   value={newRoomId}
-                  onChange={(e) => setNewRoomId(e.target.value)}
-                  className="w-full px-2.5 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
+                  onChange={setNewRoomId}
+                  placeholder="Select new available room..."
                 >
                   {availableRooms
                     .filter((r) => r.status === 'available' && r.id !== changeRoomGuest.roomId)
                     .map((r) => (
                       <option key={r.id} value={r.id}>
-                        Room {r.room_number} ({r.floor_name}) - Available
+                        Room {r.room_number} ({r.floor_name || 'Standard'}) - Available
                       </option>
                     ))}
-                </select>
+                </SearchableSelect>
               </div>
             </div>
 
@@ -2084,17 +2082,17 @@ export default function FrontDeskClient({
                 <label className="block text-xs font-medium text-gray-700 mb-1">
                   Payment Mode *
                 </label>
-                <select
+                <SearchableSelect
                   value={collectMode}
-                  onChange={(e) => setCollectMode(e.target.value)}
-                  className="w-full px-2.5 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
+                  onChange={setCollectMode}
+                  placeholder="Select payment mode..."
                 >
                   <option value="UPI">UPI (QR / Google Pay / PhonePe)</option>
                   <option value="Cash">Cash (Front Desk Drawer)</option>
                   <option value="Credit Card">Credit Card (POS Swipe)</option>
                   <option value="Debit Card">Debit Card</option>
                   <option value="Bank Transfer">Bank Transfer (NEFT/RTGS)</option>
-                </select>
+                </SearchableSelect>
               </div>
 
               <div>

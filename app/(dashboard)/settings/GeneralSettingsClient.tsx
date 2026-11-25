@@ -24,6 +24,8 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+import { SearchableSelect } from '@/components/ui/searchable-select'
+import { CustomTimePicker } from '@/components/ui/custom-time-picker'
 import { PropertySettingsData, updatePropertySettings, getPropertySettings } from '@/services/settings.service'
 import { toast } from 'sonner'
 
@@ -150,17 +152,19 @@ export function GeneralSettingsClient({ initialProperty, properties = [] }: Gene
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {properties && properties.length > 1 && (
-            <select
-              value={selectedPropertyId}
-              onChange={(e) => handlePropertyChange(e.target.value)}
-              className="text-xs border border-gray-200 rounded-md px-2.5 py-1.5 bg-white font-medium text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-            >
-              {properties.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
+            <div className="w-56">
+              <SearchableSelect
+                value={selectedPropertyId}
+                onChange={handlePropertyChange}
+                placeholder="Switch Property..."
+              >
+                {properties.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </SearchableSelect>
+            </div>
           )}
           {property?.tenant && (
             <>
@@ -293,17 +297,17 @@ export function GeneralSettingsClient({ initialProperty, properties = [] }: Gene
                 <label className="block text-xs font-medium text-gray-700 mb-1">
                   Property Classification
                 </label>
-                <select
+                <SearchableSelect
                   value={propertyType}
-                  onChange={(e) => setPropertyType(e.target.value)}
-                  className="w-full h-9 px-3 border border-gray-300 rounded-md text-xs bg-white focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
+                  onChange={setPropertyType}
+                  placeholder="Select classification..."
                 >
                   <option value="hotel">Boutique / City Hotel</option>
                   <option value="resort">Luxury Beach / Mountain Resort</option>
                   <option value="villa">Private Villa / Luxury Homestay</option>
                   <option value="lodge">Eco Lodge / Safari Retreat</option>
                   <option value="service_apartment">Serviced Apartments</option>
-                </select>
+                </SearchableSelect>
               </div>
 
               <div>
@@ -410,45 +414,44 @@ export function GeneralSettingsClient({ initialProperty, properties = [] }: Gene
                 <label className="block text-xs font-medium text-gray-700 mb-1">
                   Base Accounting Currency
                 </label>
-                <select
+                <SearchableSelect
                   value={currency}
-                  onChange={(e) => setCurrency(e.target.value)}
-                  className="w-full h-9 px-3 border border-gray-300 rounded-md text-xs bg-white focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
+                  onChange={setCurrency}
+                  placeholder="Select currency..."
                 >
                   <option value="INR">INR (₹) - Indian Rupee</option>
                   <option value="USD">USD ($) - US Dollar</option>
                   <option value="EUR">EUR (€) - Euro</option>
                   <option value="GBP">GBP (£) - British Pound</option>
                   <option value="AED">AED (د.إ) - UAE Dirham</option>
-                </select>
+                </SearchableSelect>
               </div>
 
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">
                   Timezone
                 </label>
-                <select
+                <SearchableSelect
                   value={timezone}
-                  onChange={(e) => setTimezone(e.target.value)}
-                  className="w-full h-9 px-3 border border-gray-300 rounded-md text-xs bg-white focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
+                  onChange={setTimezone}
+                  placeholder="Select timezone..."
                 >
                   <option value="Asia/Kolkata">Asia/Kolkata (IST +5:30)</option>
                   <option value="Asia/Dubai">Asia/Dubai (GST +4:00)</option>
                   <option value="UTC">UTC (Universal Coordinated)</option>
                   <option value="America/New_York">America/New_York (EST -5:00)</option>
                   <option value="Europe/London">Europe/London (GMT +0:00)</option>
-                </select>
+                </SearchableSelect>
               </div>
 
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">
                   Standard Check-in Time
                 </label>
-                <Input
-                  type="time"
+                <CustomTimePicker
                   value={checkInTime}
-                  onChange={(e) => setCheckInTime(e.target.value)}
-                  className="text-xs rounded-md"
+                  onChange={setCheckInTime}
+                  placeholder="14:00"
                 />
               </div>
 
@@ -456,11 +459,10 @@ export function GeneralSettingsClient({ initialProperty, properties = [] }: Gene
                 <label className="block text-xs font-medium text-gray-700 mb-1">
                   Standard Check-out Time
                 </label>
-                <Input
-                  type="time"
+                <CustomTimePicker
                   value={checkOutTime}
-                  onChange={(e) => setCheckOutTime(e.target.value)}
-                  className="text-xs rounded-md"
+                  onChange={setCheckOutTime}
+                  placeholder="11:00"
                 />
               </div>
             </div>
@@ -556,11 +558,10 @@ export function GeneralSettingsClient({ initialProperty, properties = [] }: Gene
                 <label className="block text-xs font-medium text-gray-700 mb-1">
                   Night Audit Automated Closing Time
                 </label>
-                <Input
-                  type="time"
+                <CustomTimePicker
                   value={nightAuditTime}
-                  onChange={(e) => setNightAuditTime(e.target.value)}
-                  className="text-xs rounded-md font-mono"
+                  onChange={setNightAuditTime}
+                  placeholder="02:00"
                 />
                 <p className="text-[10px] text-gray-400 mt-1">Daily room charge posting &amp; day close</p>
               </div>

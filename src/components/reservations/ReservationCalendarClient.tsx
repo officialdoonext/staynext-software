@@ -32,6 +32,8 @@ import { RoomItem } from '@/services/room.service'
 import { ReservationDetail, assignRoomToReservation } from '@/services/reservation.service'
 import { PropertyItem } from '@/services/property.service'
 import { formatDate, formatCurrency, formatTimeString } from '@/lib/utils'
+import { SearchableSelect } from '@/components/ui/searchable-select'
+import { CustomDatePicker } from '@/components/ui/custom-date-picker'
 
 interface ReservationCalendarClientProps {
   property: PropertyItem
@@ -295,15 +297,17 @@ export default function ReservationCalendarClient({
 
         <div className="flex items-center gap-2">
           {properties.length > 1 && (
-            <select
-              value={selectedPropertyId}
-              onChange={(e) => handlePropertyChange(e.target.value)}
-              className="px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-            >
-              {properties.map((p) => (
-                <option key={p.id} value={p.id}>{p.name}</option>
-              ))}
-            </select>
+            <div className="w-52">
+              <SearchableSelect
+                value={selectedPropertyId}
+                onChange={handlePropertyChange}
+                placeholder="Switch Property..."
+              >
+                {properties.map((p) => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
+              </SearchableSelect>
+            </div>
           )}
 
           <Link href="/reservations/new">
@@ -349,13 +353,15 @@ export default function ReservationCalendarClient({
           </Button>
 
           {/* Jump to specific date */}
-          <div className="flex items-center gap-1.5 ml-1">
-            <span className="text-xs text-gray-500">Jump to:</span>
-            <input
-              type="date"
+          <div className="flex items-center gap-1.5 ml-1 w-44">
+            <span className="text-xs text-gray-500 shrink-0">Jump:</span>
+            <CustomDatePicker
               value={toDateString(startDate)}
-              onChange={handleDateChange}
-              className="h-8 px-2 text-xs border border-gray-200 rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
+              onChange={(val) => {
+                if (val) setStartDate(fromDateString(val))
+              }}
+              placeholder="Jump to date..."
+              showShortcuts={false}
             />
           </div>
 
@@ -812,10 +818,10 @@ export default function ReservationCalendarClient({
                 <label className="block text-xs font-medium text-gray-700 mb-1">
                   Select Room to Assign:
                 </label>
-                <select
+                <SearchableSelect
                   value={selectedRoomId}
-                  onChange={(e) => setSelectedRoomId(e.target.value)}
-                  className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
+                  onChange={setSelectedRoomId}
+                  placeholder="Choose an available room..."
                 >
                   <option value="">-- Choose an Available Room --</option>
                   {rooms
@@ -825,7 +831,7 @@ export default function ReservationCalendarClient({
                         Room {r.room_number} ({r.room_type_name}) - Current: {r.status}
                       </option>
                     ))}
-                </select>
+                </SearchableSelect>
               </div>
 
               {assignError && (

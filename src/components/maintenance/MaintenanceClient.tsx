@@ -24,6 +24,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+import { SearchableSelect } from '@/components/ui/searchable-select'
 import { MaintenanceItem, updateMaintenanceStatus } from '@/services/maintenance.service'
 import { PropertyItem } from '@/services/property.service'
 import { formatCurrency, formatDateTime } from '@/lib/utils'
@@ -162,16 +163,18 @@ export default function MaintenanceClient({
 
         <div className="flex items-center gap-2 flex-wrap">
           {properties.length > 1 && (
-            <select
-              value={selectedPropertyId}
-              onChange={(e) => setSelectedPropertyId(e.target.value)}
-              className="px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-            >
-              <option value="all">All Properties ({properties.length})</option>
-              {properties.map((p) => (
-                <option key={p.id} value={p.id}>{p.name}</option>
-              ))}
-            </select>
+            <div className="w-56">
+              <SearchableSelect
+                value={selectedPropertyId}
+                onChange={setSelectedPropertyId}
+                placeholder="All Properties..."
+              >
+                <option value="all">All Properties ({properties.length})</option>
+                {properties.map((p) => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
+              </SearchableSelect>
+            </div>
           )}
 
           <Link href="/maintenance/types">
@@ -284,40 +287,44 @@ export default function MaintenanceClient({
         </div>
 
         <div>
-          <select
+          <SearchableSelect
             value={priorityFilter}
-            onChange={(e) => setPriorityFilter(e.target.value)}
-            className="w-full px-3 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
+            onChange={setPriorityFilter}
+            placeholder="All Priorities"
           >
             <option value="all">All Priorities</option>
             <option value="urgent">Urgent Priority</option>
             <option value="high">High Priority</option>
             <option value="medium">Medium Priority</option>
             <option value="low">Low Priority</option>
-          </select>
+          </SearchableSelect>
         </div>
 
         <div className="flex gap-2">
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="w-1/2 px-2 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-          >
-            <option value="all">All Statuses</option>
-            <option value="open">Open ({openTicketsCount})</option>
-            <option value="in_progress">In Progress ({inProgressTicketsCount})</option>
-            <option value="resolved">Resolved ({resolvedTicketsCount})</option>
-          </select>
+          <div className="w-1/2">
+            <SearchableSelect
+              value={statusFilter}
+              onChange={setStatusFilter}
+              placeholder="All Statuses"
+            >
+              <option value="all">All Statuses</option>
+              <option value="open">Open ({openTicketsCount})</option>
+              <option value="in_progress">In Progress ({inProgressTicketsCount})</option>
+              <option value="resolved">Resolved ({resolvedTicketsCount})</option>
+            </SearchableSelect>
+          </div>
 
-          <select
-            value={sourceFilter}
-            onChange={(e) => setSourceFilter(e.target.value)}
-            className="w-1/2 px-2 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-          >
-            <option value="all">All Sources</option>
-            <option value="room_qr">Room QR</option>
-            <option value="staff">Staff</option>
-          </select>
+          <div className="w-1/2">
+            <SearchableSelect
+              value={sourceFilter}
+              onChange={setSourceFilter}
+              placeholder="All Sources"
+            >
+              <option value="all">All Sources</option>
+              <option value="room_qr">Room QR</option>
+              <option value="staff">Staff</option>
+            </SearchableSelect>
+          </div>
         </div>
       </div>
 

@@ -67,33 +67,15 @@ export default function Header({
                 ? "text-gray-500 hover:text-gray-900 hover:bg-gray-100 border-transparent"
                 : "text-[#5e2b9d] bg-[#f7f2fd] border-[#dfcef6] hover:bg-[#eee4fa]"
             )}
-            title={sidebarOpen ? "Collapse Sidebar" : "Expand Sidebar"}
+            title={sidebarOpen ? "Collapse Sidebar to Icons" : "Expand Full Sidebar"}
             aria-label={sidebarOpen ? "Collapse Sidebar" : "Expand Sidebar"}
           >
             {sidebarOpen ? (
               <PanelLeftClose className="h-4 w-4" />
             ) : (
-              <>
-                <PanelLeftOpen className="h-4 w-4 text-[#5e2b9d]" />
-                <span className="text-xs font-medium">Expand Menu</span>
-              </>
+              <PanelLeftOpen className="h-4 w-4 text-[#5e2b9d]" />
             )}
           </button>
-
-          {/* Brand header when sidebar is collapsed */}
-          {!sidebarOpen && (
-            <Link
-              href="/dashboard"
-              className="hidden md:flex items-center gap-2 pl-2 border-l border-gray-200 cursor-pointer"
-            >
-              <div className="flex h-7 w-7 items-center justify-center rounded-md bg-[#5e2b9d] text-white shadow-xs">
-                <Hotel className="h-4 w-4" />
-              </div>
-              <span className="text-sm font-medium tracking-tight text-gray-900 leading-none">
-                STAYNEXT
-              </span>
-            </Link>
-          )}
 
           {/* Breadcrumbs */}
           <nav className="hidden sm:flex items-center gap-1.5 text-xs text-gray-500 font-medium truncate ml-1">

@@ -32,6 +32,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { formatCurrency, formatDateTime } from '@/lib/utils'
+import { SearchableSelect } from '@/components/ui/searchable-select'
 import {
   FoodRequestRecord,
   updateFoodRequestStatus,
@@ -262,17 +263,19 @@ export function FoodRequestsClient({ initialRequests, propertyId, properties = [
 
         <div className="flex flex-wrap items-center gap-2">
           {properties && properties.length > 1 && (
-            <select
-              value={currentPropertyId}
-              onChange={(e) => handlePropertyChange(e.target.value)}
-              className="text-xs border border-gray-200 rounded-md px-2.5 py-2 bg-white font-medium text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-            >
-              {properties.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
+            <div className="w-56">
+              <SearchableSelect
+                value={currentPropertyId}
+                onChange={handlePropertyChange}
+                placeholder="Switch Property..."
+              >
+                {properties.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </SearchableSelect>
+            </div>
           )}
 
           <Link href="/restaurant/menu">

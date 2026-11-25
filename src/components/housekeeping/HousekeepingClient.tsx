@@ -25,6 +25,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+import { SearchableSelect } from '@/components/ui/searchable-select'
 import {
   HousekeepingTaskItem,
   updateHousekeepingTaskStatus,
@@ -237,16 +238,18 @@ export default function HousekeepingClient({
 
         <div className="flex items-center gap-2 flex-wrap">
           {properties.length > 1 && (
-            <select
-              value={selectedPropertyId}
-              onChange={(e) => setSelectedPropertyId(e.target.value)}
-              className="px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-            >
-              <option value="all">All Properties ({properties.length})</option>
-              {properties.map((p) => (
-                <option key={p.id} value={p.id}>{p.name}</option>
-              ))}
-            </select>
+            <div className="w-56">
+              <SearchableSelect
+                value={selectedPropertyId}
+                onChange={setSelectedPropertyId}
+                placeholder="All Properties..."
+              >
+                <option value="all">All Properties ({properties.length})</option>
+                {properties.map((p) => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
+              </SearchableSelect>
+            </div>
           )}
 
           <Link href="/housekeeping/types">
@@ -402,40 +405,44 @@ export default function HousekeepingClient({
             </div>
 
             <div>
-              <select
+              <SearchableSelect
                 value={taskStatusFilter}
-                onChange={(e) => setTaskStatusFilter(e.target.value)}
-                className="w-full px-3 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
+                onChange={setTaskStatusFilter}
+                placeholder="All Request Statuses"
               >
                 <option value="all">All Request Statuses</option>
                 <option value="pending">Pending ({pendingTasksCount})</option>
                 <option value="in_progress">Cleaning in Progress ({inProgressTasksCount})</option>
                 <option value="completed">Completed / Inspected ({completedTasksCount})</option>
-              </select>
+              </SearchableSelect>
             </div>
 
             <div className="flex gap-2">
-              <select
-                value={taskPriorityFilter}
-                onChange={(e) => setTaskPriorityFilter(e.target.value)}
-                className="w-1/2 px-2 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-              >
-                <option value="all">All Priorities</option>
-                <option value="urgent">Urgent</option>
-                <option value="high">High</option>
-                <option value="medium">Medium</option>
-                <option value="low">Low</option>
-              </select>
+              <div className="w-1/2">
+                <SearchableSelect
+                  value={taskPriorityFilter}
+                  onChange={setTaskPriorityFilter}
+                  placeholder="All Priorities"
+                >
+                  <option value="all">All Priorities</option>
+                  <option value="urgent">Urgent</option>
+                  <option value="high">High</option>
+                  <option value="medium">Medium</option>
+                  <option value="low">Low</option>
+                </SearchableSelect>
+              </div>
 
-              <select
-                value={taskSourceFilter}
-                onChange={(e) => setTaskSourceFilter(e.target.value)}
-                className="w-1/2 px-2 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-              >
-                <option value="all">All Sources</option>
-                <option value="room_qr">Room QR</option>
-                <option value="staff">Staff</option>
-              </select>
+              <div className="w-1/2">
+                <SearchableSelect
+                  value={taskSourceFilter}
+                  onChange={setTaskSourceFilter}
+                  placeholder="All Sources"
+                >
+                  <option value="all">All Sources</option>
+                  <option value="room_qr">Room QR</option>
+                  <option value="staff">Staff</option>
+                </SearchableSelect>
+              </div>
             </div>
           </div>
 

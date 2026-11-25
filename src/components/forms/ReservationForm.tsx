@@ -40,6 +40,9 @@ import { createReservation, AccompanyingGuestItem } from '@/services/reservation
 import { RoomItem, RoomTypeItem } from '@/services/room.service'
 import { PropertyItem } from '@/services/property.service'
 import { formatCurrency, formatDate, formatTimeString } from '@/lib/utils'
+import { SearchableSelect } from '@/components/ui/searchable-select'
+import { CustomDatePicker } from '@/components/ui/custom-date-picker'
+import { CustomTimePicker } from '@/components/ui/custom-time-picker'
 
 interface ReservationFormProps {
   property: PropertyItem
@@ -262,6 +265,10 @@ export default function ReservationForm({
 
   // Accompanying Guests List
   const [accompanyingGuests, setAccompanyingGuests] = useState<AccompanyingGuestItem[]>([])
+
+  const setField = (field: string, val: any) => {
+    setFormData((prev) => ({ ...prev, [field]: val }))
+  }
 
   // Calculate age from date of birth
   const handleDobChange = (dobStr: string) => {
@@ -626,15 +633,17 @@ export default function ReservationForm({
 
         <div className="flex items-center gap-2">
           {properties.length > 1 && (
-            <select
-              value={selectedPropertyId}
-              onChange={(e) => setSelectedPropertyId(e.target.value)}
-              className="px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-            >
-              {properties.map((p) => (
-                <option key={p.id} value={p.id}>{p.name}</option>
-              ))}
-            </select>
+            <div className="w-52">
+              <SearchableSelect
+                value={selectedPropertyId}
+                onChange={setSelectedPropertyId}
+                placeholder="Switch Property..."
+              >
+                {properties.map((p) => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
+              </SearchableSelect>
+            </div>
           )}
 
           <div className="flex items-center gap-2 bg-[#f7f2fd] border border-[#dfcef6] px-3 py-1 rounded-md text-xs text-[#5e2b9d]">
@@ -1164,44 +1173,41 @@ export default function ReservationForm({
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div>
                       <label className="block text-gray-700 font-medium mb-1">Booking Type *</label>
-                      <select
-                        name="booking_type"
+                      <SearchableSelect
                         value={formData.booking_type}
-                        onChange={handleChange}
-                        className="w-full px-3 py-2 bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
+                        onChange={(val) => setField('booking_type', val)}
+                        placeholder="Select booking type..."
                       >
                         {BOOKING_TYPES.map((bt) => (
                           <option key={bt} value={bt}>{bt}</option>
                         ))}
-                      </select>
+                      </SearchableSelect>
                     </div>
 
                     <div>
                       <label className="block text-gray-700 font-medium mb-1">Booking Source *</label>
-                      <select
-                        name="booking_source"
+                      <SearchableSelect
                         value={formData.booking_source}
-                        onChange={handleChange}
-                        className="w-full px-3 py-2 bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
+                        onChange={(val) => setField('booking_source', val)}
+                        placeholder="Select booking source..."
                       >
                         {BOOKING_SOURCES.map((bs) => (
                           <option key={bs} value={bs}>{bs}</option>
                         ))}
-                      </select>
+                      </SearchableSelect>
                     </div>
 
                     <div>
                       <label className="block text-gray-700 font-medium mb-1">Purpose of Visit</label>
-                      <select
-                        name="purpose_of_visit"
+                      <SearchableSelect
                         value={formData.purpose_of_visit}
-                        onChange={handleChange}
-                        className="w-full px-3 py-2 bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
+                        onChange={(val) => setField('purpose_of_visit', val)}
+                        placeholder="Select purpose..."
                       >
                         {PURPOSE_OPTIONS.map((p) => (
                           <option key={p} value={p}>{p}</option>
                         ))}
-                      </select>
+                      </SearchableSelect>
                     </div>
                   </div>
 
@@ -1215,19 +1221,15 @@ export default function ReservationForm({
                           <span>Check-in Date &amp; Timing *</span>
                         </label>
                         <div className="grid grid-cols-2 gap-2">
-                          <input
-                            type="date"
-                            name="check_in_date"
+                          <CustomDatePicker
                             value={formData.check_in_date}
-                            onChange={handleChange}
-                            className="w-full px-3 py-2 bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
+                            onChange={(val) => setField('check_in_date', val)}
+                            placeholder="Check-in Date"
                           />
-                          <input
-                            type="time"
-                            name="check_in_time"
+                          <CustomTimePicker
                             value={formData.check_in_time}
-                            onChange={handleChange}
-                            className="w-full px-3 py-2 bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
+                            onChange={(val) => setField('check_in_time', val)}
+                            placeholder="Check-in Time"
                           />
                         </div>
                       </div>
@@ -1239,19 +1241,16 @@ export default function ReservationForm({
                           <span>Check-out Date &amp; Timing *</span>
                         </label>
                         <div className="grid grid-cols-2 gap-2">
-                          <input
-                            type="date"
-                            name="check_out_date"
+                          <CustomDatePicker
                             value={formData.check_out_date}
-                            onChange={handleChange}
-                            className="w-full px-3 py-2 bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
+                            minDate={formData.check_in_date}
+                            onChange={(val) => setField('check_out_date', val)}
+                            placeholder="Check-out Date"
                           />
-                          <input
-                            type="time"
-                            name="check_out_time"
+                          <CustomTimePicker
                             value={formData.check_out_time}
-                            onChange={handleChange}
-                            className="w-full px-3 py-2 bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
+                            onChange={(val) => setField('check_out_time', val)}
+                            placeholder="Check-out Time"
                           />
                         </div>
                       </div>
@@ -1342,10 +1341,10 @@ export default function ReservationForm({
                     {/* Room Selector */}
                     <div>
                       <label className="block text-gray-700 font-medium mb-1">Select Room Number *</label>
-                      <select
+                      <SearchableSelect
                         value={formData.room_id}
-                        onChange={(e) => handleRoomSelect(e.target.value)}
-                        className="w-full px-3 py-2 bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer font-medium text-gray-900"
+                        onChange={handleRoomSelect}
+                        placeholder="-- Choose an Available Room --"
                       >
                         <option value="">-- Choose an Available Room --</option>
                         {availableRooms
@@ -1355,7 +1354,7 @@ export default function ReservationForm({
                               Room {r.room_number} — {r.room_type_name} ({r.floor_name || 'Ground'} · {r.building_name || 'Main'})
                             </option>
                           ))}
-                      </select>
+                      </SearchableSelect>
                       <span className="text-[10px] text-gray-400 block mt-1">
                         Only available rooms without date conflicts are shown.
                       </span>
