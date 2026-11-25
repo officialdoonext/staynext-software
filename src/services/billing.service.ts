@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { getTenantPropertyIds, verifyPropertyOwnership } from '@/services/tenant.service'
 
 export interface FolioItem {
   id: string
@@ -85,6 +86,11 @@ export async function getFolios(
   options?: { status?: string; search?: string }
 ): Promise<FolioRecord[]> {
   try {
+    const allowedPropertyIds = await getTenantPropertyIds()
+    if (allowedPropertyIds.length === 0) return []
+    const targetPropertyId = propertyId && allowedPropertyIds.includes(propertyId) ? propertyId : allowedPropertyIds[0]
+    if (!targetPropertyId) return []
+
     const supabase = await createClient()
 
     let query = supabase
@@ -119,7 +125,7 @@ export async function getFolios(
           )
         )
       `)
-      .eq('property_id', propertyId)
+      .eq('property_id', targetPropertyId)
       .order('updated_at', { ascending: false })
 
     if (options?.status && options.status !== 'all') {
@@ -223,6 +229,9 @@ export async function getFolioById(folioId: string): Promise<FolioRecord | null>
       .single()
 
     if (error || !f) return null
+
+    const allowedPropertyIds = await getTenantPropertyIds()
+    if (!allowedPropertyIds.includes(f.property_id)) return null
 
     // Fetch line items
     const { data: itemsData } = await supabase
@@ -477,6 +486,11 @@ export async function getPayments(
   options?: { method?: string; startDate?: string; endDate?: string }
 ): Promise<PaymentRecord[]> {
   try {
+    const allowedPropertyIds = await getTenantPropertyIds()
+    if (allowedPropertyIds.length === 0) return []
+    const targetPropertyId = propertyId && allowedPropertyIds.includes(propertyId) ? propertyId : allowedPropertyIds[0]
+    if (!targetPropertyId) return []
+
     const supabase = await createClient()
 
     let query = supabase
@@ -501,7 +515,7 @@ export async function getPayments(
           folio_number
         )
       `)
-      .eq('property_id', propertyId)
+      .eq('property_id', targetPropertyId)
       .order('created_at', { ascending: false })
 
     if (options?.method && options.method !== 'all') {
@@ -553,6 +567,11 @@ export async function getInvoices(
   options?: { status?: string; search?: string }
 ): Promise<InvoiceRecord[]> {
   try {
+    const allowedPropertyIds = await getTenantPropertyIds()
+    if (allowedPropertyIds.length === 0) return []
+    const targetPropertyId = propertyId && allowedPropertyIds.includes(propertyId) ? propertyId : allowedPropertyIds[0]
+    if (!targetPropertyId) return []
+
     const supabase = await createClient()
 
     let query = supabase
@@ -584,7 +603,7 @@ export async function getInvoices(
           phone
         )
       `)
-      .eq('property_id', propertyId)
+      .eq('property_id', targetPropertyId)
       .order('issued_at', { ascending: false })
 
     if (options?.status && options.status !== 'all') {
@@ -791,6 +810,9 @@ export async function getInvoiceById(invoiceId: string) {
       .single()
 
     if (error || !inv) return null
+
+    const allowedPropertyIds = await getTenantPropertyIds()
+    if (!allowedPropertyIds.includes(inv.property_id)) return null
 
     return inv
   } catch (err) {

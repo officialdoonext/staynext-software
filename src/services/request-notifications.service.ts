@@ -1,6 +1,7 @@
 'use server'
 
 import { createAdminClient } from '@/lib/supabase/admin'
+import { getTenantPropertyIds } from '@/services/tenant.service'
 
 export interface RequestNotification {
   id: string
@@ -25,6 +26,11 @@ export interface RequestNotification {
 export async function getRecentRequestNotifications(
   propertyId?: string
 ): Promise<RequestNotification[]> {
+  const allowedPropertyIds = await getTenantPropertyIds()
+  if (allowedPropertyIds.length === 0) return []
+  if (propertyId && !allowedPropertyIds.includes(propertyId)) return []
+  const targetPropertyIds = propertyId ? [propertyId] : allowedPropertyIds
+
   const admin = createAdminClient()
   const results: RequestNotification[] = []
 
@@ -43,12 +49,9 @@ export async function getRecentRequestNotifications(
         created_at,
         room:rooms(room_number)
       `)
+      .in('property_id', targetPropertyIds)
       .order('created_at', { ascending: false })
       .limit(20)
-
-    if (propertyId) {
-      hkQuery = hkQuery.eq('property_id', propertyId)
-    }
 
     const { data: hkData, error: hkErr } = await hkQuery
     if (!hkErr && hkData) {
@@ -88,12 +91,9 @@ export async function getRecentRequestNotifications(
         created_at,
         room:rooms(room_number)
       `)
+      .in('property_id', targetPropertyIds)
       .order('created_at', { ascending: false })
       .limit(20)
-
-    if (propertyId) {
-      maintQuery = maintQuery.eq('property_id', propertyId)
-    }
 
     const { data: maintData, error: maintErr } = await maintQuery
     if (!maintErr && maintData) {
@@ -138,12 +138,9 @@ export async function getRecentRequestNotifications(
           quantity
         )
       `)
+      .in('property_id', targetPropertyIds)
       .order('created_at', { ascending: false })
       .limit(20)
-
-    if (propertyId) {
-      foodQuery = foodQuery.eq('property_id', propertyId)
-    }
 
     const { data: foodData, error: foodErr } = await foodQuery
     if (!foodErr && foodData) {

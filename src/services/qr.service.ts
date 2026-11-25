@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import QRCode from 'qrcode'
 import crypto from 'crypto'
+import { getTenantPropertyIds, verifyPropertyOwnership } from '@/services/tenant.service'
 
 export interface RoomQRCodeItem {
   id: string
@@ -45,6 +46,13 @@ function generateToken(): string {
  * Fetch all rooms with their QR code status and analytics
  */
 export async function getRoomQRCodes(propertyId?: string): Promise<RoomQRCodeItem[]> {
+  const allowedPropertyIds = await getTenantPropertyIds()
+  if (allowedPropertyIds.length === 0) return []
+
+  const targetPropertyIds = propertyId && allowedPropertyIds.includes(propertyId)
+    ? [propertyId]
+    : allowedPropertyIds
+
   const supabase = await createClient()
 
   let query = supabase
@@ -57,11 +65,8 @@ export async function getRoomQRCodes(propertyId?: string): Promise<RoomQRCodeIte
       room_type:room_types(name),
       qr:room_qr_codes(*)
     `)
+    .in('property_id', targetPropertyIds)
     .order('room_number', { ascending: true })
-
-  if (propertyId) {
-    query = query.eq('property_id', propertyId)
-  }
 
   const { data, error } = await query
   if (error || !data) return []
@@ -105,6 +110,9 @@ export async function generateRoomQRCode(
   roomId: string
 ): Promise<{ success: boolean; data?: RoomQRCodeItem; error?: string }> {
   try {
+    const isOwner = await verifyPropertyOwnership(propertyId)
+    if (!isOwner) return { success: false, error: 'Unauthorized property' }
+
     const supabase = await createClient()
     const token = generateToken()
     const baseUrl = getBaseUrl()

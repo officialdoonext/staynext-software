@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { getTenantPropertyIds, verifyPropertyOwnership } from '@/services/tenant.service'
 
 export interface DepartmentRecord {
   id: string
@@ -46,6 +47,9 @@ export interface ShiftScheduleRecord {
  */
 export async function getDepartments(propertyId: string): Promise<DepartmentRecord[]> {
   try {
+    const allowedPropertyIds = await getTenantPropertyIds()
+    if (!propertyId || !allowedPropertyIds.includes(propertyId)) return []
+
     const supabase = await createClient()
 
     const { data, error } = await supabase
@@ -138,6 +142,9 @@ export async function getEmployees(
   options?: { departmentId?: string; role?: string; search?: string }
 ): Promise<EmployeeRecord[]> {
   try {
+    const allowedPropertyIds = await getTenantPropertyIds()
+    if (!propertyId || !allowedPropertyIds.includes(propertyId)) return []
+
     const supabase = await createClient()
 
     let query = supabase
@@ -292,6 +299,9 @@ export async function getEmployeeSchedules(
   endDate?: string
 ): Promise<ShiftScheduleRecord[]> {
   try {
+    const allowedPropertyIds = await getTenantPropertyIds()
+    if (!propertyId || !allowedPropertyIds.includes(propertyId)) return []
+
     const supabase = await createClient()
 
     let query = supabase

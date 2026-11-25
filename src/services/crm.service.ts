@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { getAuthenticatedTenantId } from '@/services/tenant.service'
 
 export interface GuestItem {
   id: string
@@ -53,6 +54,11 @@ export interface GuestFilterOptions {
  * Fetch guest directory with filters and stay counts
  */
 export async function getGuests(options?: GuestFilterOptions): Promise<{ guests: GuestItem[]; totalCount: number }> {
+  const tenantId = await getAuthenticatedTenantId()
+  if (!tenantId) {
+    return { guests: [], totalCount: 0 }
+  }
+
   const supabase = await createClient()
 
   let query = supabase
@@ -61,6 +67,7 @@ export async function getGuests(options?: GuestFilterOptions): Promise<{ guests:
       *,
       reservations:reservations(id, total_amount, status)
     `, { count: 'exact' })
+    .eq('tenant_id', tenantId)
     .order('created_at', { ascending: false })
 
   if (options?.vipStatus && options.vipStatus !== 'all') {
@@ -138,6 +145,9 @@ export async function getGuests(options?: GuestFilterOptions): Promise<{ guests:
  * Fetch guest profile with full stay history
  */
 export async function getGuestById(id: string) {
+  const tenantId = await getAuthenticatedTenantId()
+  if (!tenantId || !id) return null
+
   const supabase = await createClient()
 
   const { data, error } = await supabase
@@ -155,7 +165,8 @@ export async function getGuestById(id: string) {
       )
     `)
     .eq('id', id)
-    .single()
+    .eq('tenant_id', tenantId)
+    .maybeSingle()
 
   if (error || !data) return null
 
@@ -197,39 +208,12 @@ export async function createGuest(payload: {
   preferred_language?: string
 }): Promise<{ success: boolean; data?: any; error?: string }> {
   try {
-    const supabase = await createClient()
-
-    // Resolve tenant_id
-    let tenantId: string | null = null
-    const { data: { user } } = await supabase.auth.getUser()
-    if (user) {
-      const { data: tu } = await supabase
-        .from('tenant_users')
-        .select('tenant_id')
-        .eq('user_id', user.id)
-        .limit(1)
-        .maybeSingle()
-      tenantId = tu?.tenant_id || null
-
-      if (!tenantId) {
-        const { data: pu } = await supabase
-          .from('property_users')
-          .select('properties(tenant_id)')
-          .eq('user_id', user.id)
-          .limit(1)
-          .maybeSingle()
-        tenantId = (pu as any)?.properties?.tenant_id || null
-      }
-    }
-
+    const tenantId = await getAuthenticatedTenantId()
     if (!tenantId) {
-      const { data: fallbackTenant } = await supabase
-        .from('tenants')
-        .select('id')
-        .limit(1)
-        .maybeSingle()
-      tenantId = fallbackTenant?.id || null
+      return { success: false, error: 'Unauthorized tenant session' }
     }
+
+    const supabase = await createClient()
 
     const { data, error } = await supabase
       .from('guests')
@@ -282,12 +266,16 @@ export async function toggleGuestVip(
   vipTier: string = 'Gold VIP'
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    const tenantId = await getAuthenticatedTenantId()
+    if (!tenantId) return { success: false, error: 'Unauthorized' }
+
     const supabase = await createClient()
 
     const { error } = await supabase
       .from('guests')
       .update({ is_vip: isVip, vip_tier: isVip ? vipTier : 'Standard' })
       .eq('id', guestId)
+      .eq('tenant_id', tenantId)
 
     if (error) throw error
 
@@ -307,6 +295,9 @@ export async function toggleGuestBlacklist(
   reason?: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    const tenantId = await getAuthenticatedTenantId()
+    if (!tenantId) return { success: false, error: 'Unauthorized' }
+
     const supabase = await createClient()
 
     const { error } = await supabase
@@ -316,6 +307,7 @@ export async function toggleGuestBlacklist(
         blacklist_reason: isBlacklisted ? reason || 'Security / behavioral incident flagged by management' : null,
       })
       .eq('id', guestId)
+      .eq('tenant_id', tenantId)
 
     if (error) throw error
 

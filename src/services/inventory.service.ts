@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { getTenantPropertyIds } from '@/services/tenant.service'
 
 export interface InventoryCategoryRecord {
   id: string
@@ -60,6 +61,9 @@ export interface InventoryTransactionRecord {
  */
 export async function getInventoryCategories(propertyId: string): Promise<InventoryCategoryRecord[]> {
   try {
+    const allowedPropertyIds = await getTenantPropertyIds()
+    if (!propertyId || !allowedPropertyIds.includes(propertyId)) return []
+
     const supabase = await createClient()
 
     const { data, error } = await supabase
@@ -117,6 +121,9 @@ export async function createInventoryCategory(data: {
  */
 export async function getSuppliers(propertyId: string): Promise<SupplierRecord[]> {
   try {
+    const allowedPropertyIds = await getTenantPropertyIds()
+    if (!propertyId || !allowedPropertyIds.includes(propertyId)) return []
+
     const supabase = await createClient()
 
     const { data, error } = await supabase
@@ -210,6 +217,9 @@ export async function getInventoryItems(
   options?: { categoryId?: string; lowStockOnly?: boolean; search?: string }
 ): Promise<InventoryItemRecord[]> {
   try {
+    const allowedPropertyIds = await getTenantPropertyIds()
+    if (!propertyId || !allowedPropertyIds.includes(propertyId)) return []
+
     const supabase = await createClient()
 
     let query = supabase
@@ -446,6 +456,9 @@ export async function getPurchaseOrders(
   status?: string
 ): Promise<PurchaseOrderRecord[]> {
   try {
+    const allowedPropertyIds = await getTenantPropertyIds()
+    if (!propertyId || !allowedPropertyIds.includes(propertyId)) return []
+
     const supabase = await createClient()
 
     let query = supabase

@@ -1,20 +1,12 @@
 import React from 'react'
-import { createClient } from '@/lib/supabase/server'
+import { getActiveTenantPropertyId } from '@/services/tenant.service'
 import { getExecutiveReport } from '@/services/report.service'
 import { ReportsClient } from './ReportsClient'
 
 export const metadata = { title: 'Reports & Business Intelligence | StayNext' }
 
 export default async function ReportsPage() {
-  const supabase = await createClient()
-
-  let propertyId = ''
-  try {
-    const { data: props } = await supabase.from('properties').select('id').limit(1)
-    if (props && props.length > 0) {
-      propertyId = props[0].id
-    }
-  } catch {}
+  const propertyId = (await getActiveTenantPropertyId()) || ''
 
   const report = propertyId
     ? await getExecutiveReport(propertyId)

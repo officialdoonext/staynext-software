@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { createClient } from '@/lib/supabase/client'
+import { getProperties } from '@/services/property.service'
 import { cn } from '@/lib/utils'
 
 interface Property {
@@ -40,12 +41,10 @@ export default function PropertySelector() {
         const supabase = createClient()
         const { data: { user } } = await supabase.auth.getUser()
 
-        // 1. Fetch properties assigned to this tenant
-        const { data, error } = await supabase
-          .from('properties')
-          .select('id, name, property_type')
+        // 1. Fetch properties assigned strictly to this tenant via secure server action
+        const data = await getProperties()
 
-        if (!error && data && data.length > 0) {
+        if (data && data.length > 0) {
           const list: Property[] = data.map((p) => ({
             id: p.id,
             name: p.name,

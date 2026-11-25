@@ -1,20 +1,12 @@
 import React from 'react'
-import { createClient } from '@/lib/supabase/server'
+import { getActiveTenantPropertyId } from '@/services/tenant.service'
 import { getDepartments } from '@/services/employee.service'
 import { DepartmentsClient } from './DepartmentsClient'
 
 export const metadata = { title: 'Departments | StayNext' }
 
 export default async function DepartmentsPage() {
-  const supabase = await createClient()
-
-  let propertyId = ''
-  try {
-    const { data: props } = await supabase.from('properties').select('id').limit(1)
-    if (props && props.length > 0) {
-      propertyId = props[0].id
-    }
-  } catch {}
+  const propertyId = (await getActiveTenantPropertyId()) || ''
 
   const departments = propertyId ? await getDepartments(propertyId) : []
 

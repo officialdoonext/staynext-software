@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { generateReservationNumber } from '@/lib/utils'
+import { getAuthenticatedTenantId, verifyPropertyOwnership } from '@/services/tenant.service'
 
 export interface ActionResponse<T = any> {
   success: boolean
@@ -38,37 +39,17 @@ export async function createReservationAction(formData: FormData): Promise<Actio
 
     const resNumber = generateReservationNumber()
 
-    // 1. Resolve tenant_id for guest
-    let tenantId: string | null = null
+    // 1. Resolve tenant_id for authenticated user and verify property
+    const tenantId = await getAuthenticatedTenantId()
+    if (!tenantId) {
+      return { success: false, message: 'Authentication required. No tenant found.' }
+    }
+
     if (propertyId) {
-      const { data: prop } = await supabase
-        .from('properties')
-        .select('tenant_id')
-        .eq('id', propertyId)
-        .maybeSingle()
-      tenantId = prop?.tenant_id || null
-    }
-
-    if (!tenantId) {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        const { data: tu } = await supabase
-          .from('tenant_users')
-          .select('tenant_id')
-          .eq('user_id', user.id)
-          .limit(1)
-          .maybeSingle()
-        tenantId = tu?.tenant_id || null
+      const isOwner = await verifyPropertyOwnership(propertyId)
+      if (!isOwner) {
+        return { success: false, message: 'Unauthorized property selection.' }
       }
-    }
-
-    if (!tenantId) {
-      const { data: fallbackTenant } = await supabase
-        .from('tenants')
-        .select('id')
-        .limit(1)
-        .maybeSingle()
-      tenantId = fallbackTenant?.id || null
     }
 
     // 2. First ensure guest exists or create guest

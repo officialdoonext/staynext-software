@@ -3,6 +3,19 @@
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
+import {
+  getAuthenticatedTenantId,
+  getTenantPropertyIds,
+  getActiveTenantPropertyId,
+  verifyPropertyOwnership,
+} from './tenant.service'
+
+export {
+  getAuthenticatedTenantId,
+  getTenantPropertyIds,
+  getActiveTenantPropertyId,
+  verifyPropertyOwnership,
+}
 
 export interface PropertyItem {
   id: string
@@ -87,17 +100,7 @@ export interface TenantPropertyStats {
 export async function getTenantPropertyStats(): Promise<TenantPropertyStats> {
   try {
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return { currentCount: 0, allowedCount: 1, canAdd: false, plan: 'starter' }
-
-    const { data: tenantUser } = await supabase
-      .from('tenant_users')
-      .select('tenant_id')
-      .eq('user_id', user.id)
-      .limit(1)
-      .maybeSingle()
-
-    const tenantId = tenantUser?.tenant_id
+    const tenantId = await getAuthenticatedTenantId()
     if (!tenantId) return { currentCount: 0, allowedCount: 1, canAdd: false, plan: 'starter' }
 
     const { data: tenant } = await supabase
@@ -131,6 +134,9 @@ export async function getTenantPropertyStats(): Promise<TenantPropertyStats> {
  * Fetch all properties for the authenticated tenant with room counts
  */
 export async function getProperties(search?: string, propertyType?: string, status?: string): Promise<PropertyItem[]> {
+  const tenantId = await getAuthenticatedTenantId()
+  if (!tenantId) return []
+
   const supabase = await createClient()
 
   let query = supabase
@@ -139,6 +145,7 @@ export async function getProperties(search?: string, propertyType?: string, stat
       *,
       rooms:rooms(id, status)
     `)
+    .eq('tenant_id', tenantId)
     .order('created_at', { ascending: false })
 
   if (search) {
@@ -164,6 +171,7 @@ export async function getProperties(search?: string, propertyType?: string, stat
           *,
           rooms:rooms(id, status)
         `)
+        .eq('tenant_id', tenantId)
         .order('created_at', { ascending: false })
 
       if (search) {
@@ -242,21 +250,39 @@ export async function getProperties(search?: string, propertyType?: string, stat
 }
 
 /**
- * Fetch a single property by ID
+ * Fetch a single property by ID (strictly tenant scoped)
  */
 export async function getPropertyById(propertyId: string): Promise<PropertyItem | null> {
+  const tenantId = await getAuthenticatedTenantId()
+  if (!tenantId || !propertyId) return null
+
   const supabase = await createClient()
 
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from('properties')
     .select(`
       *,
       rooms:rooms(id, status)
     `)
     .eq('id', propertyId)
-    .single()
+    .eq('tenant_id', tenantId)
+    .maybeSingle()
 
-  if (error || !data) return null
+  if (error || !data) {
+    const admin = createAdminClient()
+    const adminRes = await admin
+      .from('properties')
+      .select(`
+        *,
+        rooms:rooms(id, status)
+      `)
+      .eq('id', propertyId)
+      .eq('tenant_id', tenantId)
+      .maybeSingle()
+    data = adminRes.data
+  }
+
+  if (!data) return null
 
   const rooms = data.rooms || []
   return {
@@ -274,18 +300,11 @@ export async function createProperty(payload: Partial<PropertyItem>): Promise<{ 
     const supabase = await createClient()
 
     // Retrieve active tenant
+    const tenantId = await getAuthenticatedTenantId()
+    if (!tenantId) throw new Error('No tenant associated with user')
+
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error('Not authenticated')
-
-    const { data: tenantUser } = await supabase
-      .from('tenant_users')
-      .select('tenant_id')
-      .eq('user_id', user.id)
-      .limit(1)
-      .maybeSingle()
-
-    const tenantId = tenantUser?.tenant_id
-    if (!tenantId) throw new Error('No tenant associated with user')
 
     // Verify allowed properties limit before inserting
     const { data: tenant } = await supabase
@@ -370,15 +389,19 @@ export async function createProperty(payload: Partial<PropertyItem>): Promise<{ 
  */
 export async function updateProperty(propertyId: string, payload: Partial<PropertyItem>): Promise<{ success: boolean; error?: string }> {
   try {
-    const supabase = await createClient()
+    const tenantId = await getAuthenticatedTenantId()
+    if (!tenantId) return { success: false, error: 'Unauthorized' }
 
-    const { error } = await supabase
+    const admin = createAdminClient()
+
+    const { error } = await admin
       .from('properties')
       .update({
         ...payload,
         updated_at: new Date().toISOString(),
       })
       .eq('id', propertyId)
+      .eq('tenant_id', tenantId)
 
     if (error) throw error
 
@@ -396,12 +419,16 @@ export async function updateProperty(propertyId: string, payload: Partial<Proper
  */
 export async function togglePropertyStatus(propertyId: string, isActive: boolean): Promise<{ success: boolean; error?: string }> {
   try {
-    const supabase = await createClient()
+    const tenantId = await getAuthenticatedTenantId()
+    if (!tenantId) return { success: false, error: 'Unauthorized' }
 
-    const { error } = await supabase
+    const admin = createAdminClient()
+
+    const { error } = await admin
       .from('properties')
       .update({ is_active: isActive })
       .eq('id', propertyId)
+      .eq('tenant_id', tenantId)
 
     if (error) throw error
 
@@ -417,9 +444,12 @@ export async function togglePropertyStatus(propertyId: string, isActive: boolean
 // ============================================================================
 
 export async function getBuildings(propertyId?: string): Promise<BuildingItem[]> {
-  const supabase = await createClient()
+  const allowedPropertyIds = await getTenantPropertyIds()
+  if (allowedPropertyIds.length === 0) return []
 
-  let query = supabase
+  const admin = createAdminClient()
+
+  let query = admin
     .from('buildings')
     .select(`
       *,
@@ -429,7 +459,10 @@ export async function getBuildings(propertyId?: string): Promise<BuildingItem[]>
     .order('created_at', { ascending: true })
 
   if (propertyId) {
+    if (!allowedPropertyIds.includes(propertyId)) return []
     query = query.eq('property_id', propertyId)
+  } else {
+    query = query.in('property_id', allowedPropertyIds)
   }
 
   const { data, error } = await query
@@ -450,8 +483,11 @@ export async function getBuildings(propertyId?: string): Promise<BuildingItem[]>
 
 export async function createBuilding(payload: { property_id: string; name: string; code?: string; description?: string }): Promise<{ success: boolean; data?: any; error?: string }> {
   try {
-    const supabase = await createClient()
-    const { data, error } = await supabase
+    const isOwner = await verifyPropertyOwnership(payload.property_id)
+    if (!isOwner) return { success: false, error: 'Unauthorized property access' }
+
+    const admin = createAdminClient()
+    const { data, error } = await admin
       .from('buildings')
       .insert(payload)
       .select()
@@ -470,8 +506,16 @@ export async function createBuilding(payload: { property_id: string; name: strin
 
 export async function updateBuilding(id: string, payload: Partial<BuildingItem>): Promise<{ success: boolean; error?: string }> {
   try {
-    const supabase = await createClient()
-    const { error } = await supabase.from('buildings').update(payload).eq('id', id)
+    const allowedPropertyIds = await getTenantPropertyIds()
+    const admin = createAdminClient()
+
+    // Verify building belongs to user's property
+    const { data: b } = await admin.from('buildings').select('property_id').eq('id', id).maybeSingle()
+    if (!b || !allowedPropertyIds.includes(b.property_id)) {
+      return { success: false, error: 'Unauthorized building modification' }
+    }
+
+    const { error } = await admin.from('buildings').update(payload).eq('id', id)
     if (error) throw error
     revalidatePath('/properties/buildings')
     revalidatePath('/rooms/buildings')
@@ -484,8 +528,16 @@ export async function updateBuilding(id: string, payload: Partial<BuildingItem>)
 
 export async function deleteBuilding(id: string): Promise<{ success: boolean; error?: string }> {
   try {
-    const supabase = await createClient()
-    const { error } = await supabase.from('buildings').delete().eq('id', id)
+    const allowedPropertyIds = await getTenantPropertyIds()
+    const admin = createAdminClient()
+
+    // Verify building belongs to user's property
+    const { data: b } = await admin.from('buildings').select('property_id').eq('id', id).maybeSingle()
+    if (!b || !allowedPropertyIds.includes(b.property_id)) {
+      return { success: false, error: 'Unauthorized building modification' }
+    }
+
+    const { error } = await admin.from('buildings').delete().eq('id', id)
     if (error) throw error
     revalidatePath('/properties/buildings')
     revalidatePath('/rooms/buildings')
@@ -501,9 +553,12 @@ export async function deleteBuilding(id: string): Promise<{ success: boolean; er
 // ============================================================================
 
 export async function getFloors(propertyId?: string, buildingId?: string): Promise<FloorItem[]> {
-  const supabase = await createClient()
+  const allowedPropertyIds = await getTenantPropertyIds()
+  if (allowedPropertyIds.length === 0) return []
 
-  let query = supabase
+  const admin = createAdminClient()
+
+  let query = admin
     .from('floors')
     .select(`
       *,
@@ -513,7 +568,10 @@ export async function getFloors(propertyId?: string, buildingId?: string): Promi
     .order('floor_number', { ascending: true })
 
   if (propertyId) {
+    if (!allowedPropertyIds.includes(propertyId)) return []
     query = query.eq('property_id', propertyId)
+  } else {
+    query = query.in('property_id', allowedPropertyIds)
   }
 
   if (buildingId) {
@@ -538,8 +596,11 @@ export async function getFloors(propertyId?: string, buildingId?: string): Promi
 
 export async function createFloor(payload: { property_id: string; building_id?: string; floor_number: number; name?: string }): Promise<{ success: boolean; data?: any; error?: string }> {
   try {
-    const supabase = await createClient()
-    const { data, error } = await supabase
+    const isOwner = await verifyPropertyOwnership(payload.property_id)
+    if (!isOwner) return { success: false, error: 'Unauthorized property access' }
+
+    const admin = createAdminClient()
+    const { data, error } = await admin
       .from('floors')
       .insert({
         property_id: payload.property_id,
@@ -564,8 +625,16 @@ export async function createFloor(payload: { property_id: string; building_id?: 
 
 export async function updateFloor(id: string, payload: Partial<FloorItem>): Promise<{ success: boolean; error?: string }> {
   try {
-    const supabase = await createClient()
-    const { error } = await supabase.from('floors').update(payload).eq('id', id)
+    const allowedPropertyIds = await getTenantPropertyIds()
+    const admin = createAdminClient()
+
+    // Verify floor belongs to user's property
+    const { data: f } = await admin.from('floors').select('property_id').eq('id', id).maybeSingle()
+    if (!f || !allowedPropertyIds.includes(f.property_id)) {
+      return { success: false, error: 'Unauthorized floor modification' }
+    }
+
+    const { error } = await admin.from('floors').update(payload).eq('id', id)
     if (error) throw error
     revalidatePath('/properties/floors')
     revalidatePath('/rooms/floors')
@@ -578,8 +647,16 @@ export async function updateFloor(id: string, payload: Partial<FloorItem>): Prom
 
 export async function deleteFloor(id: string): Promise<{ success: boolean; error?: string }> {
   try {
-    const supabase = await createClient()
-    const { error } = await supabase.from('floors').delete().eq('id', id)
+    const allowedPropertyIds = await getTenantPropertyIds()
+    const admin = createAdminClient()
+
+    // Verify floor belongs to user's property
+    const { data: f } = await admin.from('floors').select('property_id').eq('id', id).maybeSingle()
+    if (!f || !allowedPropertyIds.includes(f.property_id)) {
+      return { success: false, error: 'Unauthorized floor modification' }
+    }
+
+    const { error } = await admin.from('floors').delete().eq('id', id)
     if (error) throw error
     revalidatePath('/properties/floors')
     revalidatePath('/rooms/floors')
@@ -595,6 +672,9 @@ export async function deleteFloor(id: string): Promise<{ success: boolean; error
 // ============================================================================
 
 export async function getFacilitiesWithPropertyStatus(propertyId: string): Promise<FacilityItem[]> {
+  const isOwner = await verifyPropertyOwnership(propertyId)
+  if (!isOwner) return []
+
   const supabase = await createClient()
 
   // Default facility list
@@ -649,9 +729,12 @@ export async function getFacilitiesWithPropertyStatus(propertyId: string): Promi
 
 export async function togglePropertyFacility(propertyId: string, facilityId: string, isAvailable: boolean): Promise<{ success: boolean; error?: string }> {
   try {
-    const supabase = await createClient()
+    const isOwner = await verifyPropertyOwnership(propertyId)
+    if (!isOwner) return { success: false, error: 'Unauthorized property access' }
 
-    const { error } = await supabase
+    const admin = createAdminClient()
+
+    const { error } = await admin
       .from('property_facilities')
       .upsert({
         property_id: propertyId,

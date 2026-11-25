@@ -22,18 +22,20 @@ export default async function RestaurantPage() {
 
   // Fetch rooms for room delivery
   let rooms: Array<{ id: string; roomNumber: string }> = []
-  try {
-    const admin = createAdminClient()
-    let query = admin.from('rooms').select('id, room_number').order('room_number', { ascending: true })
-    if (propertyId) {
-      query = query.eq('property_id', propertyId)
-    }
-    const { data: roomsData } = await query
+  if (propertyId) {
+    try {
+      const admin = createAdminClient()
+      const { data: roomsData } = await admin
+        .from('rooms')
+        .select('id, room_number')
+        .eq('property_id', propertyId)
+        .order('room_number', { ascending: true })
 
-    if (roomsData) {
-      rooms = roomsData.map((r: any) => ({ id: r.id, roomNumber: r.room_number }))
-    }
-  } catch {}
+      if (roomsData) {
+        rooms = roomsData.map((r: any) => ({ id: r.id, roomNumber: r.room_number }))
+      }
+    } catch {}
+  }
 
   return (
     <RestaurantClient

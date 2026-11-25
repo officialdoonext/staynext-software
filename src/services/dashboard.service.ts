@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { getTenantPropertyIds } from '@/services/tenant.service'
 
 export function isSupabaseConfigured(): boolean {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -98,6 +99,17 @@ export async function getDashboardStats(propertyId?: string): Promise<DashboardS
     return emptyStats
   }
 
+  const allowedPropertyIds = await getTenantPropertyIds()
+  if (allowedPropertyIds.length === 0) {
+    return emptyStats
+  }
+
+  if (propertyId && !allowedPropertyIds.includes(propertyId)) {
+    return emptyStats
+  }
+
+  const targetPropertyIds = propertyId ? [propertyId] : allowedPropertyIds
+
   try {
     const supabase = await createClient()
     const today = new Date().toISOString().split('T')[0]
@@ -106,8 +118,7 @@ export async function getDashboardStats(propertyId?: string): Promise<DashboardS
       .split('T')[0]
 
     // Count reservations
-    const totalQuery = supabase.from('reservations').select('*', { count: 'exact', head: true })
-    if (propertyId) totalQuery.eq('property_id', propertyId)
+    const totalQuery = supabase.from('reservations').select('*', { count: 'exact', head: true }).in('property_id', targetPropertyIds)
     const { count: totalReservations } = await totalQuery
 
     const checkInsQuery = supabase
@@ -115,7 +126,7 @@ export async function getDashboardStats(propertyId?: string): Promise<DashboardS
       .select('*', { count: 'exact', head: true })
       .eq('check_in_date', today)
       .in('status', ['confirmed', 'checked_in'])
-    if (propertyId) checkInsQuery.eq('property_id', propertyId)
+      .in('property_id', targetPropertyIds)
     const { count: todayCheckIns } = await checkInsQuery
 
     const checkOutsQuery = supabase
@@ -123,7 +134,7 @@ export async function getDashboardStats(propertyId?: string): Promise<DashboardS
       .select('*', { count: 'exact', head: true })
       .eq('check_out_date', today)
       .eq('status', 'checked_in')
-    if (propertyId) checkOutsQuery.eq('property_id', propertyId)
+      .in('property_id', targetPropertyIds)
     const { count: todayCheckOuts } = await checkOutsQuery
 
     const upcomingQuery = supabase
@@ -131,75 +142,74 @@ export async function getDashboardStats(propertyId?: string): Promise<DashboardS
       .select('*', { count: 'exact', head: true })
       .gt('check_in_date', today)
       .eq('status', 'confirmed')
-    if (propertyId) upcomingQuery.eq('property_id', propertyId)
+      .in('property_id', targetPropertyIds)
     const { count: upcomingReservations } = await upcomingQuery
 
     const pendingQuery = supabase
       .from('reservations')
       .select('*', { count: 'exact', head: true })
       .eq('status', 'pending')
-    if (propertyId) pendingQuery.eq('property_id', propertyId)
+      .in('property_id', targetPropertyIds)
     const { count: pendingReservations } = await pendingQuery
 
     const cancelledQuery = supabase
       .from('reservations')
       .select('*', { count: 'exact', head: true })
       .eq('status', 'cancelled')
-    if (propertyId) cancelledQuery.eq('property_id', propertyId)
+      .in('property_id', targetPropertyIds)
     const { count: cancelledReservations } = await cancelledQuery
 
     // Room counts
-    const totalRoomsQuery = supabase.from('rooms').select('*', { count: 'exact', head: true })
-    if (propertyId) totalRoomsQuery.eq('property_id', propertyId)
+    const totalRoomsQuery = supabase.from('rooms').select('*', { count: 'exact', head: true }).in('property_id', targetPropertyIds)
     const { count: totalRooms } = await totalRoomsQuery
 
     const availableQuery = supabase
       .from('rooms')
       .select('*', { count: 'exact', head: true })
       .eq('status', 'available')
-    if (propertyId) availableQuery.eq('property_id', propertyId)
+      .in('property_id', targetPropertyIds)
     const { count: availableRooms } = await availableQuery
 
     const occupiedQuery = supabase
       .from('rooms')
       .select('*', { count: 'exact', head: true })
       .eq('status', 'occupied')
-    if (propertyId) occupiedQuery.eq('property_id', propertyId)
+      .in('property_id', targetPropertyIds)
     const { count: occupiedRooms } = await occupiedQuery
 
     const reservedQuery = supabase
       .from('rooms')
       .select('*', { count: 'exact', head: true })
       .eq('status', 'reserved')
-    if (propertyId) reservedQuery.eq('property_id', propertyId)
+      .in('property_id', targetPropertyIds)
     const { count: reservedRooms } = await reservedQuery
 
     const dirtyQuery = supabase
       .from('rooms')
       .select('*', { count: 'exact', head: true })
       .eq('status', 'dirty')
-    if (propertyId) dirtyQuery.eq('property_id', propertyId)
+      .in('property_id', targetPropertyIds)
     const { count: dirtyRooms } = await dirtyQuery
 
     const cleaningQuery = supabase
       .from('rooms')
       .select('*', { count: 'exact', head: true })
       .eq('status', 'cleaning')
-    if (propertyId) cleaningQuery.eq('property_id', propertyId)
+      .in('property_id', targetPropertyIds)
     const { count: cleaningRooms } = await cleaningQuery
 
     const maintenanceQuery = supabase
       .from('rooms')
       .select('*', { count: 'exact', head: true })
       .eq('status', 'maintenance')
-    if (propertyId) maintenanceQuery.eq('property_id', propertyId)
+      .in('property_id', targetPropertyIds)
     const { count: maintenanceRooms } = await maintenanceQuery
 
     const outOfOrderQuery = supabase
       .from('rooms')
       .select('*', { count: 'exact', head: true })
       .eq('status', 'out_of_order')
-    if (propertyId) outOfOrderQuery.eq('property_id', propertyId)
+      .in('property_id', targetPropertyIds)
     const { count: outOfOrderRooms } = await outOfOrderQuery
 
     // Financial aggregation
@@ -208,7 +218,7 @@ export async function getDashboardStats(propertyId?: string): Promise<DashboardS
       .select('amount')
       .gte('created_at', `${today}T00:00:00`)
       .eq('status', 'completed')
-    if (propertyId) todayPaymentsQuery.eq('property_id', propertyId)
+      .in('property_id', targetPropertyIds)
     const { data: todayPayments } = await todayPaymentsQuery
 
     const monthlyPaymentsQuery = supabase
@@ -216,21 +226,21 @@ export async function getDashboardStats(propertyId?: string): Promise<DashboardS
       .select('amount')
       .gte('created_at', `${monthStart}T00:00:00`)
       .eq('status', 'completed')
-    if (propertyId) monthlyPaymentsQuery.eq('property_id', propertyId)
+      .in('property_id', targetPropertyIds)
     const { data: monthlyPayments } = await monthlyPaymentsQuery
 
     const pendingPaymentsQuery = supabase
       .from('guest_folios')
       .select('balance')
       .gt('balance', 0)
-    if (propertyId) pendingPaymentsQuery.eq('property_id', propertyId)
+      .in('property_id', targetPropertyIds)
     const { data: pendingPaymentsData } = await pendingPaymentsQuery
 
     const todayExpensesQuery = supabase
       .from('expenses')
       .select('amount')
       .gte('created_at', `${today}T00:00:00`)
-    if (propertyId) todayExpensesQuery.eq('property_id', propertyId)
+      .in('property_id', targetPropertyIds)
     const { data: todayExpensesData } = await todayExpensesQuery
 
     const todayRevenue = (todayPayments || []).reduce(
@@ -272,7 +282,7 @@ export async function getDashboardStats(propertyId?: string): Promise<DashboardS
         .select('*', { count: 'exact', head: true })
         .eq('check_in_date', today)
         .eq('booking_type', 'Walk-in')
-      if (propertyId) walkInsQuery.eq('property_id', propertyId)
+        .in('property_id', targetPropertyIds)
       const { count } = await walkInsQuery
       walkInGuests = count || 0
     } catch {}
@@ -280,35 +290,39 @@ export async function getDashboardStats(propertyId?: string): Promise<DashboardS
     try {
       const foreignQuery = supabase
         .from('foreign_guest_details')
-        .select('*', { count: 'exact', head: true })
+        .select('id, reservations!inner(property_id)', { count: 'exact', head: true })
         .eq('arrival_date_in_india', today)
+        .in('reservations.property_id', targetPropertyIds)
       const { count } = await foreignQuery
       foreignGuestArrivals = count || 0
     } catch {}
 
     try {
       const formIIIPendingQuery = supabase
-        .from('foreign_guest_details')
+        .from('form_iii_reports')
         .select('*', { count: 'exact', head: true })
-        .eq('form_iii_status', 'Pending')
+        .eq('report_status', 'Pending')
+        .in('property_id', targetPropertyIds)
       const { count } = await formIIIPendingQuery
       formIIIPending = count || 0
     } catch {}
 
     try {
       const formIIISubmittedQuery = supabase
-        .from('foreign_guest_details')
+        .from('form_iii_reports')
         .select('*', { count: 'exact', head: true })
-        .eq('form_iii_status', 'Submitted')
+        .eq('report_status', 'Submitted')
+        .in('property_id', targetPropertyIds)
       const { count } = await formIIISubmittedQuery
       formIIISubmitted = count || 0
     } catch {}
 
     try {
       const idVerifyQuery = supabase
-        .from('guests')
+        .from('reservations')
         .select('*', { count: 'exact', head: true })
         .eq('id_verification_status', 'Pending')
+        .in('property_id', targetPropertyIds)
       const { count } = await idVerifyQuery
       idVerificationPending = count || 0
     } catch {}
@@ -319,7 +333,7 @@ export async function getDashboardStats(propertyId?: string): Promise<DashboardS
         .select('amount, payment_method')
         .gte('created_at', `${today}T00:00:00`)
         .eq('status', 'completed')
-      if (propertyId) paymentsMethodQuery.eq('property_id', propertyId)
+        .in('property_id', targetPropertyIds)
       const { data: todayPaymentMethods } = await paymentsMethodQuery
 
       ;(todayPaymentMethods || []).forEach((p: any) => {
@@ -336,7 +350,7 @@ export async function getDashboardStats(propertyId?: string): Promise<DashboardS
         .from('reservations')
         .select('cgst_amount, sgst_amount, igst_amount')
         .eq('check_in_date', today)
-      if (propertyId) taxQuery.eq('property_id', propertyId)
+        .in('property_id', targetPropertyIds)
       const { data: taxData } = await taxQuery
 
       ;(taxData || []).forEach((t: any) => {
@@ -353,8 +367,8 @@ export async function getDashboardStats(propertyId?: string): Promise<DashboardS
         .select('id')
         .eq('audit_date', today)
         .eq('status', 'Completed')
+        .in('property_id', targetPropertyIds)
         .limit(1)
-      if (propertyId) nightAuditQuery.eq('property_id', propertyId)
       const { data: auditRows } = await nightAuditQuery
       nightAuditCompleted = !!(auditRows && auditRows.length > 0)
     } catch {}
@@ -429,6 +443,11 @@ export async function getTodayArrivals(propertyId?: string): Promise<Reservation
     return []
   }
 
+  const allowedPropertyIds = await getTenantPropertyIds()
+  if (allowedPropertyIds.length === 0) return []
+  if (propertyId && !allowedPropertyIds.includes(propertyId)) return []
+  const targetPropertyIds = propertyId ? [propertyId] : allowedPropertyIds
+
   try {
     const supabase = await createClient()
     const today = new Date().toISOString().split('T')[0]
@@ -454,8 +473,7 @@ export async function getTodayArrivals(propertyId?: string): Promise<Reservation
       `)
       .eq('check_in_date', today)
       .in('status', ['confirmed', 'pending'])
-
-    if (propertyId) query = query.eq('property_id', propertyId)
+      .in('property_id', targetPropertyIds)
 
     const { data, error } = await query
     if (error || !data) return []
@@ -486,6 +504,11 @@ export async function getTodayDepartures(propertyId?: string): Promise<Reservati
     return []
   }
 
+  const allowedPropertyIds = await getTenantPropertyIds()
+  if (allowedPropertyIds.length === 0) return []
+  if (propertyId && !allowedPropertyIds.includes(propertyId)) return []
+  const targetPropertyIds = propertyId ? [propertyId] : allowedPropertyIds
+
   try {
     const supabase = await createClient()
     const today = new Date().toISOString().split('T')[0]
@@ -510,8 +533,7 @@ export async function getTodayDepartures(propertyId?: string): Promise<Reservati
       `)
       .eq('check_out_date', today)
       .eq('status', 'checked_in')
-
-    if (propertyId) query = query.eq('property_id', propertyId)
+      .in('property_id', targetPropertyIds)
 
     const { data, error } = await query
     if (error || !data) return []
@@ -545,6 +567,11 @@ export async function getRecentReservations(
     return []
   }
 
+  const allowedPropertyIds = await getTenantPropertyIds()
+  if (allowedPropertyIds.length === 0) return []
+  if (propertyId && !allowedPropertyIds.includes(propertyId)) return []
+  const targetPropertyIds = propertyId ? [propertyId] : allowedPropertyIds
+
   try {
     const supabase = await createClient()
 
@@ -567,10 +594,9 @@ export async function getRecentReservations(
           name
         )
       `)
+      .in('property_id', targetPropertyIds)
       .order('created_at', { ascending: false })
       .limit(limit)
-
-    if (propertyId) query = query.eq('property_id', propertyId)
 
     const { data, error } = await query
     if (error || !data) return []
@@ -617,6 +643,11 @@ export async function getRevenueChartData(
     return Object.values(buckets)
   }
 
+  const allowedPropertyIds = await getTenantPropertyIds()
+  if (allowedPropertyIds.length === 0) return Object.values(buckets)
+  if (propertyId && !allowedPropertyIds.includes(propertyId)) return Object.values(buckets)
+  const targetPropertyIds = propertyId ? [propertyId] : allowedPropertyIds
+
   try {
     const supabase = await createClient()
     const startDate = new Date()
@@ -628,14 +659,14 @@ export async function getRevenueChartData(
       .select('amount, created_at')
       .gte('created_at', `${startStr}T00:00:00`)
       .eq('status', 'completed')
-    if (propertyId) paymentsQuery = paymentsQuery.eq('property_id', propertyId)
+      .in('property_id', targetPropertyIds)
     const { data: payments } = await paymentsQuery
 
     let expensesQuery = supabase
       .from('expenses')
       .select('amount, created_at')
       .gte('created_at', `${startStr}T00:00:00`)
-    if (propertyId) expensesQuery = expensesQuery.eq('property_id', propertyId)
+      .in('property_id', targetPropertyIds)
     const { data: expenses } = await expensesQuery
 
     for (const p of payments || []) {
@@ -667,24 +698,29 @@ export async function getRoomTypePerformance(propertyId?: string): Promise<RoomT
     return []
   }
 
+  const allowedPropertyIds = await getTenantPropertyIds()
+  if (allowedPropertyIds.length === 0) return []
+  if (propertyId && !allowedPropertyIds.includes(propertyId)) return []
+  const targetPropertyIds = propertyId ? [propertyId] : allowedPropertyIds
+
   try {
     const supabase = await createClient()
 
     let rtQuery = supabase
       .from('room_types')
       .select('id, name, base_rate, property_id')
-    if (propertyId) rtQuery = rtQuery.eq('property_id', propertyId)
+      .in('property_id', targetPropertyIds)
 
     let roomsQuery = supabase
       .from('rooms')
       .select('id, room_type_id, status, property_id')
-    if (propertyId) roomsQuery = roomsQuery.eq('property_id', propertyId)
+      .in('property_id', targetPropertyIds)
 
     let resQuery = supabase
       .from('reservations')
       .select('id, room_type_id, total_amount, status')
       .neq('status', 'cancelled')
-    if (propertyId) resQuery = resQuery.eq('property_id', propertyId)
+      .in('property_id', targetPropertyIds)
 
     const [rtRes, roomsRes, resRes] = await Promise.all([
       rtQuery,
@@ -755,36 +791,40 @@ export async function getHousekeepingOverview(propertyId?: string): Promise<Hous
     return emptyOverview
   }
 
+  const allowedPropertyIds = await getTenantPropertyIds()
+  if (allowedPropertyIds.length === 0) return emptyOverview
+  if (propertyId && !allowedPropertyIds.includes(propertyId)) return emptyOverview
+  const targetPropertyIds = propertyId ? [propertyId] : allowedPropertyIds
+
   try {
     const supabase = await createClient()
-    const today = new Date().toISOString().split('T')[0]
 
     let pendingQ = supabase
       .from('housekeeping_tasks')
       .select('*', { count: 'exact', head: true })
       .eq('status', 'pending')
-    if (propertyId) pendingQ = pendingQ.eq('property_id', propertyId)
+      .in('property_id', targetPropertyIds)
     const { count: requiresCleaning } = await pendingQ
 
     let inProgQ = supabase
       .from('housekeeping_tasks')
       .select('*', { count: 'exact', head: true })
       .eq('status', 'in_progress')
-    if (propertyId) inProgQ = inProgQ.eq('property_id', propertyId)
+      .in('property_id', targetPropertyIds)
     const { count: inProgress } = await inProgQ
 
     let completedQ = supabase
       .from('housekeeping_tasks')
       .select('*', { count: 'exact', head: true })
       .eq('status', 'completed')
-    if (propertyId) completedQ = completedQ.eq('property_id', propertyId)
+      .in('property_id', targetPropertyIds)
     const { count: completed } = await completedQ
 
     let awaitingQ = supabase
       .from('housekeeping_tasks')
       .select('*', { count: 'exact', head: true })
       .eq('status', 'awaiting_inspection')
-    if (propertyId) awaitingQ = awaitingQ.eq('property_id', propertyId)
+      .in('property_id', targetPropertyIds)
     const { count: awaitingInspection } = await awaitingQ
 
     return {
@@ -809,10 +849,17 @@ export async function getBookingSourcesData(propertyId?: string): Promise<Bookin
     return []
   }
 
+  const allowedPropertyIds = await getTenantPropertyIds()
+  if (allowedPropertyIds.length === 0) return []
+  if (propertyId && !allowedPropertyIds.includes(propertyId)) return []
+  const targetPropertyIds = propertyId ? [propertyId] : allowedPropertyIds
+
   try {
     const supabase = await createClient()
-    let query = supabase.from('reservations').select('booking_source')
-    if (propertyId) query = query.eq('property_id', propertyId)
+    let query = supabase
+      .from('reservations')
+      .select('booking_source')
+      .in('property_id', targetPropertyIds)
 
     const { data } = await query
     if (!data || data.length === 0) return []
@@ -853,6 +900,11 @@ export async function getBookingTrendsData(
     return Object.entries(buckets).map(([date, count]) => ({ date, count }))
   }
 
+  const allowedPropertyIds = await getTenantPropertyIds()
+  if (allowedPropertyIds.length === 0) return Object.entries(buckets).map(([date, count]) => ({ date, count }))
+  if (propertyId && !allowedPropertyIds.includes(propertyId)) return Object.entries(buckets).map(([date, count]) => ({ date, count }))
+  const targetPropertyIds = propertyId ? [propertyId] : allowedPropertyIds
+
   try {
     const supabase = await createClient()
     const startDate = new Date()
@@ -863,7 +915,7 @@ export async function getBookingTrendsData(
       .from('reservations')
       .select('created_at')
       .gte('created_at', `${startStr}T00:00:00`)
-    if (propertyId) query = query.eq('property_id', propertyId)
+      .in('property_id', targetPropertyIds)
 
     const { data } = await query
     for (const r of data || []) {

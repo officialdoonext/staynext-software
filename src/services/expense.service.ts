@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { getTenantPropertyIds } from '@/services/tenant.service'
 
 export interface ExpenseCategoryRecord {
   id: string
@@ -36,6 +37,9 @@ export interface ExpenseRecord {
  */
 export async function getExpenseCategories(propertyId: string): Promise<ExpenseCategoryRecord[]> {
   try {
+    const allowedPropertyIds = await getTenantPropertyIds()
+    if (!propertyId || !allowedPropertyIds.includes(propertyId)) return []
+
     const supabase = await createClient()
 
     const { data: categories, error } = await supabase
@@ -142,6 +146,9 @@ export async function getExpenses(
   }
 ): Promise<ExpenseRecord[]> {
   try {
+    const allowedPropertyIds = await getTenantPropertyIds()
+    if (!propertyId || !allowedPropertyIds.includes(propertyId)) return []
+
     const supabase = await createClient()
 
     let query = supabase

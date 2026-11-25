@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
+import { getActiveTenantPropertyId, verifyPropertyOwnership } from '@/services/tenant.service'
 
 export interface PropertySettingsData {
   id: string
@@ -87,15 +88,19 @@ export interface PropertyUserItem {
  */
 export async function getPropertySettings(propId?: string): Promise<PropertySettingsData | null> {
   try {
+    const targetPropertyId = await getActiveTenantPropertyId(propId)
+    if (!targetPropertyId) return null
+
     let properties: any[] | null = null
 
     try {
       const supabase = await createClient()
-      let query = supabase.from('properties').select('*, tenants(*)')
-      if (propId) {
-        query = query.eq('id', propId)
-      }
-      const res = await query.limit(1)
+      const res = await supabase
+        .from('properties')
+        .select('*, tenants(*)')
+        .eq('id', targetPropertyId)
+        .limit(1)
+
       if (res.data && res.data.length > 0) {
         properties = res.data
       }
@@ -103,11 +108,12 @@ export async function getPropertySettings(propId?: string): Promise<PropertySett
 
     if (!properties || properties.length === 0) {
       const admin = createAdminClient()
-      let adminQuery = admin.from('properties').select('*, tenants(*)')
-      if (propId) {
-        adminQuery = adminQuery.eq('id', propId)
-      }
-      const adminRes = await adminQuery.limit(1)
+      const adminRes = await admin
+        .from('properties')
+        .select('*, tenants(*)')
+        .eq('id', targetPropertyId)
+        .limit(1)
+
       if (adminRes.data && adminRes.data.length > 0) {
         properties = adminRes.data
       }

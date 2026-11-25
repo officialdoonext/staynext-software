@@ -50,6 +50,7 @@ import {
   getBookingSourcesData,
   getBookingTrendsData,
 } from '@/services/dashboard.service'
+import { getActiveTenantPropertyId } from '@/services/tenant.service'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import Link from 'next/link'
 
@@ -63,7 +64,8 @@ interface DashboardPageProps {
 
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
   const resolvedParams = searchParams ? await searchParams : {}
-  const propertyId = resolvedParams?.propertyId
+  const activePropertyId = await getActiveTenantPropertyId(resolvedParams?.propertyId)
+  const propertyId = activePropertyId || undefined
 
   const [
     stats,

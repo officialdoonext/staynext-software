@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { getTenantPropertyIds, getAuthenticatedTenantId } from '@/services/tenant.service'
 
 export interface ForeignGuestRecord {
   id: string
@@ -79,12 +80,31 @@ export interface ComplianceAuditLog {
  */
 export async function getComplianceOverview(propertyId?: string) {
   try {
+    const tenantId = await getAuthenticatedTenantId()
+    const allowedPropertyIds = await getTenantPropertyIds()
+    if (!tenantId || allowedPropertyIds.length === 0) {
+      return {
+        totalForeign: 0,
+        formIIIPending: 0,
+        formIIISubmitted: 0,
+        totalLicenses: 0,
+        expiringSoonLicenses: 0,
+        dpdpConsentCompliant: true,
+        lastAuditSync: new Date().toISOString(),
+      }
+    }
+
+    const targetPropertyIds = propertyId && allowedPropertyIds.includes(propertyId)
+      ? [propertyId]
+      : allowedPropertyIds
+
     const supabase = await createClient()
 
-    // 1. Fetch foreign guests
+    // 1. Fetch foreign guests scoped to tenant guests
     const foreignQuery = supabase
       .from('foreign_guest_details')
-      .select('id, form_iii_status, created_at')
+      .select('id, form_iii_status, created_at, guest:guests!inner(tenant_id)')
+      .eq('guest.tenant_id', tenantId)
 
     const { data: foreignList } = await foreignQuery
 
@@ -92,10 +112,11 @@ export async function getComplianceOverview(propertyId?: string) {
     const formIIIPending = foreignList?.filter((f) => f.form_iii_status === 'Pending').length || 0
     const formIIISubmitted = foreignList?.filter((f) => f.form_iii_status === 'Submitted' || f.form_iii_status === 'Acknowledged').length || 0
 
-    // 2. Fetch licenses
+    // 2. Fetch licenses scoped to tenant/properties
     const { data: licenses } = await supabase
       .from('property_licenses')
       .select('*')
+      .in('property_id', targetPropertyIds)
 
     const totalLicenses = licenses?.length || 0
     const expiringSoonLicenses = licenses?.filter((l) => l.status === 'Expiring Soon').length || 0
@@ -112,11 +133,11 @@ export async function getComplianceOverview(propertyId?: string) {
   } catch (err) {
     console.error('getComplianceOverview error:', err)
     return {
-      totalForeign: 1,
-      formIIIPending: 1,
+      totalForeign: 0,
+      formIIIPending: 0,
       formIIISubmitted: 0,
-      totalLicenses: 4,
-      expiringSoonLicenses: 1,
+      totalLicenses: 0,
+      expiringSoonLicenses: 0,
       dpdpConsentCompliant: true,
       lastAuditSync: new Date().toISOString(),
     }
@@ -128,13 +149,16 @@ export async function getComplianceOverview(propertyId?: string) {
  */
 export async function getForeignGuests(propertyId?: string): Promise<ForeignGuestRecord[]> {
   try {
+    const tenantId = await getAuthenticatedTenantId()
+    if (!tenantId) return []
+
     const supabase = await createClient()
 
     const { data, error } = await supabase
       .from('foreign_guest_details')
       .select(`
         *,
-        guest:guests(first_name, last_name, phone, nationality),
+        guest:guests!inner(first_name, last_name, phone, nationality, tenant_id),
         reservation:reservations(
           reservation_number,
           check_in_date,
@@ -142,36 +166,11 @@ export async function getForeignGuests(propertyId?: string): Promise<ForeignGues
           reservation_rooms(rooms(room_number))
         )
       `)
+      .eq('guest.tenant_id', tenantId)
       .order('created_at', { ascending: false })
 
     if (error || !data || data.length === 0) {
-      // Fallback demo/sample record if DB migration isn't populated yet
-      return [
-        {
-          id: 'FG-8801',
-          guest_id: 'GST-901',
-          guest_name: 'David Christopher Miller',
-          passport_number: 'USA-984210492',
-          passport_issue_country: 'United States',
-          passport_issue_date: '2021-04-12',
-          passport_expiry_date: '2031-04-11',
-          visa_number: 'IND-V-2025-9921',
-          visa_type: 'e-Tourist (Double Entry)',
-          visa_expiry_date: '2026-03-30',
-          is_oci: false,
-          arrival_date: new Date().toISOString().split('T')[0],
-          arrived_from: 'London Heathrow (LHR)',
-          proceeding_to: 'Bengaluru (BLR)',
-          purpose_of_visit: 'Tourism & Cultural Visit',
-          address_in_india: 'StayNext Hotel & Suites, Room 304, Financial District, Hyderabad',
-          permanent_overseas_address: '422 Lexington Ave, Apt 9B, New York, NY 10017, USA',
-          form_iii_status: 'Pending',
-          form_iii_reference_number: '',
-          room_number: '304',
-          mobile_number: '+1 917 555 0192',
-          created_at: new Date().toISOString(),
-        },
-      ]
+      return []
     }
 
     return data.map((d: any) => {
@@ -249,6 +248,13 @@ export async function submitFormIIIAcknowledgment(
  */
 export async function getStatutoryGuestRegister(propertyId?: string): Promise<StatutoryRegisterRecord[]> {
   try {
+    const allowedPropertyIds = await getTenantPropertyIds()
+    if (allowedPropertyIds.length === 0) return []
+
+    const targetPropertyIds = propertyId && allowedPropertyIds.includes(propertyId)
+      ? [propertyId]
+      : allowedPropertyIds
+
     const supabase = await createClient()
 
     const { data } = await supabase
@@ -282,48 +288,12 @@ export async function getStatutoryGuestRegister(propertyId?: string): Promise<St
           )
         )
       `)
+      .in('property_id', targetPropertyIds)
       .order('check_in_date', { ascending: false })
       .limit(50)
 
     if (!data || data.length === 0) {
-      return [
-        {
-          serial_number: 'REG-2026-001',
-          guest_name: 'Rahul Sharma',
-          guest_category: 'Indian Resident',
-          gender: 'Male',
-          age: 34,
-          check_in_date: '2026-11-20',
-          check_in_time: '02:15 PM',
-          check_out_date: '2026-11-23',
-          room_number: '101',
-          permanent_address: 'Flat 402, Green Glen Layout, Bellandur, Bengaluru, Karnataka - 560103',
-          mobile_number: '+91 98765 43210',
-          id_proof_type: 'Aadhaar Card',
-          id_proof_number: 'XXXX-XXXX-4921',
-          arrived_from: 'Bengaluru',
-          proceeding_to: 'Mumbai',
-          signature_status: 'Accepted',
-        },
-        {
-          serial_number: 'REG-2026-002',
-          guest_name: 'Priya Patel',
-          guest_category: 'Indian Resident',
-          gender: 'Female',
-          age: 29,
-          check_in_date: '2026-11-19',
-          check_in_time: '11:45 AM',
-          check_out_date: '2026-11-22',
-          room_number: '204',
-          permanent_address: 'B-12, Navrangpura, Ahmedabad, Gujarat - 380009',
-          mobile_number: '+91 94280 12345',
-          id_proof_type: 'Driving Licence',
-          id_proof_number: 'GJ01-2018-0942',
-          arrived_from: 'Ahmedabad',
-          proceeding_to: 'Pune',
-          signature_status: 'Accepted',
-        },
-      ]
+      return []
     }
 
     return data.map((r: any, idx: number) => {
@@ -360,61 +330,23 @@ export async function getStatutoryGuestRegister(propertyId?: string): Promise<St
  */
 export async function getPropertyLicenses(propertyId?: string): Promise<PropertyLicenseRecord[]> {
   try {
+    const allowedPropertyIds = await getTenantPropertyIds()
+    if (allowedPropertyIds.length === 0) return []
+
+    const targetPropertyIds = propertyId && allowedPropertyIds.includes(propertyId)
+      ? [propertyId]
+      : allowedPropertyIds
+
     const supabase = await createClient()
 
     const { data } = await supabase
       .from('property_licenses')
       .select('*')
+      .in('property_id', targetPropertyIds)
       .order('expiry_date', { ascending: true })
 
     if (!data || data.length === 0) {
-      // Default India hospitality licenses
-      return [
-        {
-          id: 'lic-1',
-          license_type: 'Municipal Corporation Trade Licence',
-          license_number: 'GHMC/TL/2024/88921',
-          issuing_authority: 'Greater Hyderabad Municipal Corporation',
-          issue_date: '2024-04-01',
-          expiry_date: '2027-03-31',
-          status: 'Active',
-          alert_days: 30,
-          created_at: new Date().toISOString(),
-        },
-        {
-          id: 'lic-2',
-          license_type: 'Fire Safety NOC (Form 15)',
-          license_number: 'FS-TEL/NOC/2025/1042',
-          issuing_authority: 'State Disaster Response & Fire Services Dept',
-          issue_date: '2025-01-15',
-          expiry_date: '2026-01-14',
-          status: 'Expiring Soon',
-          alert_days: 60,
-          created_at: new Date().toISOString(),
-        },
-        {
-          id: 'lic-3',
-          license_type: 'FSSAI Food Business Operator Licence',
-          license_number: '13624011000842',
-          issuing_authority: 'Food Safety and Standards Authority of India',
-          issue_date: '2024-08-10',
-          expiry_date: '2029-08-09',
-          status: 'Active',
-          alert_days: 45,
-          created_at: new Date().toISOString(),
-        },
-        {
-          id: 'lic-4',
-          license_type: 'State Pollution Control Board Consent (CTO)',
-          license_number: 'TSPCB/RO/HYD/CTO/2024-912',
-          issuing_authority: 'Telangana State Pollution Control Board',
-          issue_date: '2024-05-01',
-          expiry_date: '2027-04-30',
-          status: 'Active',
-          alert_days: 60,
-          created_at: new Date().toISOString(),
-        },
-      ]
+      return []
     }
 
     return data
@@ -429,6 +361,12 @@ export async function getPropertyLicenses(propertyId?: string): Promise<Property
  */
 export async function savePropertyLicense(payload: Partial<PropertyLicenseRecord>): Promise<{ success: boolean; error?: string }> {
   try {
+    const tenantId = await getAuthenticatedTenantId()
+    const allowedPropertyIds = await getTenantPropertyIds()
+    const targetPropertyId = (payload.property_id && allowedPropertyIds.includes(payload.property_id))
+      ? payload.property_id
+      : allowedPropertyIds[0]
+
     const supabase = await createClient()
 
     if (payload.id && !payload.id.startsWith('lic-')) {
@@ -444,12 +382,15 @@ export async function savePropertyLicense(payload: Partial<PropertyLicenseRecord
           alert_days: payload.alert_days || 30,
         })
         .eq('id', payload.id)
+        .eq('tenant_id', tenantId)
 
       if (error) throw error
     } else {
       const { error } = await supabase
         .from('property_licenses')
         .insert({
+          tenant_id: tenantId,
+          property_id: targetPropertyId,
           license_type: payload.license_type,
           license_number: payload.license_number,
           issuing_authority: payload.issuing_authority,
@@ -474,37 +415,32 @@ export async function savePropertyLicense(payload: Partial<PropertyLicenseRecord
  */
 export async function getComplianceAuditLogs(propertyId?: string): Promise<ComplianceAuditLog[]> {
   try {
+    const tenantId = await getAuthenticatedTenantId()
+    if (!tenantId) return []
+
+    const allowedPropertyIds = await getTenantPropertyIds()
+    const targetPropertyIds = propertyId && allowedPropertyIds.includes(propertyId)
+      ? [propertyId]
+      : allowedPropertyIds
+
     const supabase = await createClient()
 
-    const { data } = await supabase
+    let query = supabase
       .from('compliance_audit_logs')
       .select('*')
       .order('created_at', { ascending: false })
       .limit(50)
 
+    if (targetPropertyIds.length > 0) {
+      query = query.in('property_id', targetPropertyIds)
+    } else {
+      query = query.eq('tenant_id', tenantId)
+    }
+
+    const { data } = await query
+
     if (!data || data.length === 0) {
-      return [
-        {
-          id: 'log-1',
-          user_name: 'Reception Desk 1 (Duty Staff)',
-          action_type: 'Guest Identity Verification (DPDP Section 4)',
-          resource_type: 'Aadhaar / Passport Document',
-          resource_id: 'GST-10492',
-          ip_address: '192.168.1.104',
-          details: { method: 'Visual Inspection', consent_logged: true },
-          created_at: new Date(Date.now() - 1000 * 60 * 35).toISOString(),
-        },
-        {
-          id: 'log-2',
-          user_name: 'System Automation',
-          action_type: 'FRRO Form III 24h Compliance Check',
-          resource_type: 'Foreign Guest Manifest',
-          resource_id: 'BATCH-2026-11',
-          ip_address: '127.0.0.1',
-          details: { pending_filings: 1, acknowledged: 4 },
-          created_at: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
-        },
-      ]
+      return []
     }
 
     return data.map((d: any) => ({

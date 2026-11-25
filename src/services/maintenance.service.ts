@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
+import { getTenantPropertyIds, verifyPropertyOwnership } from '@/services/tenant.service'
 
 export interface MaintenanceItem {
   id: string
@@ -30,6 +31,11 @@ export interface MaintenanceItem {
  * Fetch maintenance tickets and guest QR maintenance requests
  */
 export async function getMaintenanceRequests(propertyId?: string): Promise<MaintenanceItem[]> {
+  const allowedPropertyIds = await getTenantPropertyIds()
+  if (allowedPropertyIds.length === 0) return []
+  if (propertyId && !allowedPropertyIds.includes(propertyId)) return []
+  const targetPropertyIds = propertyId ? [propertyId] : allowedPropertyIds
+
   const supabase = createAdminClient()
 
   // 1. Fetch from maintenance_requests (DO NOT join employees because foreign key doesn't exist)
@@ -39,11 +45,8 @@ export async function getMaintenanceRequests(propertyId?: string): Promise<Maint
       *,
       room:rooms(id, room_number)
     `)
+    .in('property_id', targetPropertyIds)
     .order('created_at', { ascending: false })
-
-  if (propertyId) {
-    query = query.eq('property_id', propertyId)
-  }
 
   const { data, error } = await query
   if (error) {
@@ -56,8 +59,8 @@ export async function getMaintenanceRequests(propertyId?: string): Promise<Maint
     let fallback = supabase
       .from('maintenance_requests')
       .select('*')
+      .in('property_id', targetPropertyIds)
       .order('created_at', { ascending: false })
-    if (propertyId) fallback = fallback.eq('property_id', propertyId)
     const { data: fbData } = await fallback
     if (fbData) mtData = fbData
   }
@@ -211,6 +214,9 @@ export async function createMaintenanceWorkOrder(payload: {
   estimated_cost?: number
 }): Promise<{ success: boolean; data?: any; error?: string }> {
   try {
+    const isOwner = await verifyPropertyOwnership(payload.property_id)
+    if (!isOwner) return { success: false, error: 'Unauthorized property' }
+
     const supabase = await createClient()
 
     const { data, error } = await supabase
@@ -389,18 +395,24 @@ export async function getMaintenanceTypes(params: {
   const from = (page - 1) * pageSize
   const to = from + pageSize - 1
 
+  const allowedPropertyIds = await getTenantPropertyIds()
+  if (allowedPropertyIds.length === 0) {
+    return { data: [], totalCount: 0, page, pageSize, totalPages: 0 }
+  }
+  if (params.propertyId && !allowedPropertyIds.includes(params.propertyId)) {
+    return { data: [], totalCount: 0, page, pageSize, totalPages: 0 }
+  }
+  const targetPropertyIds = params.propertyId ? [params.propertyId] : allowedPropertyIds
+
   try {
     const supabase = await createClient()
 
     let query = supabase
       .from('maintenance_types')
       .select('*', { count: 'exact' })
+      .in('property_id', targetPropertyIds)
       .order('created_at', { ascending: false })
       .range(from, to)
-
-    if (params.propertyId) {
-      query = query.eq('property_id', params.propertyId)
-    }
 
     if (params.search && params.search.trim()) {
       query = query.ilike('name', `%${params.search.trim()}%`)

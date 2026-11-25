@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
+import { getTenantPropertyIds, verifyPropertyOwnership } from '@/services/tenant.service'
 
 export interface TableRecord {
   id: string
@@ -72,6 +73,9 @@ export interface RestaurantOrderRecord {
  */
 export async function getRestaurantTables(propertyId: string): Promise<TableRecord[]> {
   try {
+    const allowedPropertyIds = await getTenantPropertyIds()
+    if (!propertyId || !allowedPropertyIds.includes(propertyId)) return []
+
     const supabase = createAdminClient()
 
     const { data, error } = await supabase
@@ -179,37 +183,20 @@ export async function deleteRestaurantTable(tableId: string): Promise<{ success:
  */
 export async function getMenuCategories(propertyId: string): Promise<MenuCategoryRecord[]> {
   try {
+    const allowedPropertyIds = await getTenantPropertyIds()
+    if (!propertyId || !allowedPropertyIds.includes(propertyId)) return []
+
     const admin = createAdminClient()
 
-    let query = admin
+    const { data, error } = await admin
       .from('guest_service_categories')
       .select('*')
+      .eq('property_id', propertyId)
       .order('name', { ascending: true })
 
-    if (propertyId) {
-      query = query.eq('property_id', propertyId)
-    }
+    if (error || !data) return []
 
-    const { data, error } = await query
-
-    if (error) {
-      console.error('getMenuCategories error:', error)
-      return []
-    }
-    if (!data) return []
-
-    let cats = data
-    if (cats.length === 0 && propertyId) {
-      const { data: allCats } = await admin
-        .from('guest_service_categories')
-        .select('*')
-        .order('name', { ascending: true })
-      if (allCats && allCats.length > 0) {
-        cats = allCats
-      }
-    }
-
-    return cats.map((c: any) => ({
+    return data.map((c: any) => ({
       id: c.id,
       propertyId: c.property_id,
       name: c.name,
@@ -279,6 +266,9 @@ export async function createMenuCategory(data: {
  */
 export async function getMenuItems(propertyId: string, categoryId?: string): Promise<MenuItemRecord[]> {
   try {
+    const allowedPropertyIds = await getTenantPropertyIds()
+    if (!propertyId || !allowedPropertyIds.includes(propertyId)) return []
+
     const admin = createAdminClient()
 
     let query = admin
@@ -307,25 +297,17 @@ export async function getMenuItems(propertyId: string, categoryId?: string): Pro
 
     const { data, error } = await query
 
-    if (error) {
-      console.error('getMenuItems query error:', error)
+    if (error || !data) {
+      if (error) console.error('getMenuItems query error:', error)
       return []
     }
-    if (!data) return []
 
-    // Filter items belonging to this property (via property_id or category)
-    let filtered = propertyId
-      ? data.filter(
-          (item: any) =>
-            item.property_id === propertyId ||
-            item.guest_service_categories?.property_id === propertyId
-        )
-      : data
-
-    // If specific property has 0 items but database has items, fallback to all available items
-    if (filtered.length === 0 && data.length > 0) {
-      filtered = data
-    }
+    // Filter items strictly belonging to this property (via property_id or category)
+    const filtered = data.filter(
+      (item: any) =>
+        item.property_id === propertyId ||
+        item.guest_service_categories?.property_id === propertyId
+    )
 
     return filtered.map((item: any) => ({
       id: item.id,
@@ -490,6 +472,13 @@ export async function getRestaurantOrders(
   status?: string
 ): Promise<RestaurantOrderRecord[]> {
   try {
+    const allowedPropertyIds = await getTenantPropertyIds()
+    if (allowedPropertyIds.length === 0) return []
+
+    const targetPropertyIds = propertyId && allowedPropertyIds.includes(propertyId)
+      ? [propertyId]
+      : allowedPropertyIds
+
     const supabase = createAdminClient()
 
     let query = supabase
@@ -525,11 +514,8 @@ export async function getRestaurantOrders(
           notes
         )
       `)
+      .in('property_id', targetPropertyIds)
       .order('created_at', { ascending: false })
-
-    if (propertyId) {
-      query = query.eq('property_id', propertyId)
-    }
 
     if (status && status !== 'all') {
       query = query.eq('status', status)
@@ -1014,6 +1000,13 @@ export async function getFoodRequests(
   statusFilter?: string
 ): Promise<FoodRequestRecord[]> {
   try {
+    const allowedPropertyIds = await getTenantPropertyIds()
+    if (allowedPropertyIds.length === 0) return []
+
+    const targetPropertyIds = propertyId && allowedPropertyIds.includes(propertyId)
+      ? [propertyId]
+      : allowedPropertyIds
+
     const admin = createAdminClient()
 
     let query = admin
@@ -1049,68 +1042,21 @@ export async function getFoodRequests(
           special_requests
         )
       `)
+      .in('property_id', targetPropertyIds)
       .order('created_at', { ascending: false })
-
-    if (propertyId) {
-      query = query.eq('property_id', propertyId)
-    }
 
     if (statusFilter && statusFilter !== 'all') {
       query = query.eq('status', statusFilter)
     }
 
-    let { data, error } = await query
+    const { data, error } = await query
 
     if (error) {
       console.error('getFoodRequests error:', error)
       return []
     }
 
-    let records = data || []
-    if (records.length === 0 && propertyId) {
-      let fbQuery = admin
-        .from('guest_orders')
-        .select(`
-          id,
-          property_id,
-          room_id,
-          order_number,
-          guest_name,
-          guest_phone,
-          status,
-          payment_method,
-          payment_status,
-          subtotal,
-          tax_amount,
-          delivery_charge,
-          total_amount,
-          special_instructions,
-          created_at,
-          delivered_at,
-          rooms (
-            room_number
-          ),
-          guest_order_items (
-            id,
-            order_id,
-            item_name,
-            quantity,
-            unit_price,
-            total_price,
-            dietary_type,
-            special_requests
-          )
-        `)
-        .order('created_at', { ascending: false })
-
-      if (statusFilter && statusFilter !== 'all') {
-        fbQuery = fbQuery.eq('status', statusFilter)
-      }
-      const { data: allReqs } = await fbQuery
-      if (allReqs && allReqs.length > 0) {
-        records = allReqs
-      }
-    }
+    const records = data || []
 
     return records.map((o: any) => {
       const room = o.rooms

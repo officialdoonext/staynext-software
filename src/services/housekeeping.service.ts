@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
+import { getTenantPropertyIds, getActiveTenantPropertyId, verifyPropertyOwnership } from '@/services/tenant.service'
 
 export interface HousekeepingTaskItem {
   id: string
@@ -27,6 +28,11 @@ export interface HousekeepingTaskItem {
  * Fetch housekeeping turnover tasks and guest QR requests
  */
 export async function getHousekeepingTasks(propertyId?: string): Promise<HousekeepingTaskItem[]> {
+  const allowedPropertyIds = await getTenantPropertyIds()
+  if (allowedPropertyIds.length === 0) return []
+  if (propertyId && !allowedPropertyIds.includes(propertyId)) return []
+  const targetPropertyIds = propertyId ? [propertyId] : allowedPropertyIds
+
   const supabase = createAdminClient()
 
   // 1. Fetch from housekeeping_tasks (DO NOT join employees because foreign key doesn't exist)
@@ -36,6 +42,7 @@ export async function getHousekeepingTasks(propertyId?: string): Promise<Houseke
       *,
       room:rooms(id, room_number, property_id, floor:floors(name, floor_number))
     `)
+    .in('property_id', targetPropertyIds)
     .order('created_at', { ascending: false })
 
   const { data, error } = await query
@@ -49,8 +56,8 @@ export async function getHousekeepingTasks(propertyId?: string): Promise<Houseke
     let fb = supabase
       .from('housekeeping_tasks')
       .select('*')
+      .in('property_id', targetPropertyIds)
       .order('created_at', { ascending: false })
-    if (propertyId) fb = fb.eq('property_id', propertyId)
     const { data: fbData } = await fb
     if (fbData) hkData = fbData
   }
@@ -271,8 +278,12 @@ export async function createHousekeepingTask(payload: {
     }
 
     if (!propId) {
-      const { data: prop } = await supabase.from('properties').select('id').limit(1).maybeSingle()
-      propId = prop?.id
+      propId = (await getActiveTenantPropertyId()) || undefined
+    }
+
+    if (propId) {
+      const isOwner = await verifyPropertyOwnership(propId)
+      if (!isOwner) return { success: false, error: 'Unauthorized property' }
     }
 
     const { data, error } = await supabase

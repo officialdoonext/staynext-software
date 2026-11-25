@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { extendStayReservation, checkOutReservation } from '@/services/reservation.service'
+import { getTenantPropertyIds } from '@/services/tenant.service'
 
 export interface FrontDeskReservationInfo {
   id: string
@@ -111,6 +112,26 @@ function parseCheckOutDateTime(dateStr: string, timeStr?: string): Date {
  * Accurately determines whether a room is occupied based on live timestamps.
  */
 export async function getFrontDeskRoomMatrix(propertyId: string): Promise<FrontDeskMatrixResult> {
+  const allowedPropertyIds = await getTenantPropertyIds()
+  if (allowedPropertyIds.length === 0) {
+    return {
+      groups: [],
+      allRooms: [],
+      stats: {
+        totalRooms: 0,
+        availableCount: 0,
+        occupiedCount: 0,
+        overdueCount: 0,
+        housekeepingCount: 0,
+        maintenanceCount: 0,
+      },
+    }
+  }
+
+  const targetPropertyId = propertyId && allowedPropertyIds.includes(propertyId)
+    ? propertyId
+    : allowedPropertyIds[0]
+
   const supabase = await createClient()
   const now = new Date()
   const today = now.toISOString().split('T')[0]
@@ -119,7 +140,7 @@ export async function getFrontDeskRoomMatrix(propertyId: string): Promise<FrontD
   const { data: roomTypesData } = await supabase
     .from('room_types')
     .select('id, name, base_rate, max_occupancy, bed_type')
-    .eq('property_id', propertyId)
+    .eq('property_id', targetPropertyId)
     .order('name', { ascending: true })
 
   // 2. Fetch Rooms with relations
@@ -141,7 +162,7 @@ export async function getFrontDeskRoomMatrix(propertyId: string): Promise<FrontD
       room_type:room_types(id, name, base_rate, max_occupancy, bed_type),
       qr_code:room_qr_codes(token_hash)
     `)
-    .eq('property_id', propertyId)
+    .eq('property_id', targetPropertyId)
     .order('room_number', { ascending: true })
 
   // 3. Fetch all active reservations (checked_in or confirmed)
@@ -162,7 +183,7 @@ export async function getFrontDeskRoomMatrix(propertyId: string): Promise<FrontD
       guest:guests(id, first_name, last_name, phone, email),
       rooms:reservation_rooms(room_id, is_active)
     `)
-    .eq('property_id', propertyId)
+    .eq('property_id', targetPropertyId)
     .in('status', ['checked_in', 'confirmed'])
 
   // Map reservations by room_id

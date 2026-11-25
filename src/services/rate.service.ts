@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { getTenantPropertyIds } from '@/services/tenant.service'
 
 export interface RatePlanRecord {
   id: string
@@ -49,6 +50,9 @@ export interface RatePromotionRecord {
  */
 export async function getRatePlans(propertyId: string): Promise<RatePlanRecord[]> {
   try {
+    const allowedPropertyIds = await getTenantPropertyIds()
+    if (!propertyId || !allowedPropertyIds.includes(propertyId)) return []
+
     const supabase = await createClient()
 
     const { data, error } = await supabase
@@ -141,6 +145,9 @@ export async function deleteRatePlan(id: string): Promise<{ success: boolean; er
  */
 export async function getSeasonalRates(propertyId: string): Promise<SeasonalRateRecord[]> {
   try {
+    const allowedPropertyIds = await getTenantPropertyIds()
+    if (!propertyId || !allowedPropertyIds.includes(propertyId)) return []
+
     const supabase = await createClient()
 
     const { data, error } = await supabase
@@ -224,6 +231,9 @@ export async function deleteSeasonalRate(id: string): Promise<{ success: boolean
  */
 export async function getRatePromotions(propertyId: string): Promise<RatePromotionRecord[]> {
   try {
+    const allowedPropertyIds = await getTenantPropertyIds()
+    if (!propertyId || !allowedPropertyIds.includes(propertyId)) return []
+
     const supabase = await createClient()
 
     const { data, error } = await supabase

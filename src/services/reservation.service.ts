@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { generateReservationNumber } from '@/lib/utils'
+import { getTenantPropertyIds, verifyPropertyOwnership, getAuthenticatedTenantId } from '@/services/tenant.service'
 
 export interface ReservationDetail {
   id: string
@@ -66,6 +67,16 @@ export async function getReservations(
   propertyId?: string,
   options?: ReservationFilterOptions
 ): Promise<{ reservations: ReservationDetail[]; totalCount: number }> {
+  const allowedPropertyIds = await getTenantPropertyIds()
+  if (allowedPropertyIds.length === 0) {
+    return { reservations: [], totalCount: 0 }
+  }
+
+  if (propertyId && !allowedPropertyIds.includes(propertyId)) {
+    return { reservations: [], totalCount: 0 }
+  }
+
+  const targetPropertyIds = propertyId ? [propertyId] : allowedPropertyIds
   const supabase = await createClient()
 
   let query = supabase
@@ -81,11 +92,8 @@ export async function getReservations(
     `,
       { count: 'exact' }
     )
+    .in('property_id', targetPropertyIds)
     .order('created_at', { ascending: false })
-
-  if (propertyId) {
-    query = query.eq('property_id', propertyId)
-  }
 
   if (options?.status && options.status !== 'all') {
     query = query.eq('status', options.status)
@@ -190,6 +198,9 @@ export async function getReservations(
  * Fetch single reservation details
  */
 export async function getReservationById(reservationId: string): Promise<ReservationDetail | null> {
+  const allowedPropertyIds = await getTenantPropertyIds()
+  if (allowedPropertyIds.length === 0 || !reservationId) return null
+
   const supabase = await createClient()
 
   const { data, error } = await supabase
@@ -203,7 +214,8 @@ export async function getReservationById(reservationId: string): Promise<Reserva
       )
     `)
     .eq('id', reservationId)
-    .single()
+    .in('property_id', allowedPropertyIds)
+    .maybeSingle()
 
   if (error || !data) return null
 
@@ -373,40 +385,17 @@ export async function createReservation(
   payload: CreateReservationPayload
 ): Promise<{ success: boolean; data?: any; error?: string }> {
   try {
+    const isOwner = await verifyPropertyOwnership(payload.property_id)
+    if (!isOwner) {
+      return { success: false, error: 'Unauthorized property for reservation' }
+    }
+
+    const tenantId = await getAuthenticatedTenantId()
+    if (!tenantId) {
+      return { success: false, error: 'Unauthorized tenant session' }
+    }
+
     const supabase = await createClient()
-
-    // 1. Resolve tenant_id for guest
-    let tenantId: string | null = null
-    if (payload.property_id) {
-      const { data: prop } = await supabase
-        .from('properties')
-        .select('tenant_id')
-        .eq('id', payload.property_id)
-        .maybeSingle()
-      tenantId = prop?.tenant_id || null
-    }
-
-    if (!tenantId) {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        const { data: tu } = await supabase
-          .from('tenant_users')
-          .select('tenant_id')
-          .eq('user_id', user.id)
-          .limit(1)
-          .maybeSingle()
-        tenantId = tu?.tenant_id || null
-      }
-    }
-
-    if (!tenantId) {
-      const { data: fallbackTenant } = await supabase
-        .from('tenants')
-        .select('id')
-        .limit(1)
-        .maybeSingle()
-      tenantId = fallbackTenant?.id || null
-    }
 
     // 2. Find or create/update guest
     let guestId: string | undefined
@@ -935,6 +924,14 @@ export async function cancelReservation(
  * Front desk today's operational views
  */
 export async function getFrontDeskOperations(propertyId?: string) {
+  const allowedPropertyIds = await getTenantPropertyIds()
+  if (allowedPropertyIds.length === 0) {
+    return { todayArrivals: [], todayDepartures: [], inHouseGuests: [] }
+  }
+  const targetPropertyIds = propertyId && allowedPropertyIds.includes(propertyId)
+    ? [propertyId]
+    : allowedPropertyIds
+
   const supabase = await createClient()
   const today = new Date().toISOString().split('T')[0]
 
@@ -949,6 +946,7 @@ export async function getFrontDeskOperations(propertyId?: string) {
         room:rooms(id, room_number)
       )
     `)
+    .in('property_id', targetPropertyIds)
     .eq('check_in_date', today)
     .in('status', ['confirmed', 'checked_in'])
 
@@ -963,6 +961,7 @@ export async function getFrontDeskOperations(propertyId?: string) {
         room:rooms(id, room_number)
       )
     `)
+    .in('property_id', targetPropertyIds)
     .eq('check_out_date', today)
     .in('status', ['checked_in', 'checked_out'])
 
@@ -977,13 +976,8 @@ export async function getFrontDeskOperations(propertyId?: string) {
         room:rooms(id, room_number)
       )
     `)
+    .in('property_id', targetPropertyIds)
     .eq('status', 'checked_in')
-
-  if (propertyId) {
-    arrQuery = arrQuery.eq('property_id', propertyId)
-    depQuery = depQuery.eq('property_id', propertyId)
-    inHouseQuery = inHouseQuery.eq('property_id', propertyId)
-  }
 
   const [arrRes, depRes, inHouseRes] = await Promise.all([arrQuery, depQuery, inHouseQuery])
 

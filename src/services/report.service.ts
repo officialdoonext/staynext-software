@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { getAuthenticatedTenantId, getTenantPropertyIds } from '@/services/tenant.service'
 
 export interface ExecutiveReportData {
   totalRooms: number
@@ -305,11 +306,15 @@ export async function getFinancialReport(propertyId: string): Promise<FinancialP
  */
 export async function getGuestsReport(propertyId: string): Promise<GuestAnalyticsData> {
   try {
+    const tenantId = await getAuthenticatedTenantId()
+    if (!tenantId) return { totalGuests: 0, vipCount: 0, topGuests: [] }
+
     const supabase = await createClient()
 
     const { data: guests } = await supabase
       .from('guests')
       .select('id, first_name, last_name, email, phone, is_vip, total_stays')
+      .eq('tenant_id', tenantId)
       .order('total_stays', { ascending: false })
       .limit(50)
 

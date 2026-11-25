@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { getTenantPropertyIds } from '@/services/tenant.service'
 
 export interface CorporateAccountRecord {
   id: string
@@ -55,6 +56,9 @@ export async function getCorporateAccounts(
   search?: string
 ): Promise<CorporateAccountRecord[]> {
   try {
+    const allowedPropertyIds = await getTenantPropertyIds()
+    if (!propertyId || !allowedPropertyIds.includes(propertyId)) return []
+
     const supabase = await createClient()
 
     const query = supabase
@@ -167,6 +171,9 @@ export async function deleteCorporateAccount(id: string): Promise<{ success: boo
  */
 export async function getCorporateContracts(propertyId: string): Promise<CorporateContractRecord[]> {
   try {
+    const allowedPropertyIds = await getTenantPropertyIds()
+    if (!propertyId || !allowedPropertyIds.includes(propertyId)) return []
+
     const supabase = await createClient()
 
     const { data, error } = await supabase
@@ -280,6 +287,9 @@ export async function deleteCorporateContract(id: string): Promise<{ success: bo
  */
 export async function getTravelAgents(propertyId: string): Promise<TravelAgentRecord[]> {
   try {
+    const allowedPropertyIds = await getTenantPropertyIds()
+    if (!propertyId || !allowedPropertyIds.includes(propertyId)) return []
+
     const supabase = await createClient()
 
     const { data, error } = await supabase

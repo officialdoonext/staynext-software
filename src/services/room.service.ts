@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 import { generateRoomQRCode } from '@/services/qr.service'
+import { getTenantPropertyIds, verifyPropertyOwnership } from '@/services/tenant.service'
 
 export interface RoomItem {
   id: string
@@ -100,6 +101,16 @@ export async function getRooms(
   propertyId?: string,
   options?: RoomFilterOptions
 ): Promise<{ rooms: RoomItem[]; totalCount: number }> {
+  const allowedPropertyIds = await getTenantPropertyIds()
+  if (allowedPropertyIds.length === 0) {
+    return { rooms: [], totalCount: 0 }
+  }
+
+  if (propertyId && !allowedPropertyIds.includes(propertyId)) {
+    return { rooms: [], totalCount: 0 }
+  }
+
+  const targetPropertyIds = propertyId ? [propertyId] : allowedPropertyIds
   const supabase = await createClient()
 
   let query = supabase
@@ -114,11 +125,8 @@ export async function getRooms(
     `,
       { count: 'exact' }
     )
+    .in('property_id', targetPropertyIds)
     .order('room_number', { ascending: true })
-
-  if (propertyId) {
-    query = query.eq('property_id', propertyId)
-  }
 
   if (options?.search) {
     query = query.ilike('room_number', `%${options.search}%`)
@@ -164,11 +172,9 @@ export async function getRooms(
         `,
           { count: 'exact' }
         )
+        .in('property_id', targetPropertyIds)
         .order('room_number', { ascending: true })
 
-      if (propertyId) {
-        adminQuery = adminQuery.eq('property_id', propertyId)
-      }
       if (options?.search) {
         adminQuery = adminQuery.ilike('room_number', `%${options.search}%`)
       }
@@ -236,6 +242,9 @@ export async function getRooms(
  * Fetch a single room by ID
  */
 export async function getRoomById(roomId: string): Promise<RoomItem | null> {
+  const allowedPropertyIds = await getTenantPropertyIds()
+  if (allowedPropertyIds.length === 0) return null
+
   const supabase = await createClient()
 
   const { data, error } = await supabase
@@ -248,7 +257,8 @@ export async function getRoomById(roomId: string): Promise<RoomItem | null> {
       qr_code:room_qr_codes(token_hash, is_active)
     `)
     .eq('id', roomId)
-    .single()
+    .in('property_id', allowedPropertyIds)
+    .maybeSingle()
 
   if (error || !data) return null
 
@@ -287,6 +297,9 @@ export async function createRoom(payload: {
   notes?: string
 }): Promise<{ success: boolean; data?: any; error?: string }> {
   try {
+    const isOwner = await verifyPropertyOwnership(payload.property_id)
+    if (!isOwner) return { success: false, error: 'Unauthorized property' }
+
     const supabase = await createClient()
 
     // 1. Check for duplicate room number in property
@@ -427,6 +440,12 @@ export async function updateRoomStatus(
 // ============================================================================
 
 export async function getRoomTypes(propertyId?: string): Promise<RoomTypeItem[]> {
+  const allowedPropertyIds = await getTenantPropertyIds()
+  if (allowedPropertyIds.length === 0) return []
+
+  if (propertyId && !allowedPropertyIds.includes(propertyId)) return []
+
+  const targetPropertyIds = propertyId ? [propertyId] : allowedPropertyIds
   const supabase = await createClient()
 
   let query = supabase
@@ -435,11 +454,8 @@ export async function getRoomTypes(propertyId?: string): Promise<RoomTypeItem[]>
       *,
       rooms:rooms(id)
     `)
+    .in('property_id', targetPropertyIds)
     .order('created_at', { ascending: true })
-
-  if (propertyId) {
-    query = query.eq('property_id', propertyId)
-  }
 
   const { data, error } = await query
   if (error || !data) return []
@@ -472,6 +488,11 @@ export async function getRoomTypes(propertyId?: string): Promise<RoomTypeItem[]>
 
 export async function createRoomType(payload: Partial<RoomTypeItem>): Promise<{ success: boolean; data?: any; error?: string }> {
   try {
+    if (payload.property_id) {
+      const isOwner = await verifyPropertyOwnership(payload.property_id)
+      if (!isOwner) return { success: false, error: 'Unauthorized property' }
+    }
+
     const supabase = await createClient()
 
     const { data, error } = await supabase
@@ -555,6 +576,12 @@ export async function deleteRoomType(id: string): Promise<{ success: boolean; er
 // ============================================================================
 
 export async function getRoomBlocks(propertyId?: string): Promise<RoomBlockItem[]> {
+  const allowedPropertyIds = await getTenantPropertyIds()
+  if (allowedPropertyIds.length === 0) return []
+
+  if (propertyId && !allowedPropertyIds.includes(propertyId)) return []
+
+  const targetPropertyIds = propertyId ? [propertyId] : allowedPropertyIds
   const supabase = await createClient()
 
   let query = supabase
@@ -563,11 +590,8 @@ export async function getRoomBlocks(propertyId?: string): Promise<RoomBlockItem[
       *,
       room:rooms(room_number)
     `)
+    .in('property_id', targetPropertyIds)
     .order('created_at', { ascending: false })
-
-  if (propertyId) {
-    query = query.eq('property_id', propertyId)
-  }
 
   const { data, error } = await query
   if (error || !data) return []
@@ -605,6 +629,9 @@ export async function createRoomBlock(payload: {
   approved_by?: string
 }): Promise<{ success: boolean; data?: any; error?: string }> {
   try {
+    const isOwner = await verifyPropertyOwnership(payload.property_id)
+    if (!isOwner) return { success: false, error: 'Unauthorized property' }
+
     const supabase = await createClient()
 
     // 1. Insert room block record
