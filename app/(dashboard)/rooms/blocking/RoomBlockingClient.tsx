@@ -19,6 +19,8 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { RoomBlockItem, RoomItem, createRoomBlock, releaseRoomBlock } from '@/services/room.service'
 import { PropertyItem } from '@/services/property.service'
 import { formatDate } from '@/lib/utils'
+import { SearchableSelect } from '@/components/ui/searchable-select'
+import { CustomDatePicker } from '@/components/ui/custom-date-picker'
 
 interface RoomBlockingClientProps {
   property: PropertyItem
@@ -158,15 +160,14 @@ export default function RoomBlockingClient({
 
         <div className="flex items-center gap-2">
           {properties.length > 1 && (
-            <select
-              value={selectedPropertyId}
-              onChange={(e) => setSelectedPropertyId(e.target.value)}
-              className="px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-            >
-              {properties.map((p) => (
-                <option key={p.id} value={p.id}>{p.name}</option>
-              ))}
-            </select>
+            <div className="w-56">
+              <SearchableSelect
+                value={selectedPropertyId}
+                onChange={setSelectedPropertyId}
+                options={properties.map((p) => ({ value: p.id, label: p.name }))}
+                placeholder="Select property..."
+              />
+            </div>
           )}
 
           <Button
@@ -216,34 +217,35 @@ export default function RoomBlockingClient({
               <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">Select Room *</label>
-                  <select
+                  <SearchableSelect
                     value={formData.room_id}
-                    onChange={(e) => setFormData({ ...formData, room_id: e.target.value })}
-                    className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
+                    onChange={(val) => setFormData({ ...formData, room_id: val })}
+                    options={rooms.map((r) => ({
+                      value: r.id,
+                      label: `Room ${r.room_number} (${r.room_type_name}) - Current: ${r.status}`,
+                    }))}
+                    placeholder="Select room..."
                     required
-                  >
-                    {rooms.map((r) => (
-                      <option key={r.id} value={r.id}>
-                        Room {r.room_number} ({r.room_type_name}) - Current: {r.status}
-                      </option>
-                    ))}
-                  </select>
+                  />
                 </div>
 
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">Block Type *</label>
-                  <select
+                  <SearchableSelect
                     value={formData.block_type}
-                    onChange={(e) => setFormData({ ...formData, block_type: e.target.value })}
-                    className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-                  >
-                    <option value="Maintenance">Maintenance &amp; Engineering</option>
-                    <option value="Renovation">Room Renovation / Refurbishment</option>
-                    <option value="Pest Control">Pest Control Treatment</option>
-                    <option value="Deep Cleaning">Deep Sanitization / Cleaning</option>
-                    <option value="Safety Issue">Safety / Electrical Inspection</option>
-                    <option value="VIP Reservation Hold">VIP / Government Hold</option>
-                  </select>
+                    onChange={(val) => setFormData({ ...formData, block_type: val })}
+                    options={[
+                      { value: 'Maintenance', label: 'Maintenance & Engineering' },
+                      { value: 'Renovation', label: 'Room Renovation / Refurbishment' },
+                      { value: 'Pest Control', label: 'Pest Control Treatment' },
+                      { value: 'Deep Cleaning', label: 'Deep Sanitization / Cleaning' },
+                      { value: 'Safety Issue', label: 'Safety / Electrical Inspection' },
+                      { value: 'VIP Reservation Hold', label: 'VIP / Government Hold' },
+                    ]}
+                    allowAdd={true}
+                    addNewLabel="Add Block Type"
+                    placeholder="Select block type..."
+                  />
                 </div>
 
                 <div>
@@ -291,23 +293,19 @@ export default function RoomBlockingClient({
 
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">Start Date</label>
-                  <input
-                    type="date"
+                  <CustomDatePicker
                     value={formData.start_date}
-                    onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-                    className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-                    required
+                    onChange={(val) => setFormData({ ...formData, start_date: val })}
+                    placeholder="Select start date..."
                   />
                 </div>
 
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">End Date</label>
-                  <input
-                    type="date"
+                  <CustomDatePicker
                     value={formData.end_date}
-                    onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-                    className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-                    required
+                    onChange={(val) => setFormData({ ...formData, end_date: val })}
+                    placeholder="Select end date..."
                   />
                 </div>
 

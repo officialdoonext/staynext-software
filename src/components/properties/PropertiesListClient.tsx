@@ -23,6 +23,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { PropertyItem, togglePropertyStatus, TenantPropertyStats } from '@/services/property.service'
+import { SearchableSelect } from '@/components/ui/searchable-select'
 
 interface PropertiesListClientProps {
   initialProperties: PropertyItem[]
@@ -155,30 +156,32 @@ export default function PropertiesListClient({ initialProperties, propertyStats 
         </div>
 
         <div>
-          <select
+          <SearchableSelect
             value={selectedType}
-            onChange={(e) => setSelectedType(e.target.value)}
-            className="w-full px-3 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-          >
-            <option value="all">All Property Types</option>
-            <option value="hotel">Hotel</option>
-            <option value="resort">Resort</option>
-            <option value="lodge">Lodge</option>
-            <option value="apartment">Apartment</option>
-            <option value="villa">Villa</option>
-          </select>
+            onChange={setSelectedType}
+            options={[
+              { value: 'all', label: 'All Property Types' },
+              { value: 'hotel', label: 'Hotel' },
+              { value: 'resort', label: 'Resort' },
+              { value: 'lodge', label: 'Lodge' },
+              { value: 'apartment', label: 'Apartment' },
+              { value: 'villa', label: 'Villa' },
+            ]}
+            placeholder="Filter Type..."
+          />
         </div>
 
         <div>
-          <select
+          <SearchableSelect
             value={selectedStatus}
-            onChange={(e) => setSelectedStatus(e.target.value)}
-            className="w-full px-3 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-          >
-            <option value="all">All Statuses</option>
-            <option value="active">Active Only</option>
-            <option value="inactive">Inactive Only</option>
-          </select>
+            onChange={setSelectedStatus}
+            options={[
+              { value: 'all', label: 'All Statuses' },
+              { value: 'active', label: 'Active Only' },
+              { value: 'inactive', label: 'Inactive Only' },
+            ]}
+            placeholder="Filter Status..."
+          />
         </div>
       </div>
 

@@ -1,6 +1,6 @@
 import React from 'react'
 import { createClient } from '@/lib/supabase/server'
-import { getExpenses } from '@/services/expense.service'
+import { getExpenses, getExpenseCategories } from '@/services/expense.service'
 import { ExpensesClient } from './ExpensesClient'
 
 export const metadata = { title: 'Expense Management | StayNext' }
@@ -16,7 +16,16 @@ export default async function ExpensesPage() {
     }
   } catch {}
 
-  const expenses = propertyId ? await getExpenses(propertyId) : []
+  const [expenses, categories] = await Promise.all([
+    propertyId ? getExpenses(propertyId) : Promise.resolve([]),
+    propertyId ? getExpenseCategories(propertyId) : Promise.resolve([]),
+  ])
 
-  return <ExpensesClient initialExpenses={expenses} propertyId={propertyId} />
+  return (
+    <ExpensesClient
+      initialExpenses={expenses}
+      categories={categories}
+      propertyId={propertyId}
+    />
+  )
 }

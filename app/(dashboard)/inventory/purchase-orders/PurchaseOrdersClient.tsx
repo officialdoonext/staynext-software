@@ -31,6 +31,8 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { formatCurrency, formatDate } from '@/lib/utils'
+import { SearchableSelect } from '@/components/ui/searchable-select'
+import { CustomDatePicker } from '@/components/ui/custom-date-picker'
 import {
   PurchaseOrderRecord,
   SupplierRecord,
@@ -364,22 +366,18 @@ export function PurchaseOrdersClient({
           <form onSubmit={handleCreateSubmit} className="space-y-4 pt-2">
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">Select Supplier *</label>
-              <select
+              <SearchableSelect
                 value={form.supplierId}
-                onChange={(e) => setForm({ ...form, supplierId: e.target.value })}
-                className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
+                onChange={(val) => setForm({ ...form, supplierId: val })}
+                options={suppliers.map((s) => ({
+                  value: s.id,
+                  label: `${s.name} (${s.paymentTerms})`,
+                }))}
+                placeholder="Select supplier..."
+                allowAdd={true}
+                addNewLabel="Add Supplier"
                 required
-              >
-                {suppliers.length === 0 ? (
-                  <option value="">No registered vendors (create one in Suppliers)</option>
-                ) : (
-                  suppliers.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.name} ({s.paymentTerms})
-                    </option>
-                  ))
-                )}
-              </select>
+              />
             </div>
 
             <div>
@@ -413,11 +411,10 @@ export function PurchaseOrdersClient({
 
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Expected Delivery Date</label>
-                <input
-                  type="date"
+                <CustomDatePicker
                   value={form.expectedDelivery}
-                  onChange={(e) => setForm({ ...form, expectedDelivery: e.target.value })}
-                  className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
+                  onChange={(d) => setForm({ ...form, expectedDelivery: d })}
+                  placeholder="Select delivery date..."
                 />
               </div>
             </div>

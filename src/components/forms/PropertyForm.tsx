@@ -20,6 +20,8 @@ import {
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { createProperty, updateProperty, PropertyItem, TenantPropertyStats } from '@/services/property.service'
+import { SearchableSelect } from '@/components/ui/searchable-select'
+import { CustomTimePicker } from '@/components/ui/custom-time-picker'
 
 interface PropertyFormProps {
   initialData?: PropertyItem
@@ -250,37 +252,39 @@ export default function PropertyForm({ initialData, isEdit = false, propertyStat
                     <label className="block text-xs font-medium text-gray-700 mb-1">
                       Property Type
                     </label>
-                    <select
-                      name="property_type"
+                    <SearchableSelect
                       value={formData.property_type}
-                      onChange={handleChange}
-                      className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-                    >
-                      <option value="hotel">Boutique / Luxury Hotel</option>
-                      <option value="resort">Resort &amp; Spa</option>
-                      <option value="lodge">Lodge / Guest House</option>
-                      <option value="apartment">Serviced Apartments</option>
-                      <option value="villa">Luxury Villa / Homestay</option>
-                      <option value="motel">Motel / Highway Inn</option>
-                    </select>
+                      onChange={(val) => setFormData((prev) => ({ ...prev, property_type: val }))}
+                      options={[
+                        { value: 'hotel', label: 'Boutique / Luxury Hotel' },
+                        { value: 'resort', label: 'Resort & Spa' },
+                        { value: 'lodge', label: 'Lodge / Guest House' },
+                        { value: 'apartment', label: 'Serviced Apartments' },
+                        { value: 'villa', label: 'Luxury Villa / Homestay' },
+                        { value: 'motel', label: 'Motel / Highway Inn' },
+                      ]}
+                      allowAdd={true}
+                      addNewLabel="Add Property Type"
+                      placeholder="Select property type..."
+                    />
                   </div>
 
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1">
                       Star Rating
                     </label>
-                    <select
-                      name="star_rating"
-                      value={formData.star_rating}
-                      onChange={handleChange}
-                      className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-                    >
-                      <option value={1}>1 Star</option>
-                      <option value={2}>2 Star</option>
-                      <option value={3}>3 Star (Standard)</option>
-                      <option value={4}>4 Star (Premium)</option>
-                      <option value={5}>5 Star (Luxury)</option>
-                    </select>
+                    <SearchableSelect
+                      value={String(formData.star_rating)}
+                      onChange={(val) => setFormData((prev) => ({ ...prev, star_rating: parseInt(val) || 3 }))}
+                      options={[
+                        { value: '1', label: '1 Star' },
+                        { value: '2', label: '2 Star' },
+                        { value: '3', label: '3 Star (Standard)' },
+                        { value: '4', label: '4 Star (Premium)' },
+                        { value: '5', label: '5 Star (Luxury)' },
+                      ]}
+                      placeholder="Select rating..."
+                    />
                   </div>
 
                   <div className="sm:col-span-2">
@@ -448,12 +452,10 @@ export default function PropertyForm({ initialData, isEdit = false, propertyStat
                     <label className="block text-xs font-medium text-gray-700 mb-1">
                       Standard Check-in Time
                     </label>
-                    <input
-                      type="time"
-                      name="check_in_time"
+                    <CustomTimePicker
                       value={formData.check_in_time}
-                      onChange={handleChange}
-                      className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
+                      onChange={(t) => setFormData((prev) => ({ ...prev, check_in_time: t }))}
+                      placeholder="14:00"
                     />
                   </div>
 
@@ -461,12 +463,10 @@ export default function PropertyForm({ initialData, isEdit = false, propertyStat
                     <label className="block text-xs font-medium text-gray-700 mb-1">
                       Standard Check-out Time
                     </label>
-                    <input
-                      type="time"
-                      name="check_out_time"
+                    <CustomTimePicker
                       value={formData.check_out_time}
-                      onChange={handleChange}
-                      className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
+                      onChange={(t) => setFormData((prev) => ({ ...prev, check_out_time: t }))}
+                      placeholder="11:00"
                     />
                   </div>
 
@@ -474,36 +474,40 @@ export default function PropertyForm({ initialData, isEdit = false, propertyStat
                     <label className="block text-xs font-medium text-gray-700 mb-1">
                       Billing Currency
                     </label>
-                    <select
-                      name="currency"
+                    <SearchableSelect
                       value={formData.currency}
-                      onChange={handleChange}
-                      className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-                    >
-                      <option value="INR">INR (₹) - Indian Rupee</option>
-                      <option value="USD">USD ($) - US Dollar</option>
-                      <option value="EUR">EUR (€) - Euro</option>
-                      <option value="GBP">GBP (£) - British Pound</option>
-                      <option value="AED">AED (د.إ) - UAE Dirham</option>
-                    </select>
+                      onChange={(val) => setFormData((prev) => ({ ...prev, currency: val }))}
+                      options={[
+                        { value: 'INR', label: 'INR (₹) - Indian Rupee' },
+                        { value: 'USD', label: 'USD ($) - US Dollar' },
+                        { value: 'EUR', label: 'EUR (€) - Euro' },
+                        { value: 'GBP', label: 'GBP (£) - British Pound' },
+                        { value: 'AED', label: 'AED (د.إ) - UAE Dirham' },
+                      ]}
+                      allowAdd={true}
+                      addNewLabel="Add Currency"
+                      placeholder="Select currency..."
+                    />
                   </div>
 
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1">
                       Timezone
                     </label>
-                    <select
-                      name="timezone"
+                    <SearchableSelect
                       value={formData.timezone}
-                      onChange={handleChange}
-                      className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-                    >
-                      <option value="Asia/Kolkata">Asia/Kolkata (IST +5:30)</option>
-                      <option value="Asia/Dubai">Asia/Dubai (GST +4:00)</option>
-                      <option value="Europe/London">Europe/London (GMT/BST)</option>
-                      <option value="America/New_York">America/New_York (EST)</option>
-                      <option value="UTC">UTC (Universal Coordinated)</option>
-                    </select>
+                      onChange={(val) => setFormData((prev) => ({ ...prev, timezone: val }))}
+                      options={[
+                        { value: 'Asia/Kolkata', label: 'Asia/Kolkata (IST +5:30)' },
+                        { value: 'Asia/Dubai', label: 'Asia/Dubai (GST +4:00)' },
+                        { value: 'Europe/London', label: 'Europe/London (GMT/BST)' },
+                        { value: 'America/New_York', label: 'America/New_York (EST)' },
+                        { value: 'UTC', label: 'UTC (Universal Coordinated)' },
+                      ]}
+                      allowAdd={true}
+                      addNewLabel="Add Timezone"
+                      placeholder="Select timezone..."
+                    />
                   </div>
                 </div>
               </CardContent>

@@ -36,6 +36,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { formatCurrency, formatDateTime } from '@/lib/utils'
+import { SearchableSelect } from '@/components/ui/searchable-select'
 import {
   RestaurantOrderRecord,
   TableRecord,
@@ -446,52 +447,47 @@ export function RestaurantClient({
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Order Destination</label>
-                <select
+                <SearchableSelect
                   value={orderType}
-                  onChange={(e) => setOrderType(e.target.value as any)}
-                  className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-                >
-                  <option value="dine_in">Dine-in Table</option>
-                  <option value="room_delivery">Room Service</option>
-                  <option value="takeaway">Takeaway Counter</option>
-                </select>
+                  onChange={(val) => setOrderType(val as any)}
+                  options={[
+                    { value: 'dine_in', label: 'Dine-in Table' },
+                    { value: 'room_delivery', label: 'Room Service' },
+                    { value: 'takeaway', label: 'Takeaway Counter' },
+                  ]}
+                  placeholder="Select destination..."
+                />
               </div>
 
               {orderType === 'dine_in' && (
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">Select Table *</label>
-                  <select
+                  <SearchableSelect
                     value={selectedTableId}
-                    onChange={(e) => setSelectedTableId(e.target.value)}
-                    className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
+                    onChange={setSelectedTableId}
+                    options={tables.map((t) => ({
+                      value: t.id,
+                      label: `${t.tableNumber} (${t.section} - ${t.capacity} seats) - ${t.status}`,
+                    }))}
+                    placeholder="Choose Table..."
                     required
-                  >
-                    <option value="">Choose Table...</option>
-                    {tables.map((t) => (
-                      <option key={t.id} value={t.id}>
-                        {t.tableNumber} ({t.section} - {t.capacity} seats) - {t.status}
-                      </option>
-                    ))}
-                  </select>
+                  />
                 </div>
               )}
 
               {orderType === 'room_delivery' && (
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">Select Room *</label>
-                  <select
+                  <SearchableSelect
                     value={selectedRoomId}
-                    onChange={(e) => setSelectedRoomId(e.target.value)}
-                    className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
+                    onChange={setSelectedRoomId}
+                    options={rooms.map((r) => ({
+                      value: r.id,
+                      label: `Room #${r.roomNumber}`,
+                    }))}
+                    placeholder="Choose Room..."
                     required
-                  >
-                    <option value="">Choose Room...</option>
-                    {rooms.map((r) => (
-                      <option key={r.id} value={r.id}>
-                        Room #{r.roomNumber}
-                      </option>
-                    ))}
-                  </select>
+                  />
                 </div>
               )}
 

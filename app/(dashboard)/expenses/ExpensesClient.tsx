@@ -12,6 +12,8 @@ import {
   Search,
   Trash2,
   FolderTree,
+  Filter,
+  X,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -33,33 +35,61 @@ import {
 } from '@/components/ui/dialog'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import Link from 'next/link'
-import { ExpenseRecord, deleteExpense } from '@/services/expense.service'
+import { ExpenseRecord, ExpenseCategoryRecord, deleteExpense } from '@/services/expense.service'
+import { SearchableSelect } from '@/components/ui/searchable-select'
+import { CustomDatePicker } from '@/components/ui/custom-date-picker'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 
 interface ExpensesClientProps {
   initialExpenses: ExpenseRecord[]
+  categories?: ExpenseCategoryRecord[]
   propertyId: string
 }
 
-export function ExpensesClient({ initialExpenses, propertyId }: ExpensesClientProps) {
+export function ExpensesClient({ initialExpenses, categories = [], propertyId }: ExpensesClientProps) {
   const router = useRouter()
   const [expenses, setExpenses] = useState<ExpenseRecord[]>(initialExpenses)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [categoryFilter, setCategoryFilter] = useState('all')
+  const [methodFilter, setMethodFilter] = useState('all')
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
 
   const filtered = expenses.filter((exp) => {
     const matchesStatus = statusFilter === 'all' || exp.status === statusFilter
+    const matchesCategory = categoryFilter === 'all' || exp.categoryId === categoryFilter
+    const matchesMethod = methodFilter === 'all' || exp.paymentMethod === methodFilter
+    const matchesStartDate = !startDate || exp.expenseDate >= startDate
+    const matchesEndDate = !endDate || exp.expenseDate <= endDate
     const q = searchTerm.toLowerCase()
     const matchesSearch =
       !searchTerm ||
       exp.description.toLowerCase().includes(q) ||
       (exp.vendorName && exp.vendorName.toLowerCase().includes(q)) ||
       (exp.categoryName && exp.categoryName.toLowerCase().includes(q))
-    return matchesStatus && matchesSearch
+    return matchesStatus && matchesCategory && matchesMethod && matchesStartDate && matchesEndDate && matchesSearch
   })
+
+  const hasActiveFilters =
+    statusFilter !== 'all' ||
+    categoryFilter !== 'all' ||
+    methodFilter !== 'all' ||
+    Boolean(startDate) ||
+    Boolean(endDate) ||
+    Boolean(searchTerm)
+
+  const clearAllFilters = () => {
+    setSearchTerm('')
+    setStatusFilter('all')
+    setCategoryFilter('all')
+    setMethodFilter('all')
+    setStartDate('')
+    setEndDate('')
+  }
 
   const totalSpent = expenses.reduce((acc, e) => acc + e.amount, 0)
   const approvedCount = expenses.filter((e) => e.status === 'approved').length
@@ -177,34 +207,126 @@ export function ExpensesClient({ initialExpenses, propertyId }: ExpensesClientPr
         </div>
       </div>
 
-      {/* Filter and Search */}
-      <div className="flex flex-col sm:flex-row gap-3 items-center justify-between bg-white p-3 rounded-md border border-gray-200">
-        <div className="relative w-full sm:w-72">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search expense, vendor, category..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-3 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
-          />
-        </div>
-        <div className="flex items-center gap-2 w-full sm:w-auto">
-          <span className="text-xs text-gray-500">Status:</span>
-          <div className="flex gap-1">
-            {['all', 'approved', 'pending', 'rejected'].map((st) => (
-              <button
-                key={st}
-                onClick={() => setStatusFilter(st)}
-                className={`px-2.5 py-1 text-xs rounded-md capitalize cursor-pointer transition-colors ${
-                  statusFilter === st
-                    ? 'bg-[#5e2b9d] text-white font-medium'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
+      {/* Filter and Search Bar with Custom Dropdowns and Date Pickers */}
+      <div className="bg-white p-4 rounded-md border border-gray-200 shadow-2xs space-y-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 items-center">
+          {/* Keyword Search */}
+          <div className="lg:col-span-2 relative">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search expense, vendor, category..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-9 pr-3 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
+            />
+          </div>
+
+          {/* Category Filter */}
+          <div>
+            <SearchableSelect
+              value={categoryFilter}
+              onChange={setCategoryFilter}
+              options={[
+                { value: 'all', label: 'All Categories' },
+                ...categories.map((c) => ({
+                  value: c.id,
+                  label: c.code ? `${c.name} (${c.code})` : c.name,
+                })),
+              ]}
+              placeholder="Filter Category..."
+              searchPlaceholder="Search category..."
+            />
+          </div>
+
+          {/* Payment Method Filter */}
+          <div>
+            <SearchableSelect
+              value={methodFilter}
+              onChange={setMethodFilter}
+              options={[
+                { value: 'all', label: 'All Methods' },
+                { value: 'card', label: 'Credit Card' },
+                { value: 'wire', label: 'Wire / UPI' },
+                { value: 'cash', label: 'Petty Cash' },
+                { value: 'vendor_credit', label: 'Vendor Credit' },
+              ]}
+              placeholder="Filter Method..."
+              searchPlaceholder="Search method..."
+            />
+          </div>
+
+          {/* Status Filter */}
+          <div>
+            <SearchableSelect
+              value={statusFilter}
+              onChange={setStatusFilter}
+              options={[
+                { value: 'all', label: 'All Statuses' },
+                { value: 'approved', label: 'Approved' },
+                { value: 'pending', label: 'Pending Audit' },
+                { value: 'rejected', label: 'Rejected' },
+              ]}
+              placeholder="Filter Status..."
+            />
+          </div>
+
+          {/* Clear Button */}
+          <div>
+            {hasActiveFilters && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={clearAllFilters}
+                className="w-full h-9 text-xs font-medium text-gray-600 hover:text-gray-900 border-dashed cursor-pointer rounded-md"
               >
-                {st}
-              </button>
-            ))}
+                <X className="h-3.5 w-3.5 mr-1" />
+                Clear Filters
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {/* Date Range Row */}
+        <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-gray-100 text-xs text-gray-600">
+          <div className="flex items-center gap-1.5 font-medium text-gray-700 shrink-0">
+            <Calendar className="h-3.5 w-3.5 text-[#5e2b9d]" />
+            <span>Date Range:</span>
+          </div>
+
+          <div className="w-40">
+            <CustomDatePicker
+              value={startDate}
+              onChange={setStartDate}
+              placeholder="From date..."
+            />
+          </div>
+
+          <span className="text-gray-400 font-medium">to</span>
+
+          <div className="w-40">
+            <CustomDatePicker
+              value={endDate}
+              onChange={setEndDate}
+              placeholder="To date..."
+            />
+          </div>
+
+          {(startDate || endDate) && (
+            <button
+              type="button"
+              onClick={() => {
+                setStartDate('')
+                setEndDate('')
+              }}
+              className="text-[11px] text-[#5e2b9d] hover:underline font-medium cursor-pointer ml-1"
+            >
+              Reset dates
+            </button>
+          )}
+
+          <div className="ml-auto text-[11px] text-gray-400">
+            Showing {filtered.length} of {expenses.length} records
           </div>
         </div>
       </div>

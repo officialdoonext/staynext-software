@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useRef, useEffect, useMemo, useId } from 'react'
-import { Check, ChevronDown, Search, X } from 'lucide-react'
+import { Check, ChevronDown, Search, X, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export interface SelectOption {
@@ -31,6 +31,10 @@ export interface SearchableSelectProps {
   clearable?: boolean
   icon?: React.ReactNode
   emptyMessage?: string
+  allowAdd?: boolean
+  addNewLabel?: string
+  onAddNew?: (newValue: string) => void
+  onAddClick?: () => void
 }
 
 export function SearchableSelect({
@@ -51,6 +55,10 @@ export function SearchableSelect({
   clearable = false,
   icon,
   emptyMessage = 'No options found',
+  allowAdd = false,
+  addNewLabel,
+  onAddNew,
+  onAddClick,
 }: SearchableSelectProps) {
   const generatedId = useId()
   const selectId = id || generatedId
@@ -85,6 +93,7 @@ export function SearchableSelect({
   }, [directOptions, children])
 
   const [internalValue, setInternalValue] = useState<string>(defaultValue)
+  const [customOptions, setCustomOptions] = useState<SelectOption[]>([])
   const isControlled = controlledValue !== undefined
   const currentValue = isControlled ? controlledValue : internalValue
 
@@ -96,22 +105,43 @@ export function SearchableSelect({
   const searchInputRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
 
+  // Combined options including dynamically added custom options
+  const allOptions = useMemo(() => {
+    if (customOptions.length === 0) return parsedOptions
+    const existingValues = new Set(parsedOptions.map((o) => o.value))
+    const uniqueCustom = customOptions.filter((o) => !existingValues.has(o.value))
+    return [...parsedOptions, ...uniqueCustom]
+  }, [parsedOptions, customOptions])
+
   // Current selected option
   const selectedOption = useMemo(() => {
-    return parsedOptions.find((opt) => opt.value === currentValue)
-  }, [parsedOptions, currentValue])
+    const found = allOptions.find((opt) => opt.value === currentValue)
+    if (found) return found
+    if (currentValue) {
+      return { value: currentValue, label: currentValue }
+    }
+    return undefined
+  }, [allOptions, currentValue])
 
   // Filter options based on search query
   const filteredOptions = useMemo(() => {
-    if (!searchQuery.trim()) return parsedOptions
+    if (!searchQuery.trim()) return allOptions
     const q = searchQuery.toLowerCase().trim()
-    return parsedOptions.filter(
+    return allOptions.filter(
       (opt) =>
         opt.label.toLowerCase().includes(q) ||
         opt.value.toLowerCase().includes(q) ||
         (opt.description && opt.description.toLowerCase().includes(q))
     )
-  }, [parsedOptions, searchQuery])
+  }, [allOptions, searchQuery])
+
+  // Check if search query can be added as a new option
+  const canAddSearchQuery = useMemo(() => {
+    if (!allowAdd && !onAddNew && !onAddClick) return false
+    const q = searchQuery.trim().toLowerCase()
+    if (!q) return false
+    return !allOptions.some((opt) => opt.label.toLowerCase() === q || opt.value.toLowerCase() === q)
+  }, [allowAdd, onAddNew, onAddClick, searchQuery, allOptions])
 
   // Handle open/close
   const handleOpen = () => {
@@ -331,6 +361,28 @@ export function SearchableSelect({
             role="listbox"
             className="max-h-56 overflow-y-auto p-1 text-xs divide-y divide-transparent scrollbar-thin"
           >
+            {/* Quick Add Search Query Option */}
+            {canAddSearchQuery && (
+              <div
+                role="button"
+                onClick={() => {
+                  const val = searchQuery.trim()
+                  if (onAddNew) {
+                    onAddNew(val)
+                    handleClose()
+                  } else {
+                    const newOpt: SelectOption = { value: val, label: val }
+                    setCustomOptions((prev) => [...prev, newOpt])
+                    handleSelect(val)
+                  }
+                }}
+                className="flex items-center gap-2 px-2.5 py-2 text-xs font-semibold text-[#5e2b9d] bg-[#f7f2fd] hover:bg-[#eee4fa] rounded-md transition-colors cursor-pointer border border-[#dfcef6] mb-1 select-none"
+              >
+                <Plus className="h-3.5 w-3.5 text-[#5e2b9d] shrink-0" />
+                <span className="truncate">Add &quot;{searchQuery.trim()}&quot;</span>
+              </div>
+            )}
+
             {filteredOptions.length > 0 ? (
               filteredOptions.map((opt, idx) => {
                 const isSelected = opt.value === currentValue
@@ -378,15 +430,61 @@ export function SearchableSelect({
                   </div>
                 )
               })
-            ) : (
+            ) : !canAddSearchQuery ? (
               <div className="py-6 text-center text-xs text-gray-400">
                 {emptyMessage}
               </div>
-            )}
+            ) : null}
           </div>
 
+          {/* Add New Option Action Footer */}
+          {(allowAdd || onAddNew || onAddClick) && (
+            <div className="p-1.5 border-t border-gray-100 bg-gray-50/80 rounded-b-md">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  if (onAddClick) {
+                    onAddClick()
+                    handleClose()
+                  } else if (onAddNew) {
+                    const val = searchQuery.trim()
+                    if (val) {
+                      onAddNew(val)
+                      handleClose()
+                    } else {
+                      const prompted = window.prompt(`Enter new ${addNewLabel || 'option'}:`)
+                      if (prompted && prompted.trim()) {
+                        onAddNew(prompted.trim())
+                        handleClose()
+                      }
+                    }
+                  } else {
+                    const val = searchQuery.trim()
+                    if (val) {
+                      const newOpt: SelectOption = { value: val, label: val }
+                      setCustomOptions((prev) => [...prev, newOpt])
+                      handleSelect(val)
+                    } else {
+                      const prompted = window.prompt(`Enter new ${addNewLabel || 'option'}:`)
+                      if (prompted && prompted.trim()) {
+                        const newOpt: SelectOption = { value: prompted.trim(), label: prompted.trim() }
+                        setCustomOptions((prev) => [...prev, newOpt])
+                        handleSelect(prompted.trim())
+                      }
+                    }
+                  }
+                }}
+                className="w-full flex items-center justify-center gap-1.5 py-1.5 px-2 text-xs font-medium text-[#5e2b9d] hover:bg-[#f7f2fd] rounded-md transition-colors cursor-pointer border border-dashed border-[#dfcef6]"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                <span>{addNewLabel ? (addNewLabel.startsWith('+') ? addNewLabel : `+ ${addNewLabel}`) : '+ Add New Option'}</span>
+              </button>
+            </div>
+          )}
+
           {/* Footer count indicator if options count is large */}
-          {filteredOptions.length > 5 && (
+          {filteredOptions.length > 5 && !allowAdd && !onAddNew && !onAddClick && (
             <div className="px-2.5 py-1 bg-gray-50 text-[10px] text-gray-400 border-t border-gray-100 rounded-b-md flex justify-between items-center">
               <span>{filteredOptions.length} available</span>
               {searchQuery && (

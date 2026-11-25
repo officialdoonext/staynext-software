@@ -28,6 +28,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { SearchableSelect } from '@/components/ui/searchable-select'
 import {
   Dialog,
   DialogContent,
@@ -226,17 +227,14 @@ export default function RoomFloorsClient({
 
         <div className="flex items-center gap-2">
           {properties.length > 1 && (
-            <select
-              value={selectedPropertyId}
-              onChange={(e) => handlePropertyChange(e.target.value)}
-              className="px-3 py-1.5 text-xs bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-            >
-              {properties.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
+            <div className="w-52">
+              <SearchableSelect
+                value={selectedPropertyId}
+                onChange={(val) => handlePropertyChange(val)}
+                options={properties.map((p) => ({ value: p.id, label: p.name }))}
+                placeholder="Select property..."
+              />
+            </div>
           )}
 
           <Link href="/rooms/buildings">
@@ -312,19 +310,15 @@ export default function RoomFloorsClient({
           />
         </div>
 
-        <div className="flex items-center gap-2 w-full sm:w-auto">
-          <select
+        <div className="flex items-center gap-2 w-full sm:w-56">
+          <SearchableSelect
             value={selectedBuildingFilter}
-            onChange={(e) => setSelectedBuildingFilter(e.target.value)}
-            className="px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-          >
-            <option value="all">All Building Blocks ({buildings.length})</option>
-            {buildings.map((b) => (
-              <option key={b.id} value={b.id}>
-                {b.name}
-              </option>
-            ))}
-          </select>
+            onChange={(val) => setSelectedBuildingFilter(val)}
+            options={[
+              { value: 'all', label: `All Building Blocks (${buildings.length})` },
+              ...buildings.map((b) => ({ value: b.id, label: b.name })),
+            ]}
+          />
         </div>
       </div>
 
@@ -464,18 +458,19 @@ export default function RoomFloorsClient({
               <label className="block text-xs font-medium text-gray-700 mb-1">
                 Assigned Building Block / Wing
               </label>
-              <select
+              <SearchableSelect
                 value={buildingId}
-                onChange={(e) => setBuildingId(e.target.value)}
-                className="w-full h-9 px-3 border border-gray-300 rounded-md text-xs bg-white focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-              >
-                <option value="">Main Building / Unassigned</option>
-                {buildings.map((b) => (
-                  <option key={b.id} value={b.id}>
-                    {b.name} {b.code ? `(${b.code})` : ''}
-                  </option>
-                ))}
-              </select>
+                onChange={(val) => setBuildingId(val)}
+                options={[
+                  { value: '', label: 'Main Building / Unassigned' },
+                  ...buildings.map((b) => ({
+                    value: b.id,
+                    label: `${b.name} ${b.code ? `(${b.code})` : ''}`,
+                  })),
+                ]}
+                allowAdd={true}
+                addNewLabel="Add Building Block"
+              />
             </div>
 
             <DialogFooter className="pt-3">

@@ -34,6 +34,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { formatCurrency } from '@/lib/utils'
+import { SearchableSelect } from '@/components/ui/searchable-select'
 import {
   InventoryItemRecord,
   InventoryCategoryRecord,
@@ -463,33 +464,29 @@ export function InventoryClient({
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Category</label>
-                <select
+                <SearchableSelect
                   value={itemForm.categoryId}
-                  onChange={(e) => setItemForm({ ...itemForm, categoryId: e.target.value })}
-                  className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-                >
-                  {categories.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(val) => setItemForm({ ...itemForm, categoryId: val })}
+                  options={categories.map((c) => ({ value: c.id, label: c.name }))}
+                  placeholder="Select category..."
+                  allowAdd={true}
+                  addNewLabel="Add Category"
+                />
               </div>
 
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Supplier</label>
-                <select
+                <SearchableSelect
                   value={itemForm.supplierId}
-                  onChange={(e) => setItemForm({ ...itemForm, supplierId: e.target.value })}
-                  className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-                >
-                  <option value="">None / Local Sourcing</option>
-                  {suppliers.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.name}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(val) => setItemForm({ ...itemForm, supplierId: val })}
+                  options={[
+                    { value: '', label: 'None / Local Sourcing' },
+                    ...suppliers.map((s) => ({ value: s.id, label: s.name })),
+                  ]}
+                  placeholder="Select supplier..."
+                  allowAdd={true}
+                  addNewLabel="Add Supplier"
+                />
               </div>
             </div>
 

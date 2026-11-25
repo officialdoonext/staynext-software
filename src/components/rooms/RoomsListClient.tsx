@@ -28,6 +28,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+import { SearchableSelect } from '@/components/ui/searchable-select'
 import { RoomItem, RoomTypeItem, updateRoomStatus, deleteRoom } from '@/services/room.service'
 import { BuildingItem, FloorItem, PropertyItem } from '@/services/property.service'
 import { formatCurrency } from '@/lib/utils'
@@ -260,47 +261,46 @@ export default function RoomsListClient({
         </div>
 
         <div>
-          <select
+          <SearchableSelect
             value={selectedType}
-            onChange={(e) => setSelectedType(e.target.value)}
-            className="w-full px-3 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-          >
-            <option value="all">All Room Types</option>
-            {roomTypes.map((rt) => (
-              <option key={rt.id} value={rt.id}>{rt.name}</option>
-            ))}
-          </select>
+            onChange={setSelectedType}
+            options={[
+              { value: 'all', label: 'All Room Types' },
+              ...roomTypes.map((rt) => ({ value: rt.id, label: rt.name })),
+            ]}
+            placeholder="Filter Type..."
+          />
         </div>
 
         <div>
-          <select
+          <SearchableSelect
             value={selectedFloor}
-            onChange={(e) => setSelectedFloor(e.target.value)}
-            className="w-full px-3 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-          >
-            <option value="all">All Floors</option>
-            {floors.map((f) => (
-              <option key={f.id} value={f.id}>{f.name || `Floor ${f.floor_number}`}</option>
-            ))}
-          </select>
+            onChange={setSelectedFloor}
+            options={[
+              { value: 'all', label: 'All Floors' },
+              ...floors.map((f) => ({ value: f.id, label: f.name || `Floor ${f.floor_number}` })),
+            ]}
+            placeholder="Filter Floor..."
+          />
         </div>
 
         <div>
-          <select
+          <SearchableSelect
             value={selectedStatus}
-            onChange={(e) => setSelectedStatus(e.target.value)}
-            className="w-full px-3 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-          >
-            <option value="all">All Statuses</option>
-            <option value="available">Available</option>
-            <option value="occupied">Occupied</option>
-            <option value="reserved">Reserved</option>
-            <option value="dirty">Dirty</option>
-            <option value="cleaning">Cleaning</option>
-            <option value="maintenance">Maintenance</option>
-            <option value="blocked">Blocked</option>
-            <option value="out_of_order">Out of Order</option>
-          </select>
+            onChange={setSelectedStatus}
+            options={[
+              { value: 'all', label: 'All Statuses' },
+              { value: 'available', label: 'Available' },
+              { value: 'occupied', label: 'Occupied' },
+              { value: 'reserved', label: 'Reserved' },
+              { value: 'dirty', label: 'Dirty' },
+              { value: 'cleaning', label: 'Cleaning' },
+              { value: 'maintenance', label: 'Maintenance' },
+              { value: 'blocked', label: 'Blocked' },
+              { value: 'out_of_order', label: 'Out of Order' },
+            ]}
+            placeholder="Filter Status..."
+          />
         </div>
 
         <div className="flex items-center justify-end gap-1.5">

@@ -21,6 +21,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+import { SearchableSelect } from '@/components/ui/searchable-select'
 import {
   HousekeepingTypeItem,
   HousekeepingTypesResult,
@@ -216,19 +217,17 @@ export default function HousekeepingTypesClient({
 
         <div className="flex items-center gap-2">
           {properties.length > 1 && (
-            <select
-              value={selectedPropertyId}
-              onChange={(e) => {
-                const newPropId = e.target.value
-                setSelectedPropertyId(newPropId)
-                fetchPage(1, searchQuery, newPropId)
-              }}
-              className="px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-            >
-              {properties.map((p) => (
-                <option key={p.id} value={p.id}>{p.name}</option>
-              ))}
-            </select>
+            <div className="w-52">
+              <SearchableSelect
+                value={selectedPropertyId}
+                onChange={(val) => {
+                  setSelectedPropertyId(val)
+                  fetchPage(1, searchQuery, val)
+                }}
+                options={properties.map((p) => ({ value: p.id, label: p.name }))}
+                placeholder="Select property..."
+              />
+            </div>
           )}
 
           {/* Load 8 Sample Types Button */}
@@ -304,16 +303,16 @@ export default function HousekeepingTypesClient({
                   <label className="text-[11px] font-medium text-gray-700">
                     Default Priority
                   </label>
-                  <select
+                  <SearchableSelect
                     value={formData.priority}
-                    onChange={(e) => setFormData({ ...formData, priority: e.target.value as any })}
-                    className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-                  >
-                    <option value="low">Standard / Low (30-45 mins)</option>
-                    <option value="medium">Prompt / Medium (20-30 mins)</option>
-                    <option value="high">Priority / High (15-20 mins)</option>
-                    <option value="urgent">Urgent / Immediate</option>
-                  </select>
+                    onChange={(val) => setFormData({ ...formData, priority: val as any })}
+                    options={[
+                      { value: 'low', label: 'Standard / Low (30-45 mins)' },
+                      { value: 'medium', label: 'Prompt / Medium (20-30 mins)' },
+                      { value: 'high', label: 'Priority / High (15-20 mins)' },
+                      { value: 'urgent', label: 'Urgent / Immediate' },
+                    ]}
+                  />
                 </div>
               </div>
 

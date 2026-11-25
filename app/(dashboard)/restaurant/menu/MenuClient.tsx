@@ -29,6 +29,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { formatCurrency } from '@/lib/utils'
+import { SearchableSelect } from '@/components/ui/searchable-select'
 import {
   MenuItemRecord,
   MenuCategoryRecord,
@@ -451,17 +452,14 @@ export function MenuClient({ initialItems, categories, propertyId, properties = 
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {properties && properties.length > 1 && (
-            <select
-              value={currentPropertyId}
-              onChange={(e) => handlePropertyChange(e.target.value)}
-              className="text-xs border border-gray-200 rounded-md px-2.5 py-2 bg-white font-medium text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-            >
-              {properties.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
+            <div className="w-52">
+              <SearchableSelect
+                value={currentPropertyId}
+                onChange={handlePropertyChange}
+                options={properties.map((p) => ({ value: p.id, label: p.name }))}
+                placeholder="Select property..."
+              />
+            </div>
           )}
           <Button
             variant="outline"
@@ -676,21 +674,16 @@ export function MenuClient({ initialItems, categories, propertyId, properties = 
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Category *</label>
-                <select
+                <SearchableSelect
                   value={itemForm.categoryId}
-                  onChange={(e) => setItemForm({ ...itemForm, categoryId: e.target.value })}
-                  className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
+                  onChange={(val) => setItemForm({ ...itemForm, categoryId: val })}
+                  options={allCategories.map((c) => ({ value: c.id, label: c.name }))}
+                  placeholder="Select category..."
+                  allowAdd={true}
+                  addNewLabel="Add Menu Category"
+                  onAddClick={() => setIsAddCategoryOpen(true)}
                   required
-                >
-                  {allCategories.length === 0 && (
-                    <option value="">No categories created yet</option>
-                  )}
-                  {allCategories.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
+                />
               </div>
 
               <div>

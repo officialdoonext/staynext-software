@@ -18,6 +18,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { createMaintenanceWorkOrder } from '@/services/maintenance.service'
 import { RoomItem } from '@/services/room.service'
 import { PropertyItem } from '@/services/property.service'
+import { SearchableSelect } from '@/components/ui/searchable-select'
 
 interface MaintenanceFormProps {
   property: PropertyItem
@@ -92,8 +93,34 @@ export default function MaintenanceForm({
     }
   }
 
+  const roomOptions = [
+    { value: '', label: 'Public Area / Non-Room Facility' },
+    ...rooms.map((r) => ({
+      value: r.id,
+      label: `Room ${r.room_number} (${r.floor_name}) - Current: ${r.status}`,
+    })),
+  ]
+
+  const categoryOptions = [
+    { value: 'hvac', label: 'HVAC & Air Conditioning' },
+    { value: 'plumbing', label: 'Plumbing & Water Heater / Geyser' },
+    { value: 'electrical', label: 'Electrical & Lighting' },
+    { value: 'furniture', label: 'Furniture & Carpentry' },
+    { value: 'tv_entertainment', label: 'TV & Entertainment / WiFi' },
+    { value: 'door_lock', label: 'Keycard & Door Lock Mechanism' },
+    { value: 'appliances', label: 'Mini-fridge & Appliances' },
+    { value: 'general', label: 'General Facility Maintenance' },
+  ]
+
+  const priorityOptions = [
+    { value: 'low', label: 'Low (Standard preventive maintenance)' },
+    { value: 'medium', label: 'Medium (Routine turnover fix)' },
+    { value: 'high', label: 'High (Impacting guest stay)' },
+    { value: 'urgent', label: 'Urgent / Emergency (Lock room out of inventory)' },
+  ]
+
   return (
-    <div className="space-y-6 max-w-3xl mx-auto pb-12">
+    <div className="space-y-6 w-full pb-12">
       {/* Top Header */}
       <div className="flex items-center justify-between pb-3 border-b border-gray-200">
         <div className="flex items-center gap-3">
@@ -141,57 +168,41 @@ export default function MaintenanceForm({
                 <label className="block text-xs font-medium text-gray-700 mb-1">
                   Target Location / Room Unit
                 </label>
-                <select
-                  name="room_id"
+                <SearchableSelect
                   value={formData.room_id}
-                  onChange={handleChange}
-                  className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-                >
-                  <option value="">Public Area / Non-Room Facility</option>
-                  {rooms.map((r) => (
-                    <option key={r.id} value={r.id}>
-                      Room {r.room_number} ({r.floor_name}) - Current: {r.status}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(val) => setFormData((prev) => ({ ...prev, room_id: val }))}
+                  options={roomOptions}
+                  placeholder="Select room unit..."
+                  allowAdd={true}
+                  addNewLabel="Add Target Location"
+                />
               </div>
 
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">
                   Issue Category *
                 </label>
-                <select
-                  name="category"
+                <SearchableSelect
                   value={formData.category}
-                  onChange={handleChange}
-                  className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-                >
-                  <option value="hvac">HVAC &amp; Air Conditioning</option>
-                  <option value="plumbing">Plumbing &amp; Water Heater / Geyser</option>
-                  <option value="electrical">Electrical &amp; Lighting</option>
-                  <option value="furniture">Furniture &amp; Carpentry</option>
-                  <option value="tv_entertainment">TV &amp; Entertainment / WiFi</option>
-                  <option value="door_lock">Keycard &amp; Door Lock Mechanism</option>
-                  <option value="appliances">Mini-fridge &amp; Appliances</option>
-                  <option value="general">General Facility Maintenance</option>
-                </select>
+                  onChange={(val) => setFormData((prev) => ({ ...prev, category: val }))}
+                  options={categoryOptions}
+                  placeholder="Select category..."
+                  allowAdd={true}
+                  addNewLabel="Add Maintenance Category"
+                  required
+                />
               </div>
 
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">
                   Priority Level *
                 </label>
-                <select
-                  name="priority"
+                <SearchableSelect
                   value={formData.priority}
-                  onChange={handleChange}
-                  className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-                >
-                  <option value="low">Low (Standard preventive maintenance)</option>
-                  <option value="medium">Medium (Routine turnover fix)</option>
-                  <option value="high">High (Impacting guest stay)</option>
-                  <option value="urgent">Urgent / Emergency (Lock room out of inventory)</option>
-                </select>
+                  onChange={(val) => setFormData((prev) => ({ ...prev, priority: val }))}
+                  options={priorityOptions}
+                  placeholder="Select priority..."
+                />
               </div>
 
               <div>

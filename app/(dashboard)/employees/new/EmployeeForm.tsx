@@ -7,6 +7,8 @@ import { ArrowLeft, UserPlus, Save, ShieldCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { DepartmentRecord, createEmployee } from '@/services/employee.service'
+import { SearchableSelect } from '@/components/ui/searchable-select'
+import { CustomDatePicker } from '@/components/ui/custom-date-picker'
 import { toast } from 'sonner'
 
 interface EmployeeFormProps {
@@ -60,8 +62,22 @@ export function EmployeeForm({ departments, propertyId }: EmployeeFormProps) {
     }
   }
 
+  const roleOptions = [
+    { value: 'receptionist', label: 'Front Desk Receptionist' },
+    { value: 'housekeeper', label: 'Housekeeping Room Attendant' },
+    { value: 'maintenance_tech', label: 'Engineering & Maintenance Tech' },
+    { value: 'chef', label: 'Chef / Kitchen Staff' },
+    { value: 'waiter', label: 'F&B Service / Waitstaff' },
+    { value: 'duty_manager', label: 'Duty Manager' },
+    { value: 'property_manager', label: 'Property General Manager' },
+  ]
+
+  const departmentOptions = departments.length === 0
+    ? [{ value: '', label: 'General Hotel Operations' }]
+    : departments.map((d) => ({ value: d.id, label: d.name }))
+
   return (
-    <div className="space-y-6 max-w-3xl mx-auto pb-12">
+    <div className="space-y-6 w-full pb-12">
       {/* Header */}
       <div className="flex items-center justify-between pb-4 border-b border-gray-200">
         <div className="flex items-center gap-3">
@@ -139,48 +155,35 @@ export function EmployeeForm({ departments, propertyId }: EmployeeFormProps) {
 
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Operational Role *</label>
-                <select
+                <SearchableSelect
                   value={form.role}
-                  onChange={(e) => setForm({ ...form, role: e.target.value })}
-                  className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer capitalize"
+                  onChange={(val) => setForm({ ...form, role: val })}
+                  options={roleOptions}
+                  allowAdd={true}
+                  addNewLabel="Add Custom Role"
+                  placeholder="Select operational role..."
                   required
-                >
-                  <option value="receptionist">Front Desk Receptionist</option>
-                  <option value="housekeeper">Housekeeping Room Attendant</option>
-                  <option value="maintenance_tech">Engineering &amp; Maintenance Tech</option>
-                  <option value="chef">Chef / Kitchen Staff</option>
-                  <option value="waiter">F&amp;B Service / Waitstaff</option>
-                  <option value="duty_manager">Duty Manager</option>
-                  <option value="property_manager">Property General Manager</option>
-                </select>
+                />
               </div>
 
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Department</label>
-                <select
+                <SearchableSelect
                   value={form.departmentId}
-                  onChange={(e) => setForm({ ...form, departmentId: e.target.value })}
-                  className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-                >
-                  {departments.length === 0 ? (
-                    <option value="">General Hotel Operations</option>
-                  ) : (
-                    departments.map((d) => (
-                      <option key={d.id} value={d.id}>
-                        {d.name}
-                      </option>
-                    ))
-                  )}
-                </select>
+                  onChange={(val) => setForm({ ...form, departmentId: val })}
+                  options={departmentOptions}
+                  allowAdd={true}
+                  addNewLabel="Add Department"
+                  placeholder="Select department..."
+                />
               </div>
 
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Joining / Hire Date</label>
-                <input
-                  type="date"
+                <CustomDatePicker
                   value={form.hireDate}
-                  onChange={(e) => setForm({ ...form, hireDate: e.target.value })}
-                  className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
+                  onChange={(d) => setForm({ ...form, hireDate: d })}
+                  placeholder="Select hire date..."
                 />
               </div>
 

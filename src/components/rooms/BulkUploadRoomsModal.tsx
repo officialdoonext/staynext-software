@@ -20,6 +20,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { SearchableSelect } from '@/components/ui/searchable-select'
 import { PropertyItem } from '@/services/property.service'
 import { RoomTypeItem } from '@/services/room.service'
 import { BuildingItem, FloorItem } from '@/services/property.service'

@@ -611,18 +611,19 @@ export default function HousekeepingClient({
             </div>
 
             <div>
-              <select
+              <SearchableSelect
                 value={roomStatusFilter}
-                onChange={(e) => setRoomStatusFilter(e.target.value)}
-                className="w-full px-3 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-              >
-                <option value="all">All Room States ({roomList.length})</option>
-                <option value="dirty">Dirty Rooms ({dirtyRooms})</option>
-                <option value="cleaning">Cleaning in Progress ({cleaningRooms})</option>
-                <option value="available">Clean / Available ({cleanRooms})</option>
-                <option value="occupied">Occupied Rooms</option>
-                <option value="maintenance">Maintenance Hold ({maintenanceRooms})</option>
-              </select>
+                onChange={setRoomStatusFilter}
+                options={[
+                  { value: 'all', label: `All Room States (${roomList.length})` },
+                  { value: 'dirty', label: `Dirty Rooms (${dirtyRooms})` },
+                  { value: 'cleaning', label: `Cleaning in Progress (${cleaningRooms})` },
+                  { value: 'available', label: `Clean / Available (${cleanRooms})` },
+                  { value: 'occupied', label: 'Occupied Rooms' },
+                  { value: 'maintenance', label: `Maintenance Hold (${maintenanceRooms})` },
+                ]}
+                placeholder="Filter Room State..."
+              />
             </div>
           </div>
 
@@ -708,16 +709,16 @@ export default function HousekeepingClient({
                         Mark Dirty
                       </Button>
                     ) : (
-                      <select
+                      <SearchableSelect
                         value={room.status}
-                        onChange={(e) => handleQuickRoomStatus(room.id, e.target.value as any)}
-                        className="w-full text-[10px] py-1 px-1 bg-white border border-gray-200 rounded-sm cursor-pointer"
-                      >
-                        <option value="available">Make Available</option>
-                        <option value="dirty">Make Dirty</option>
-                        <option value="cleaning">Cleaning</option>
-                        <option value="maintenance">Maintenance</option>
-                      </select>
+                        onChange={(val) => handleQuickRoomStatus(room.id, val as any)}
+                        options={[
+                          { value: 'available', label: 'Make Available' },
+                          { value: 'dirty', label: 'Make Dirty' },
+                          { value: 'cleaning', label: 'Cleaning' },
+                          { value: 'maintenance', label: 'Maintenance' },
+                        ]}
+                      />
                     )}
                   </div>
                 </CardContent>
@@ -893,47 +894,47 @@ export default function HousekeepingClient({
             <form onSubmit={handleCreateTask} className="space-y-3">
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Select Room *</label>
-                <select
+                <SearchableSelect
                   value={newTaskRoomId}
-                  onChange={(e) => setNewTaskRoomId(e.target.value)}
-                  className="w-full px-2.5 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
+                  onChange={(val) => setNewTaskRoomId(val)}
+                  options={rooms.map((r) => ({
+                    value: r.id,
+                    label: `Room ${r.room_number} (${r.floor_name}) - Current: ${r.status}`,
+                  }))}
+                  placeholder="Select room..."
                   required
-                >
-                  {rooms.map((r) => (
-                    <option key={r.id} value={r.id}>
-                      Room {r.room_number} ({r.floor_name}) - Current: {r.status}
-                    </option>
-                  ))}
-                </select>
+                />
               </div>
 
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Task Type *</label>
-                <select
+                <SearchableSelect
                   value={newTaskType}
-                  onChange={(e) => setNewTaskType(e.target.value)}
-                  className="w-full px-2.5 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-                >
-                  <option value="Full Turnover & Linen Change">Full Turnover &amp; Linen Change</option>
-                  <option value="Daily Refresh & Towels">Daily Refresh &amp; Towels</option>
-                  <option value="Deep Sanitization & Steaming">Deep Sanitization &amp; Steaming</option>
-                  <option value="Post-Maintenance Inspection">Post-Maintenance Inspection</option>
-                  <option value="VIP Pre-Arrival Setup">VIP Pre-Arrival Setup</option>
-                </select>
+                  onChange={(val) => setNewTaskType(val)}
+                  options={[
+                    { value: 'Full Turnover & Linen Change', label: 'Full Turnover & Linen Change' },
+                    { value: 'Daily Refresh & Towels', label: 'Daily Refresh & Towels' },
+                    { value: 'Deep Sanitization & Steaming', label: 'Deep Sanitization & Steaming' },
+                    { value: 'Post-Maintenance Inspection', label: 'Post-Maintenance Inspection' },
+                    { value: 'VIP Pre-Arrival Setup', label: 'VIP Pre-Arrival Setup' },
+                  ]}
+                  allowAdd={true}
+                  addNewLabel="Add Task Type"
+                />
               </div>
 
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Priority</label>
-                <select
+                <SearchableSelect
                   value={newTaskPriority}
-                  onChange={(e) => setNewTaskPriority(e.target.value)}
-                  className="w-full px-2.5 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-                >
-                  <option value="medium">Medium</option>
-                  <option value="high">High (Arrival Today)</option>
-                  <option value="urgent">Urgent (Guest Waiting in Lobby)</option>
-                  <option value="low">Low</option>
-                </select>
+                  onChange={(val) => setNewTaskPriority(val)}
+                  options={[
+                    { value: 'medium', label: 'Medium' },
+                    { value: 'high', label: 'High (Arrival Today)' },
+                    { value: 'urgent', label: 'Urgent (Guest Waiting in Lobby)' },
+                    { value: 'low', label: 'Low' },
+                  ]}
+                />
               </div>
 
               <div>

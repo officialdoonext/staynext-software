@@ -35,6 +35,7 @@ import {
   PropertyUserItem,
   inviteStaffMember,
 } from '@/services/settings.service'
+import { SearchableSelect } from '@/components/ui/searchable-select'
 import { toast } from 'sonner'
 
 interface UsersClientProps {
@@ -164,19 +165,22 @@ export function UsersClient({
           />
         </div>
 
-        <select
-          value={roleFilter}
-          onChange={(e) => setRoleFilter(e.target.value)}
-          className="w-full sm:w-56 h-9 px-3 border border-gray-300 rounded-md text-xs bg-white focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-        >
-          <option value="ALL">All Roles ({users.length})</option>
-          <option value="hotel_owner">Hotel Owner</option>
-          <option value="property_manager">Property Manager</option>
-          <option value="receptionist">Front Desk</option>
-          <option value="accountant">Financial Auditor</option>
-          <option value="housekeeping_staff">Housekeeping</option>
-          <option value="maintenance_staff">Maintenance</option>
-        </select>
+        <div className="w-full sm:w-56">
+          <SearchableSelect
+            value={roleFilter}
+            onChange={setRoleFilter}
+            options={[
+              { value: 'ALL', label: `All Roles (${users.length})` },
+              { value: 'hotel_owner', label: 'Hotel Owner' },
+              { value: 'property_manager', label: 'Property Manager' },
+              { value: 'receptionist', label: 'Front Desk' },
+              { value: 'accountant', label: 'Financial Auditor' },
+              { value: 'housekeeping_staff', label: 'Housekeeping' },
+              { value: 'maintenance_staff', label: 'Maintenance' },
+            ]}
+            placeholder="Filter Role..."
+          />
+        </div>
       </div>
 
       {/* Staff Table */}
@@ -309,20 +313,22 @@ export function UsersClient({
               <label className="block text-xs font-medium text-gray-700 mb-1">
                 System Role &amp; Permissions *
               </label>
-              <select
+              <SearchableSelect
                 value={role}
-                onChange={(e) => setRole(e.target.value)}
-                className="w-full h-9 px-3 border border-gray-300 rounded-md text-xs bg-white focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-              >
-                <option value="receptionist">Front Desk Receptionist (Check-in/out, Folios)</option>
-                <option value="property_manager">Property Manager (Full Access)</option>
-                <option value="accountant">Financial Auditor (Billing, Invoices, Taxes)</option>
-                <option value="housekeeping_manager">Housekeeping Supervisor (Rooms, Laundry)</option>
-                <option value="housekeeping_staff">Housekeeping Staff (Room Status Updates)</option>
-                <option value="maintenance_staff">Maintenance Staff (Work Orders, Asset Repairs)</option>
-                <option value="restaurant_manager">Restaurant &amp; POS Manager (KOT, Menu)</option>
-                <option value="hotel_owner">Hotel Owner (Executive Overrides)</option>
-              </select>
+                onChange={setRole}
+                options={[
+                  { value: 'receptionist', label: 'Front Desk Receptionist (Check-in/out, Folios)' },
+                  { value: 'property_manager', label: 'Property Manager (Full Access)' },
+                  { value: 'accountant', label: 'Financial Auditor (Billing, Invoices, Taxes)' },
+                  { value: 'housekeeping_manager', label: 'Housekeeping Supervisor (Rooms, Laundry)' },
+                  { value: 'housekeeping_staff', label: 'Housekeeping Staff (Room Status Updates)' },
+                  { value: 'maintenance_staff', label: 'Maintenance Staff (Work Orders, Asset Repairs)' },
+                  { value: 'restaurant_manager', label: 'Restaurant & POS Manager (KOT, Menu)' },
+                  { value: 'hotel_owner', label: 'Hotel Owner (Executive Overrides)' },
+                ]}
+                placeholder="Select role..."
+                required
+              />
             </div>
 
             <DialogFooter className="pt-3">

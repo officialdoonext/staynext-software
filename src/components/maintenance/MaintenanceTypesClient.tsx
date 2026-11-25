@@ -22,6 +22,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+import { SearchableSelect } from '@/components/ui/searchable-select'
 import {
   MaintenanceTypeItem,
   MaintenanceTypesResult,
@@ -234,19 +235,17 @@ export default function MaintenanceTypesClient({
 
         <div className="flex items-center gap-2">
           {properties.length > 1 && (
-            <select
-              value={selectedPropertyId}
-              onChange={(e) => {
-                const newPropId = e.target.value
-                setSelectedPropertyId(newPropId)
-                fetchPage(1, searchQuery, selectedCategory, newPropId)
-              }}
-              className="px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-            >
-              {properties.map((p) => (
-                <option key={p.id} value={p.id}>{p.name}</option>
-              ))}
-            </select>
+            <div className="w-52">
+              <SearchableSelect
+                value={selectedPropertyId}
+                onChange={(val) => {
+                  setSelectedPropertyId(val)
+                  fetchPage(1, searchQuery, selectedCategory, val)
+                }}
+                options={properties.map((p) => ({ value: p.id, label: p.name }))}
+                placeholder="Select property..."
+              />
+            </div>
           )}
 
           {/* Load 8 Sample Types Button */}
@@ -306,15 +305,13 @@ export default function MaintenanceTypesClient({
                   <label className="text-[11px] font-medium text-gray-700">
                     Trade Category
                   </label>
-                  <select
+                  <SearchableSelect
                     value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-                  >
-                    {CATEGORIES.filter((c) => c !== 'All').map((c) => (
-                      <option key={c} value={c}>{c}</option>
-                    ))}
-                  </select>
+                    onChange={(val) => setFormData({ ...formData, category: val })}
+                    options={CATEGORIES.filter((c) => c !== 'All').map((c) => ({ value: c, label: c }))}
+                    allowAdd={true}
+                    addNewLabel="Add Trade Category"
+                  />
                 </div>
 
                 {/* Priority */}
@@ -322,16 +319,16 @@ export default function MaintenanceTypesClient({
                   <label className="text-[11px] font-medium text-gray-700">
                     Default Priority
                   </label>
-                  <select
+                  <SearchableSelect
                     value={formData.priority}
-                    onChange={(e) => setFormData({ ...formData, priority: e.target.value as any })}
-                    className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-                  >
-                    <option value="low">Standard / Low (Within 2-4 hrs)</option>
-                    <option value="medium">Prompt / Medium (Within 1 hr)</option>
-                    <option value="high">High Priority (Within 30 mins)</option>
-                    <option value="urgent">Urgent / Immediate Attention</option>
-                  </select>
+                    onChange={(val) => setFormData({ ...formData, priority: val as any })}
+                    options={[
+                      { value: 'low', label: 'Standard / Low (Within 2-4 hrs)' },
+                      { value: 'medium', label: 'Prompt / Medium (Within 1 hr)' },
+                      { value: 'high', label: 'High Priority (Within 30 mins)' },
+                      { value: 'urgent', label: 'Urgent / Immediate Attention' },
+                    ]}
+                  />
                 </div>
               </div>
 
@@ -452,19 +449,16 @@ export default function MaintenanceTypesClient({
           </form>
 
           {/* Category Filter */}
-          <select
-            value={selectedCategory}
-            onChange={(e) => {
-              const cat = e.target.value
-              setSelectedCategory(cat)
-              fetchPage(1, searchQuery, cat)
-            }}
-            className="px-3 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-          >
-            {CATEGORIES.map((c) => (
-              <option key={c} value={c}>{c === 'All' ? 'All Categories' : c}</option>
-            ))}
-          </select>
+          <div className="w-48">
+            <SearchableSelect
+              value={selectedCategory}
+              onChange={(val) => {
+                setSelectedCategory(val)
+                fetchPage(1, searchQuery, val)
+              }}
+              options={CATEGORIES.map((c) => ({ value: c, label: c === 'All' ? 'All Categories' : c }))}
+            />
+          </div>
         </div>
 
         <div className="text-xs text-gray-500 font-medium">

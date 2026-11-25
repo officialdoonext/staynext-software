@@ -24,6 +24,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+import { SearchableSelect } from '@/components/ui/searchable-select'
 import {
   ReservationDetail,
   checkInReservation,
@@ -263,45 +264,46 @@ export default function ReservationsListClient({
         </div>
 
         <div>
-          <select
+          <SearchableSelect
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="w-full px-3 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-          >
-            <option value="all">All Statuses</option>
-            <option value="confirmed">Confirmed</option>
-            <option value="checked_in">Checked In</option>
-            <option value="checked_out">Checked Out</option>
-            <option value="cancelled">Cancelled</option>
-          </select>
+            onChange={setStatusFilter}
+            options={[
+              { value: 'all', label: 'All Statuses' },
+              { value: 'confirmed', label: 'Confirmed' },
+              { value: 'checked_in', label: 'Checked In' },
+              { value: 'checked_out', label: 'Checked Out' },
+              { value: 'cancelled', label: 'Cancelled' },
+            ]}
+            placeholder="Filter Status..."
+          />
         </div>
 
         <div>
-          <select
+          <SearchableSelect
             value={roomTypeFilter}
-            onChange={(e) => setRoomTypeFilter(e.target.value)}
-            className="w-full px-3 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-          >
-            <option value="all">All Room Types</option>
-            {roomTypes.map((rt) => (
-              <option key={rt.id} value={rt.id}>{rt.name}</option>
-            ))}
-          </select>
+            onChange={setRoomTypeFilter}
+            options={[
+              { value: 'all', label: 'All Room Types' },
+              ...roomTypes.map((rt) => ({ value: rt.id, label: rt.name })),
+            ]}
+            placeholder="Filter Room Type..."
+          />
         </div>
 
         <div>
-          <select
+          <SearchableSelect
             value={sourceFilter}
-            onChange={(e) => setSourceFilter(e.target.value)}
-            className="w-full px-3 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-          >
-            <option value="all">All Sources</option>
-            <option value="direct">Direct Walk-In</option>
-            <option value="website">Hotel Website</option>
-            <option value="booking_com">Booking.com</option>
-            <option value="expedia">Expedia</option>
-            <option value="corporate">Corporate</option>
-          </select>
+            onChange={setSourceFilter}
+            options={[
+              { value: 'all', label: 'All Sources' },
+              { value: 'direct', label: 'Direct Walk-In' },
+              { value: 'website', label: 'Hotel Website' },
+              { value: 'booking_com', label: 'Booking.com' },
+              { value: 'expedia', label: 'Expedia' },
+              { value: 'corporate', label: 'Corporate' },
+            ]}
+            placeholder="Filter Source..."
+          />
         </div>
       </div>
 

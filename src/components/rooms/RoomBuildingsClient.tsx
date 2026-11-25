@@ -28,6 +28,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog'
+import { SearchableSelect } from '@/components/ui/searchable-select'
 import {
   BuildingItem,
   PropertyItem,
@@ -214,17 +215,14 @@ export default function RoomBuildingsClient({
 
         <div className="flex items-center gap-2">
           {properties.length > 1 && (
-            <select
-              value={selectedPropertyId}
-              onChange={(e) => handlePropertyChange(e.target.value)}
-              className="px-3 py-1.5 text-xs bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-            >
-              {properties.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
+            <div className="w-52">
+              <SearchableSelect
+                value={selectedPropertyId}
+                onChange={(val) => handlePropertyChange(val)}
+                options={properties.map((p) => ({ value: p.id, label: p.name }))}
+                placeholder="Select property..."
+              />
+            </div>
           )}
 
           <Link href="/rooms/floors">
@@ -300,16 +298,16 @@ export default function RoomBuildingsClient({
           />
         </div>
 
-        <div className="flex items-center gap-2 w-full sm:w-auto">
-          <select
+        <div className="flex items-center gap-2 w-full sm:w-48">
+          <SearchableSelect
             value={statusFilter}
-            onChange={(e: any) => setStatusFilter(e.target.value)}
-            className="px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-          >
-            <option value="all">All Statuses ({buildings.length})</option>
-            <option value="active">Active Only</option>
-            <option value="inactive">Inactive Only</option>
-          </select>
+            onChange={(val) => setStatusFilter(val as any)}
+            options={[
+              { value: 'all', label: `All Statuses (${buildings.length})` },
+              { value: 'active', label: 'Active Only' },
+              { value: 'inactive', label: 'Inactive Only' },
+            ]}
+          />
         </div>
       </div>
 

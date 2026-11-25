@@ -18,6 +18,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+import { SearchableSelect } from '@/components/ui/searchable-select'
 import { formatCurrency } from '@/lib/utils'
 import { RoomTypeItem, createRoomType, updateRoomType, deleteRoomType } from '@/services/room.service'
 import { PropertyItem } from '@/services/property.service'

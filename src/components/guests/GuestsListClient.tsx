@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { GuestItem, toggleGuestVip, toggleGuestBlacklist } from '@/services/crm.service'
 import { formatCurrency, formatDate } from '@/lib/utils'
+import { SearchableSelect } from '@/components/ui/searchable-select'
 
 interface GuestsListClientProps {
   initialGuests: GuestItem[]
@@ -164,28 +165,30 @@ export default function GuestsListClient({ initialGuests }: GuestsListClientProp
         </div>
 
         <div>
-          <select
+          <SearchableSelect
             value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
-            className="w-full px-3 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-          >
-            <option value="all">All Categories</option>
-            <option value="indian">Indian Residents</option>
-            <option value="foreign">Foreign Nationals (Form III)</option>
-            <option value="oci">OCI Cardholders</option>
-          </select>
+            onChange={setCategoryFilter}
+            options={[
+              { value: 'all', label: 'All Categories' },
+              { value: 'indian', label: 'Indian Residents' },
+              { value: 'foreign', label: 'Foreign Nationals (Form III)' },
+              { value: 'oci', label: 'OCI Cardholders' },
+            ]}
+            placeholder="Filter Category..."
+          />
         </div>
 
         <div>
-          <select
+          <SearchableSelect
             value={vipFilter}
-            onChange={(e) => setVipFilter(e.target.value)}
-            className="w-full px-3 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-          >
-            <option value="all">All Loyalty Tiers</option>
-            <option value="vip">VIP Guests Only</option>
-            <option value="regular">Standard Guests</option>
-          </select>
+            onChange={setVipFilter}
+            options={[
+              { value: 'all', label: 'All Loyalty Tiers' },
+              { value: 'vip', label: 'VIP Guests Only' },
+              { value: 'regular', label: 'Standard Guests' },
+            ]}
+            placeholder="Filter Loyalty..."
+          />
         </div>
       </div>
 

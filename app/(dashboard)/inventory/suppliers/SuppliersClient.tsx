@@ -28,6 +28,7 @@ import {
   createSupplier,
   deleteSupplier,
 } from '@/services/inventory.service'
+import { SearchableSelect } from '@/components/ui/searchable-select'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 
@@ -301,17 +302,20 @@ export function SuppliersClient({ initialSuppliers, propertyId }: SuppliersClien
 
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Payment Terms</label>
-                <select
+                <SearchableSelect
                   value={form.paymentTerms}
-                  onChange={(e) => setForm({ ...form, paymentTerms: e.target.value })}
-                  className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-                >
-                  <option value="Net 15">Net 15 Days</option>
-                  <option value="Net 30">Net 30 Days</option>
-                  <option value="Net 60">Net 60 Days</option>
-                  <option value="COD">Cash on Delivery</option>
-                  <option value="Advance">100% Advance</option>
-                </select>
+                  onChange={(val) => setForm({ ...form, paymentTerms: val })}
+                  options={[
+                    { value: 'Net 15', label: 'Net 15 Days' },
+                    { value: 'Net 30', label: 'Net 30 Days' },
+                    { value: 'Net 60', label: 'Net 60 Days' },
+                    { value: 'COD', label: 'Cash on Delivery' },
+                    { value: 'Advance', label: '100% Advance' },
+                  ]}
+                  allowAdd={true}
+                  addNewLabel="Add Custom Terms"
+                  placeholder="Select payment terms..."
+                />
               </div>
             </div>
 

@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { RoomItem, RoomTypeItem, createRoom, updateRoom } from '@/services/room.service'
 import { BuildingItem, FloorItem } from '@/services/property.service'
+import { SearchableSelect } from '@/components/ui/searchable-select'
 
 interface RoomFormProps {
   propertyId: string
@@ -119,8 +120,35 @@ export default function RoomForm({
     }
   }
 
+  const roomTypeOptions = roomTypes.map((rt) => ({
+    value: rt.id,
+    label: `${rt.name} — ₹${rt.base_rate}/night (${rt.max_occupancy} guests)`,
+  }))
+
+  const buildingOptions = [
+    { value: '', label: 'Main Building' },
+    ...buildings.map((b) => ({ value: b.id, label: b.name })),
+  ]
+
+  const floorOptions = [
+    { value: '', label: 'Select Floor' },
+    ...floors.map((f) => ({
+      value: f.id,
+      label: `${f.name || `Floor ${f.floor_number}`} (${f.building_name})`,
+    })),
+  ]
+
+  const statusOptions = [
+    { value: 'available', label: 'Available (Clean & Inspected)' },
+    { value: 'dirty', label: 'Dirty (Requires Cleaning)' },
+    { value: 'cleaning', label: 'Cleaning in Progress' },
+    { value: 'maintenance', label: 'Maintenance / Work Order' },
+    { value: 'out_of_order', label: 'Out of Order' },
+    { value: 'blocked', label: 'Blocked' },
+  ]
+
   return (
-    <div className="space-y-6 max-w-3xl mx-auto">
+    <div className="space-y-6 w-full">
       {/* Header */}
       <div className="flex items-center justify-between pb-4 border-b border-gray-200">
         <div className="flex items-center gap-3">
@@ -183,74 +211,55 @@ export default function RoomForm({
                 <label className="block text-xs font-medium text-gray-700 mb-1">
                   Room Category / Type *
                 </label>
-                <select
-                  name="room_type_id"
+                <SearchableSelect
                   value={formData.room_type_id}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
+                  onChange={(val) => setFormData((prev) => ({ ...prev, room_type_id: val }))}
+                  options={roomTypeOptions}
+                  placeholder="Select room type..."
+                  allowAdd={true}
+                  addNewLabel="Add Room Type"
                   required
-                >
-                  {roomTypes.map((rt) => (
-                    <option key={rt.id} value={rt.id}>
-                      {rt.name} — ₹{rt.base_rate}/night ({rt.max_occupancy} guests)
-                    </option>
-                  ))}
-                </select>
+                />
               </div>
 
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">
                   Building Block / Wing
                 </label>
-                <select
-                  name="building_id"
+                <SearchableSelect
                   value={formData.building_id}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-                >
-                  <option value="">Main Building</option>
-                  {buildings.map((b) => (
-                    <option key={b.id} value={b.id}>{b.name}</option>
-                  ))}
-                </select>
+                  onChange={(val) => setFormData((prev) => ({ ...prev, building_id: val }))}
+                  options={buildingOptions}
+                  placeholder="Select building..."
+                  allowAdd={true}
+                  addNewLabel="Add Building Block"
+                />
               </div>
 
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">
                   Floor
                 </label>
-                <select
-                  name="floor_id"
+                <SearchableSelect
                   value={formData.floor_id}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-                >
-                  <option value="">Select Floor</option>
-                  {floors.map((f) => (
-                    <option key={f.id} value={f.id}>
-                      {f.name || `Floor ${f.floor_number}`} ({f.building_name})
-                    </option>
-                  ))}
-                </select>
+                  onChange={(val) => setFormData((prev) => ({ ...prev, floor_id: val }))}
+                  options={floorOptions}
+                  placeholder="Select floor..."
+                  allowAdd={true}
+                  addNewLabel="Add Floor"
+                />
               </div>
 
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">
                   Initial Room Status
                 </label>
-                <select
-                  name="status"
+                <SearchableSelect
                   value={formData.status}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-                >
-                  <option value="available">Available (Clean &amp; Inspected)</option>
-                  <option value="dirty">Dirty (Requires Cleaning)</option>
-                  <option value="cleaning">Cleaning in Progress</option>
-                  <option value="maintenance">Maintenance / Work Order</option>
-                  <option value="out_of_order">Out of Order</option>
-                  <option value="blocked">Blocked</option>
-                </select>
+                  onChange={(val) => setFormData((prev) => ({ ...prev, status: val }))}
+                  options={statusOptions}
+                  placeholder="Select status..."
+                />
               </div>
 
               <div className="flex items-center pt-5">

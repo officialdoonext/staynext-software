@@ -19,6 +19,8 @@ import {
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { createGuest } from '@/services/crm.service'
+import { SearchableSelect } from '@/components/ui/searchable-select'
+import { CustomDatePicker } from '@/components/ui/custom-date-picker'
 
 export default function GuestForm() {
   const router = useRouter()
@@ -90,8 +92,61 @@ export default function GuestForm() {
     }
   }
 
+  const salutationOptions = [
+    { value: 'Mr', label: 'Mr.' },
+    { value: 'Mrs', label: 'Mrs.' },
+    { value: 'Ms', label: 'Ms.' },
+    { value: 'Dr', label: 'Dr.' },
+    { value: 'CA', label: 'CA' },
+    { value: 'Prof', label: 'Prof.' },
+  ]
+
+  const genderOptions = [
+    { value: 'Male', label: 'Male' },
+    { value: 'Female', label: 'Female' },
+    { value: 'Other', label: 'Other' },
+    { value: 'Prefer not to say', label: 'Prefer not to say' },
+  ]
+
+  const guestCategoryOptions = [
+    { value: 'Indian', label: 'Indian Resident' },
+    { value: 'Foreign', label: 'Foreign National (Form III)' },
+    { value: 'OCI', label: 'OCI Cardholder' },
+  ]
+
+  const idTypeOptions = [
+    { value: 'aadhaar', label: 'Aadhaar Card' },
+    { value: 'passport', label: 'Passport' },
+    { value: 'driving_license', label: 'Driving License' },
+    { value: 'voter_id', label: 'Voter ID' },
+    { value: 'pan_card', label: 'PAN Card' },
+  ]
+
+  const mealPlanOptions = [
+    { value: 'EP', label: 'EP - Room Only' },
+    { value: 'CP', label: 'CP - Bed & Breakfast' },
+    { value: 'MAP', label: 'MAP - Half Board' },
+    { value: 'AP', label: 'AP - Full Board' },
+  ]
+
+  const languageOptions = [
+    { value: 'English', label: 'English' },
+    { value: 'Hindi', label: 'Hindi' },
+    { value: 'Telugu', label: 'Telugu' },
+    { value: 'Tamil', label: 'Tamil' },
+    { value: 'Kannada', label: 'Kannada' },
+    { value: 'Bengali', label: 'Bengali' },
+  ]
+
+  const vipTierOptions = [
+    { value: 'Silver VIP', label: 'Silver VIP' },
+    { value: 'Gold VIP', label: 'Gold VIP' },
+    { value: 'Platinum VIP', label: 'Platinum VIP' },
+    { value: 'Celebrity / VVIP', label: 'Celebrity / VVIP' },
+  ]
+
   return (
-    <div className="space-y-6 max-w-3xl mx-auto pb-12">
+    <div className="space-y-6 w-full pb-12">
       {/* Top Header */}
       <div className="flex items-center justify-between pb-3 border-b border-gray-200">
         <div className="flex items-center gap-3">
@@ -137,19 +192,13 @@ export default function GuestForm() {
             <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Salutation</label>
-                <select
-                  name="salutation"
+                <SearchableSelect
                   value={formData.salutation}
-                  onChange={handleChange}
-                  className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-                >
-                  <option value="Mr">Mr.</option>
-                  <option value="Mrs">Mrs.</option>
-                  <option value="Ms">Ms.</option>
-                  <option value="Dr">Dr.</option>
-                  <option value="CA">CA</option>
-                  <option value="Prof">Prof.</option>
-                </select>
+                  onChange={(val) => setFormData((prev) => ({ ...prev, salutation: val }))}
+                  options={salutationOptions}
+                  allowAdd={true}
+                  addNewLabel="Add Salutation"
+                />
               </div>
 
               <div>
@@ -180,27 +229,21 @@ export default function GuestForm() {
 
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Gender</label>
-                <select
-                  name="gender"
+                <SearchableSelect
                   value={formData.gender}
-                  onChange={handleChange}
-                  className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-                >
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                  <option value="Other">Other</option>
-                  <option value="Prefer not to say">Prefer not to say</option>
-                </select>
+                  onChange={(val) => setFormData((prev) => ({ ...prev, gender: val }))}
+                  options={genderOptions}
+                  allowAdd={true}
+                  addNewLabel="Add Gender"
+                />
               </div>
 
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Date of Birth</label>
-                <input
-                  type="date"
-                  name="dob"
+                <CustomDatePicker
                   value={formData.dob}
-                  onChange={handleChange}
-                  className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
+                  onChange={(val) => setFormData((prev) => ({ ...prev, dob: val }))}
+                  placeholder="Select birth date..."
                 />
               </div>
 
@@ -242,16 +285,13 @@ export default function GuestForm() {
 
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Guest Category</label>
-                <select
-                  name="guest_category"
+                <SearchableSelect
                   value={formData.guest_category}
-                  onChange={handleChange}
-                  className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-                >
-                  <option value="Indian">Indian Resident</option>
-                  <option value="Foreign">Foreign National (Form III)</option>
-                  <option value="OCI">OCI Cardholder</option>
-                </select>
+                  onChange={(val) => setFormData((prev) => ({ ...prev, guest_category: val }))}
+                  options={guestCategoryOptions}
+                  allowAdd={true}
+                  addNewLabel="Add Category"
+                />
               </div>
 
               <div>
@@ -267,18 +307,13 @@ export default function GuestForm() {
 
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Identity Proof Type</label>
-                <select
-                  name="id_type"
+                <SearchableSelect
                   value={formData.id_type}
-                  onChange={handleChange}
-                  className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-                >
-                  <option value="aadhaar">Aadhaar Card</option>
-                  <option value="passport">Passport</option>
-                  <option value="driving_license">Driving License</option>
-                  <option value="voter_id">Voter ID</option>
-                  <option value="pan_card">PAN Card</option>
-                </select>
+                  onChange={(val) => setFormData((prev) => ({ ...prev, id_type: val }))}
+                  options={idTypeOptions}
+                  allowAdd={true}
+                  addNewLabel="Add ID Type"
+                />
               </div>
 
               <div className="sm:col-span-3">
@@ -367,34 +402,24 @@ export default function GuestForm() {
 
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Preferred Meal Plan</label>
-                <select
-                  name="preferred_meal_plan"
+                <SearchableSelect
                   value={formData.preferred_meal_plan}
-                  onChange={handleChange}
-                  className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-                >
-                  <option value="EP">EP - Room Only</option>
-                  <option value="CP">CP - Bed &amp; Breakfast</option>
-                  <option value="MAP">MAP - Half Board</option>
-                  <option value="AP">AP - Full Board</option>
-                </select>
+                  onChange={(val) => setFormData((prev) => ({ ...prev, preferred_meal_plan: val }))}
+                  options={mealPlanOptions}
+                  allowAdd={true}
+                  addNewLabel="Add Meal Plan"
+                />
               </div>
 
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Preferred Language</label>
-                <select
-                  name="preferred_language"
+                <SearchableSelect
                   value={formData.preferred_language}
-                  onChange={handleChange}
-                  className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-                >
-                  <option value="English">English</option>
-                  <option value="Hindi">Hindi</option>
-                  <option value="Telugu">Telugu</option>
-                  <option value="Tamil">Tamil</option>
-                  <option value="Kannada">Kannada</option>
-                  <option value="Bengali">Bengali</option>
-                </select>
+                  onChange={(val) => setFormData((prev) => ({ ...prev, preferred_language: val }))}
+                  options={languageOptions}
+                  allowAdd={true}
+                  addNewLabel="Add Language"
+                />
               </div>
 
               <div className="flex items-center pt-2">
@@ -416,17 +441,13 @@ export default function GuestForm() {
               {formData.is_vip && (
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">VIP Tier</label>
-                  <select
-                    name="vip_tier"
+                  <SearchableSelect
                     value={formData.vip_tier}
-                    onChange={handleChange}
-                    className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-                  >
-                    <option value="Silver VIP">Silver VIP</option>
-                    <option value="Gold VIP">Gold VIP</option>
-                    <option value="Platinum VIP">Platinum VIP</option>
-                    <option value="Celebrity / VVIP">Celebrity / VVIP</option>
-                  </select>
+                    onChange={(val) => setFormData((prev) => ({ ...prev, vip_tier: val }))}
+                    options={vipTierOptions}
+                    allowAdd={true}
+                    addNewLabel="Add VIP Tier"
+                  />
                 </div>
               )}
 

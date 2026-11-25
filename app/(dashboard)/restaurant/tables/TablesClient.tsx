@@ -27,6 +27,7 @@ import {
   updateTableStatus,
   deleteRestaurantTable,
 } from '@/services/restaurant.service'
+import { SearchableSelect } from '@/components/ui/searchable-select'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 
@@ -284,17 +285,20 @@ export function TablesClient({ initialTables, propertyId }: TablesClientProps) {
 
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Section</label>
-                <select
+                <SearchableSelect
                   value={form.section}
-                  onChange={(e) => setForm({ ...form, section: e.target.value })}
-                  className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
-                >
-                  <option value="Main Dining">Main Dining</option>
-                  <option value="Outdoor Patio">Outdoor Patio</option>
-                  <option value="Rooftop Bar">Rooftop Bar</option>
-                  <option value="Private Dining">Private Dining</option>
-                  <option value="Poolside Lounge">Poolside Lounge</option>
-                </select>
+                  onChange={(val) => setForm({ ...form, section: val })}
+                  options={[
+                    { value: 'Main Dining', label: 'Main Dining' },
+                    { value: 'Outdoor Patio', label: 'Outdoor Patio' },
+                    { value: 'Rooftop Bar', label: 'Rooftop Bar' },
+                    { value: 'Private Dining', label: 'Private Dining' },
+                    { value: 'Poolside Lounge', label: 'Poolside Lounge' },
+                  ]}
+                  allowAdd={true}
+                  addNewLabel="Add Restaurant Section"
+                  placeholder="Select or add section..."
+                />
               </div>
             </div>
 
