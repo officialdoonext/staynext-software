@@ -99,6 +99,7 @@ export const navigationSections: NavSection[] = [
         title: 'Rates & Plans',
         href: '/rates',
         icon: 'Tag',
+        hidden: true,
         children: [
           { title: 'Rate Plans', href: '/rates' },
           { title: 'Seasonal Rates', href: '/rates/seasonal' },
@@ -109,6 +110,7 @@ export const navigationSections: NavSection[] = [
         title: 'Billing',
         href: '/billing',
         icon: 'CreditCard',
+        hidden: true,
         children: [
           { title: 'Folios', href: '/billing' },
           { title: 'Invoices', href: '/billing/invoices' },
@@ -219,6 +221,7 @@ export const navigationSections: NavSection[] = [
         title: 'Compliance & FRRO',
         href: '/compliance',
         icon: 'ShieldCheck',
+        hidden: true,
         children: [
           { title: 'Overview & Alerts', href: '/compliance' },
           { title: 'Foreign Guests (Rule 17)', href: '/compliance/foreign-guests' },

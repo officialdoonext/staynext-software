@@ -461,6 +461,7 @@ export interface NavItem {
   badge?: string | number
   children?: NavItem[]
   disabled?: boolean
+  hidden?: boolean
 }
 
 export interface NavSection {

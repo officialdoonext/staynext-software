@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
@@ -42,6 +42,12 @@ interface SidebarProps {
   onToggle?: () => void
 }
 
+interface HoveredFlyoutState {
+  item: (typeof navigationSections)[0]['items'][0]
+  sectionTitle: string
+  top: number
+}
+
 const iconMap: Record<string, LucideIcon> = {
   LayoutDashboard,
   ConciergeBell,
@@ -68,11 +74,11 @@ const iconMap: Record<string, LucideIcon> = {
 export default function Sidebar({ isOpen, mobileOpen, onMobileClose, onToggle }: SidebarProps) {
   const pathname = usePathname()
 
-  // Requirement 3: By default, open ALL accordions across the sidebar
+  // Requirement 3: By default, open ALL accordions across the sidebar (skipping hidden ones)
   const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {}
     navigationSections.forEach((section) => {
-      section.items.forEach((item) => {
+      section.items.filter((item) => !item.hidden).forEach((item) => {
         if (item.children && item.children.length > 0) {
           initial[item.title] = true
         }
@@ -81,11 +87,70 @@ export default function Sidebar({ isOpen, mobileOpen, onMobileClose, onToggle }:
     return initial
   })
 
+  // Fixed hover flyout state for collapsed mode (prevents ANY clipping by overflow-y containers)
+  const [hoveredFlyout, setHoveredFlyout] = useState<HoveredFlyoutState | null>(null)
+  const flyoutCloseTimer = useRef<NodeJS.Timeout | null>(null)
+
+  // Clear timer on unmount
+  useEffect(() => {
+    return () => {
+      if (flyoutCloseTimer.current) clearTimeout(flyoutCloseTimer.current)
+    }
+  }, [])
+
+  // Close flyout when route changes
+  useEffect(() => {
+    setHoveredFlyout(null)
+  }, [pathname])
+
   const toggleSubmenu = (title: string) => {
     setExpandedMenus((prev) => ({
       ...prev,
       [title]: !prev[title],
     }))
+  }
+
+  const handleIconMouseEnter = (
+    e: React.MouseEvent<HTMLDivElement>,
+    item: (typeof navigationSections)[0]['items'][0],
+    sectionTitle: string
+  ) => {
+    if (flyoutCloseTimer.current) {
+      clearTimeout(flyoutCloseTimer.current)
+      flyoutCloseTimer.current = null
+    }
+    const rect = e.currentTarget.getBoundingClientRect()
+    // Calculate safe top position to never overflow viewport bottom
+    const estimatedHeight = item.children && item.children.length > 0 ? Math.min(380, 50 + item.children.length * 30) : 80
+    const maxTop = typeof window !== 'undefined' ? window.innerHeight - estimatedHeight - 16 : 400
+    const clampedTop = Math.max(12, Math.min(rect.top, maxTop))
+
+    setHoveredFlyout({
+      item,
+      sectionTitle,
+      top: clampedTop,
+    })
+  }
+
+  const handleIconMouseLeave = () => {
+    if (flyoutCloseTimer.current) clearTimeout(flyoutCloseTimer.current)
+    flyoutCloseTimer.current = setTimeout(() => {
+      setHoveredFlyout(null)
+    }, 160)
+  }
+
+  const handleFlyoutMouseEnter = () => {
+    if (flyoutCloseTimer.current) {
+      clearTimeout(flyoutCloseTimer.current)
+      flyoutCloseTimer.current = null
+    }
+  }
+
+  const handleFlyoutMouseLeave = () => {
+    if (flyoutCloseTimer.current) clearTimeout(flyoutCloseTimer.current)
+    flyoutCloseTimer.current = setTimeout(() => {
+      setHoveredFlyout(null)
+    }, 160)
   }
 
   // Full Expanded Sidebar Content
@@ -136,20 +201,24 @@ export default function Sidebar({ isOpen, mobileOpen, onMobileClose, onToggle }:
 
       {/* Nav List with Open Accordions */}
       <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-6 scrollbar-thin">
-        {navigationSections.map((section) => (
-          <div key={section.title} className="space-y-1">
-            <h4
-              suppressHydrationWarning
-              className="px-3 text-[11px] font-medium uppercase tracking-wider text-gray-400"
-            >
-              {section.title}
-            </h4>
-            <div className="space-y-0.5">
-              {section.items.map((item) => {
-                const Icon = iconMap[item.icon || 'LayoutDashboard'] || LayoutDashboard
-                const hasChildren = item.children && item.children.length > 0
-                const isExpanded = !!expandedMenus[item.title]
-                const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
+        {navigationSections.map((section) => {
+          const visibleItems = section.items.filter((item) => !item.hidden)
+          if (visibleItems.length === 0) return null
+
+          return (
+            <div key={section.title} className="space-y-1">
+              <h4
+                suppressHydrationWarning
+                className="px-3 text-[11px] font-medium uppercase tracking-wider text-gray-400"
+              >
+                {section.title}
+              </h4>
+              <div className="space-y-0.5">
+                {visibleItems.map((item) => {
+                  const Icon = iconMap[item.icon || 'LayoutDashboard'] || LayoutDashboard
+                  const hasChildren = item.children && item.children.length > 0
+                  const isExpanded = !!expandedMenus[item.title]
+                  const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
 
                 if (hasChildren) {
                   return (
@@ -218,7 +287,8 @@ export default function Sidebar({ isOpen, mobileOpen, onMobileClose, onToggle }:
               })}
             </div>
           </div>
-        ))}
+        )
+      })}
       </nav>
 
       {/* Property Status Footer */}
@@ -231,10 +301,10 @@ export default function Sidebar({ isOpen, mobileOpen, onMobileClose, onToggle }:
     </div>
   )
 
-  // Requirement 4 & 5: Collapsed Mini Sidebar Content (Icons Visible + Hover Flyout)
+  // Requirement 4 & 5: Collapsed Mini Sidebar Content (Icons Visible + Hover Flyout via Fixed Overlay)
   const collapsedSidebarContent = (
     <div className="flex h-full flex-col bg-white select-none items-center">
-      {/* Brand Header (Icon Only + Expand toggle) */}
+      {/* Brand Header (Icon Only) */}
       <div className="flex h-16 w-full items-center justify-center border-b border-gray-200 bg-white relative">
         <Link href="/dashboard" className="cursor-pointer" title="STAYNEXT Dashboard">
           <div className="flex h-9 w-9 items-center justify-center rounded-md bg-[#5e2b9d] text-white shadow-sm hover:scale-105 transition-transform">
@@ -257,95 +327,51 @@ export default function Sidebar({ isOpen, mobileOpen, onMobileClose, onToggle }:
       )}
 
       {/* Collapsed Icon Navigation Rail */}
-      <nav className="flex-1 overflow-y-auto overflow-x-visible w-full px-2 py-2 space-y-4 scrollbar-none">
-        {navigationSections.map((section, sIdx) => (
-          <div key={section.title} className="space-y-1 w-full">
-            {sIdx > 0 && <div className="border-t border-gray-100 my-2 mx-1" />}
-            <div className="space-y-1 w-full flex flex-col items-center">
-              {section.items.map((item) => {
-                const Icon = iconMap[item.icon || 'LayoutDashboard'] || LayoutDashboard
-                const hasChildren = item.children && item.children.length > 0
-                const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
+      <nav className="flex-1 overflow-y-auto w-full px-2 py-2 space-y-4 scrollbar-none">
+        {navigationSections.map((section, sIdx) => {
+          const visibleItems = section.items.filter((item) => !item.hidden)
+          if (visibleItems.length === 0) return null
+
+          return (
+            <div key={section.title} className="space-y-1 w-full">
+              {sIdx > 0 && <div className="border-t border-gray-100 my-2 mx-1" />}
+              <div className="space-y-1 w-full flex flex-col items-center">
+                {visibleItems.map((item) => {
+                  const Icon = iconMap[item.icon || 'LayoutDashboard'] || LayoutDashboard
+                  const hasChildren = item.children && item.children.length > 0
+                  const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
+                  const isHovered = hoveredFlyout?.item.title === item.title
 
                 return (
-                  <div key={item.title} className="relative group/flyout w-full flex justify-center">
+                  <div
+                    key={item.title}
+                    onMouseEnter={(e) => handleIconMouseEnter(e, item, section.title)}
+                    onMouseLeave={handleIconMouseLeave}
+                    className="relative w-full flex justify-center"
+                  >
                     {/* Collapsed Icon Button */}
                     <Link
                       href={item.href || (hasChildren && item.children?.[0]?.href) || '#'}
                       className={cn(
                         "flex h-10 w-10 items-center justify-center rounded-lg transition-all cursor-pointer relative",
-                        isActive
-                          ? "bg-[#f7f2fd] text-[#5e2b9d] shadow-xs font-semibold ring-1 ring-[#5e2b9d]/20"
+                        isActive || isHovered
+                          ? "bg-[#f7f2fd] text-[#5e2b9d] shadow-xs font-semibold ring-1 ring-[#5e2b9d]/30"
                           : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
                       )}
                       aria-label={item.title}
                     >
-                      <Icon className={cn("h-5 w-5 shrink-0", isActive ? "text-[#5e2b9d]" : "text-gray-600")} />
+                      <Icon className={cn("h-5 w-5 shrink-0", (isActive || isHovered) ? "text-[#5e2b9d]" : "text-gray-600")} />
                       {isActive && (
                         <span className="absolute -left-2 top-2 bottom-2 w-1 bg-[#5e2b9d] rounded-r-full" />
                       )}
                     </Link>
-
-                    {/* Requirement 5: Hover Flyout with Menu Name and Accordion Child Links */}
-                    <div className="absolute left-full top-0 ml-2 z-50 min-w-[220px] max-w-xs bg-white border border-gray-200 shadow-2xl rounded-lg py-2 px-1 text-left hidden group-hover/flyout:block animate-in fade-in-0 zoom-in-95 duration-150 pointer-events-auto">
-                      {/* Invisible mouse bridge preventing accidental close */}
-                      <div className="absolute -left-3 top-0 bottom-0 w-3" />
-
-                      {/* Flyout Header */}
-                      <div className="px-3 py-1.5 border-b border-gray-100 mb-1 flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <div className="p-1 rounded bg-[#f7f2fd] text-[#5e2b9d]">
-                            <Icon className="h-4 w-4" />
-                          </div>
-                          <span className="font-semibold text-xs text-gray-900 tracking-tight">
-                            {item.title}
-                          </span>
-                        </div>
-                        <span className="text-[10px] text-gray-400 uppercase tracking-wider font-medium">
-                          {section.title}
-                        </span>
-                      </div>
-
-                      {/* Flyout Menu Items */}
-                      {hasChildren ? (
-                        <div className="space-y-0.5 mt-1">
-                          {item.children?.map((sub) => {
-                            const isSubActive = pathname === sub.href
-                            return (
-                              <Link
-                                key={sub.href || sub.title}
-                                href={sub.href || '#'}
-                                className={cn(
-                                  "flex items-center justify-between px-3 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer",
-                                  isSubActive
-                                    ? "bg-[#f7f2fd] text-[#5e2b9d] font-semibold"
-                                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                                )}
-                              >
-                                <span>{sub.title}</span>
-                                {isSubActive && (
-                                  <span className="h-1.5 w-1.5 rounded-full bg-[#5e2b9d]" />
-                                )}
-                              </Link>
-                            )
-                          })}
-                        </div>
-                      ) : (
-                        <Link
-                          href={item.href || '#'}
-                          className="flex items-center justify-between px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-[#f7f2fd] hover:text-[#5e2b9d] rounded-md transition-colors mt-1"
-                        >
-                          <span>Open {item.title}</span>
-                          <ExternalLink className="h-3 w-3 opacity-50" />
-                        </Link>
-                      )}
-                    </div>
                   </div>
                 )
               })}
             </div>
           </div>
-        ))}
+        )
+      })}
       </nav>
 
       {/* Collapsed Footer indicator */}
@@ -357,10 +383,7 @@ export default function Sidebar({ isOpen, mobileOpen, onMobileClose, onToggle }:
 
   return (
     <>
-      {/* Desktop Sidebar: 
-          When isOpen is TRUE: w-64 full expanded with all accordions open.
-          When isOpen is FALSE: w-[68px] collapsed icon-rail with hover flyouts.
-      */}
+      {/* Desktop Sidebar */}
       <aside
         className={cn(
           "hidden md:flex md:flex-col shrink-0 transition-[width] duration-300 ease-in-out bg-white border-r border-gray-200 z-30 relative",
@@ -371,6 +394,77 @@ export default function Sidebar({ isOpen, mobileOpen, onMobileClose, onToggle }:
           {isOpen ? fullSidebarContent : collapsedSidebarContent}
         </div>
       </aside>
+
+      {/* Requirement 5: Fixed Viewport Hover Flyout for Collapsed Sidebar
+          Using position: fixed outside the scroll container guarantees it is NEVER cut off! */}
+      {!isOpen && hoveredFlyout && (
+        <div
+          style={{
+            position: 'fixed',
+            left: '70px',
+            top: `${hoveredFlyout.top}px`,
+          }}
+          onMouseEnter={handleFlyoutMouseEnter}
+          onMouseLeave={handleFlyoutMouseLeave}
+          className="z-[9999] min-w-[230px] max-w-xs bg-white border border-gray-200 shadow-2xl rounded-lg py-2 px-1 text-left animate-in fade-in-0 zoom-in-95 duration-100"
+        >
+          {/* Invisible mouse bridge on the left to seamlessly bridge the icon rail */}
+          <div className="absolute -left-3 top-0 bottom-0 w-3" />
+
+          {/* Flyout Header */}
+          <div className="px-3 py-1.5 border-b border-gray-100 mb-1 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="p-1 rounded bg-[#f7f2fd] text-[#5e2b9d]">
+                {React.createElement(iconMap[hoveredFlyout.item.icon || 'LayoutDashboard'] || LayoutDashboard, {
+                  className: "h-4 w-4"
+                })}
+              </div>
+              <span className="font-semibold text-xs text-gray-900 tracking-tight">
+                {hoveredFlyout.item.title}
+              </span>
+            </div>
+            <span className="text-[10px] text-gray-400 uppercase tracking-wider font-medium">
+              {hoveredFlyout.sectionTitle}
+            </span>
+          </div>
+
+          {/* Submenu links */}
+          {hoveredFlyout.item.children && hoveredFlyout.item.children.length > 0 ? (
+            <div className="space-y-0.5 mt-1 max-h-72 overflow-y-auto scrollbar-thin">
+              {hoveredFlyout.item.children.map((sub) => {
+                const isSubActive = pathname === sub.href
+                return (
+                  <Link
+                    key={sub.href || sub.title}
+                    href={sub.href || '#'}
+                    onClick={() => setHoveredFlyout(null)}
+                    className={cn(
+                      "flex items-center justify-between px-3 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer",
+                      isSubActive
+                        ? "bg-[#f7f2fd] text-[#5e2b9d] font-semibold"
+                        : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                    )}
+                  >
+                    <span>{sub.title}</span>
+                    {isSubActive && (
+                      <span className="h-1.5 w-1.5 rounded-full bg-[#5e2b9d]" />
+                    )}
+                  </Link>
+                )
+              })}
+            </div>
+          ) : (
+            <Link
+              href={hoveredFlyout.item.href || '#'}
+              onClick={() => setHoveredFlyout(null)}
+              className="flex items-center justify-between px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-[#f7f2fd] hover:text-[#5e2b9d] rounded-md transition-colors mt-1"
+            >
+              <span>Open {hoveredFlyout.item.title}</span>
+              <ExternalLink className="h-3 w-3 opacity-50" />
+            </Link>
+          )}
+        </div>
+      )}
 
       {/* Mobile Drawer Overlay */}
       {mobileOpen && (
