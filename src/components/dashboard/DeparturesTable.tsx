@@ -78,7 +78,7 @@ export default function DeparturesTable({ departures }: DeparturesTableProps) {
                     {formatCurrency(row.outstanding_balance ?? 0)}
                   </span>
                 ) : (
-                  <span className="text-emerald-600">Paid ($0.00)</span>
+                  <span className="text-emerald-600">Paid ({formatCurrency(0)})</span>
                 )}
               </TableCell>
               <TableCell>

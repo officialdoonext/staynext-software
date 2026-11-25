@@ -36,6 +36,7 @@ import {
   FoodRequestRecord,
   updateFoodRequestStatus,
   getFoodRequests,
+  acceptFoodRequest,
 } from '@/services/restaurant.service'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
@@ -90,6 +91,38 @@ export function FoodRequestsClient({ initialRequests, propertyId, properties = [
       console.error(e)
     } finally {
       setIsRefreshing(false)
+    }
+  }
+
+  // Handle Accept Order & Move to Restaurant Orders
+  const handleAcceptOrder = async (order: FoodRequestRecord) => {
+    setUpdatingId(order.id)
+    const res = await acceptFoodRequest(order.id)
+    setUpdatingId(null)
+
+    if (res.success) {
+      setRequests((prev) =>
+        prev.map((r) =>
+          r.id === order.id
+            ? {
+                ...r,
+                status: 'preparing',
+              }
+            : r
+        )
+      )
+      toast.success(
+        `Order ${order.orderNumber} (Room ${order.roomNumber}) accepted & moved to Restaurant Orders!`,
+        {
+          action: {
+            label: 'View in Orders',
+            onClick: () => router.push('/restaurant'),
+          },
+        }
+      )
+      router.refresh()
+    } else {
+      toast.error(res.error || 'Failed to accept order')
     }
   }
 
@@ -503,24 +536,35 @@ export function FoodRequestsClient({ initialRequests, propertyId, properties = [
                       <Button
                         size="sm"
                         disabled={isUpdating}
-                        onClick={() => handleStatusChange(order.id, 'preparing')}
-                        className="bg-blue-600 hover:bg-blue-700 text-white text-xs h-8 px-3 rounded-md cursor-pointer font-medium"
+                        onClick={() => handleAcceptOrder(order)}
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-8 px-3 rounded-md cursor-pointer font-medium shadow-2xs"
                       >
-                        <ChefHat className="h-3.5 w-3.5 mr-1.5" />
-                        Accept &amp; Start Prep
+                        <CheckCircle className="h-3.5 w-3.5 mr-1.5" />
+                        Accept &amp; Move to Orders
                       </Button>
                     )}
 
                     {order.status === 'preparing' && (
-                      <Button
-                        size="sm"
-                        disabled={isUpdating}
-                        onClick={() => handleStatusChange(order.id, 'out_for_delivery')}
-                        className="bg-[#5e2b9d] hover:bg-[#4d2282] text-white text-xs h-8 px-3 rounded-md cursor-pointer font-medium"
-                      >
-                        <Bike className="h-3.5 w-3.5 mr-1.5" />
-                        Out for Delivery
-                      </Button>
+                      <div className="flex items-center gap-1.5">
+                        <Link href="/restaurant">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-xs h-8 px-2.5 cursor-pointer border-[#dfcef6] text-[#5e2b9d] hover:bg-[#f7f2fd] rounded-md font-medium"
+                          >
+                            In Orders &rarr;
+                          </Button>
+                        </Link>
+                        <Button
+                          size="sm"
+                          disabled={isUpdating}
+                          onClick={() => handleStatusChange(order.id, 'out_for_delivery')}
+                          className="bg-[#5e2b9d] hover:bg-[#4d2282] text-white text-xs h-8 px-3 rounded-md cursor-pointer font-medium"
+                        >
+                          <Bike className="h-3.5 w-3.5 mr-1.5" />
+                          Out for Delivery
+                        </Button>
+                      </div>
                     )}
 
                     {order.status === 'out_for_delivery' && (

@@ -41,7 +41,7 @@ const initialNotifications: NotificationItem[] = [
   {
     id: '3',
     title: 'Payment Received',
-    message: 'Received $850.00 via Stripe for Folio #FOL-1092',
+    message: 'Received ₹850.00 via UPI for Folio #FOL-1092',
     time: '1h ago',
     read: true,
     type: 'payment',

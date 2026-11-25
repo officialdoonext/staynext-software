@@ -24,15 +24,17 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
-import { PropertySettingsData, updatePropertySettings } from '@/services/settings.service'
+import { PropertySettingsData, updatePropertySettings, getPropertySettings } from '@/services/settings.service'
 import { toast } from 'sonner'
 
 interface GeneralSettingsClientProps {
   initialProperty: PropertySettingsData | null
+  properties?: Array<{ id: string; name: string }>
 }
 
-export function GeneralSettingsClient({ initialProperty }: GeneralSettingsClientProps) {
+export function GeneralSettingsClient({ initialProperty, properties = [] }: GeneralSettingsClientProps) {
   const [property, setProperty] = useState<PropertySettingsData | null>(initialProperty)
+  const [selectedPropertyId, setSelectedPropertyId] = useState(initialProperty?.id || '')
   const [isSaving, setIsSaving] = useState(false)
 
   // Form states
@@ -59,15 +61,48 @@ export function GeneralSettingsClient({ initialProperty }: GeneralSettingsClient
   const [frroCode, setFrroCode] = useState(property?.settings?.frroCode || '')
   const [nightAuditTime, setNightAuditTime] = useState(property?.settings?.nightAuditTime || '02:00')
 
+  const handlePropertyChange = async (newPropId: string) => {
+    setSelectedPropertyId(newPropId)
+    try {
+      const fresh = await getPropertySettings(newPropId)
+      if (fresh) {
+        setProperty(fresh)
+        setName(fresh.name || '')
+        setPropertyType(fresh.propertyType || 'hotel')
+        setPhone(fresh.phone || '')
+        setEmail(fresh.email || '')
+        setWebsite(fresh.website || '')
+        setAddress(fresh.address || '')
+        setCity(fresh.city || '')
+        setState(fresh.state || '')
+        setCountry(fresh.country || 'India')
+        setPostalCode(fresh.postalCode || '')
+        setCurrency(fresh.currency || 'INR')
+        setTimezone(fresh.timezone || 'Asia/Kolkata')
+        setCheckInTime(fresh.checkInTime || '14:00')
+        setCheckOutTime(fresh.checkOutTime || '11:00')
+        setDescription(fresh.description || '')
+        setGstin(fresh.settings?.gstin || '')
+        setPanNumber(fresh.settings?.panNumber || '')
+        setFssaiNumber(fresh.settings?.fssaiNumber || '')
+        setFrroCode(fresh.settings?.frroCode || '')
+        setNightAuditTime(fresh.settings?.nightAuditTime || '02:00')
+      }
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!property?.id) {
+    const targetId = selectedPropertyId || property?.id
+    if (!targetId) {
       toast.error('No active property loaded')
       return
     }
 
     setIsSaving(true)
-    const res = await updatePropertySettings(property.id, {
+    const res = await updatePropertySettings(targetId, {
       name,
       propertyType,
       phone,
@@ -84,7 +119,7 @@ export function GeneralSettingsClient({ initialProperty }: GeneralSettingsClient
       checkOutTime,
       description,
       settings: {
-        ...(property.settings || {}),
+        ...(property?.settings || {}),
         gstin: gstin.toUpperCase(),
         panNumber: panNumber.toUpperCase(),
         fssaiNumber,
@@ -113,19 +148,34 @@ export function GeneralSettingsClient({ initialProperty }: GeneralSettingsClient
             Configure multi-property legal profile, operating hours, local currency, tax rules, and team RBAC.
           </p>
         </div>
-        {property?.tenant && (
-          <div className="flex items-center gap-2">
-            <Badge
-              variant={property.tenant.isActive ? 'success' : 'outline'}
-              className="text-[11px] rounded-sm px-2.5 py-0.5"
+        <div className="flex flex-wrap items-center gap-2">
+          {properties && properties.length > 1 && (
+            <select
+              value={selectedPropertyId}
+              onChange={(e) => handlePropertyChange(e.target.value)}
+              className="text-xs border border-gray-200 rounded-md px-2.5 py-1.5 bg-white font-medium text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#5e2b9d] cursor-pointer"
             >
-              Tenant: {property.tenant.status.toUpperCase()}
-            </Badge>
-            <Badge className="bg-[#5e2b9d] text-white text-[11px] rounded-sm px-2.5 py-0.5">
-              Plan: {property.tenant.subscriptionPlan.toUpperCase()}
-            </Badge>
-          </div>
-        )}
+              {properties.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+          )}
+          {property?.tenant && (
+            <>
+              <Badge
+                variant={property.tenant.isActive ? 'success' : 'outline'}
+                className="text-[11px] rounded-sm px-2.5 py-0.5"
+              >
+                Tenant: {property.tenant.status.toUpperCase()}
+              </Badge>
+              <Badge className="bg-[#5e2b9d] text-white text-[11px] rounded-sm px-2.5 py-0.5">
+                Plan: {property.tenant.subscriptionPlan.toUpperCase()}
+              </Badge>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Sub-Settings Quick Nav Cards */}

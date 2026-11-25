@@ -498,15 +498,17 @@ export async function getRestaurantOrders(
         id,
         property_id,
         table_id,
-        room_id,
-        guest_id,
+        order_number,
         order_type,
-        status,
+        room_id,
+        guest_name,
         subtotal,
         tax_amount,
         total_amount,
         payment_status,
-        notes,
+        payment_method,
+        status,
+        kot_number,
         created_at,
         restaurant_tables (
           table_number
@@ -514,23 +516,20 @@ export async function getRestaurantOrders(
         rooms (
           room_number
         ),
-        guests (
-          first_name,
-          last_name
-        ),
         restaurant_order_items (
           id,
           order_id,
-          service_item_id,
           item_name,
           quantity,
-          unit_price,
-          total_price,
+          price,
           notes
         )
       `)
-      .eq('property_id', propertyId)
       .order('created_at', { ascending: false })
+
+    if (propertyId) {
+      query = query.eq('property_id', propertyId)
+    }
 
     if (status && status !== 'all') {
       query = query.eq('status', status)
@@ -541,38 +540,36 @@ export async function getRestaurantOrders(
     if (error || !data) return []
 
     return data.map((o: any) => {
-      const g = o.guests
-      const guestName = g ? `${g.first_name} ${g.last_name}`.trim() : 'Dine-in Guest'
       const tableNumber = o.restaurant_tables?.table_number
       const roomNumber = o.rooms?.room_number
+      const guestName = o.guest_name || (roomNumber ? `Room ${roomNumber}` : 'Dine-in Guest')
 
       const items: OrderItemRecord[] = (o.restaurant_order_items || []).map((i: any) => ({
         id: i.id,
         orderId: i.order_id,
-        serviceItemId: i.service_item_id,
         itemName: i.item_name,
         quantity: Number(i.quantity || 1),
-        unitPrice: Number(i.unit_price || 0),
-        totalPrice: Number(i.total_price || 0),
+        unitPrice: Number(i.price || 0),
+        totalPrice: Number(((i.quantity || 1) * (i.price || 0)).toFixed(2)),
         notes: i.notes,
       }))
 
       return {
         id: o.id,
+        orderNumber: o.order_number,
         propertyId: o.property_id,
         tableId: o.table_id,
         tableNumber,
         roomId: o.room_id,
         roomNumber,
-        guestId: o.guest_id,
         guestName,
-        orderType: o.order_type,
+        orderType: o.order_type || 'dine_in',
         status: o.status,
         subtotal: Number(o.subtotal || 0),
         taxAmount: Number(o.tax_amount || 0),
         totalAmount: Number(o.total_amount || 0),
-        paymentStatus: o.payment_status,
-        notes: o.notes,
+        paymentStatus: o.payment_status || 'unpaid',
+        notes: o.kot_number ? `KOT: ${o.kot_number}` : undefined,
         createdAt: o.created_at,
         items,
       }
@@ -590,7 +587,7 @@ export async function createRestaurantOrder(data: {
   propertyId: string
   tableId?: string
   roomId?: string
-  guestId?: string
+  guestName?: string
   orderType: 'dine_in' | 'takeaway' | 'room_delivery'
   items: Array<{
     itemId?: string
@@ -602,7 +599,7 @@ export async function createRestaurantOrder(data: {
   notes?: string
 }): Promise<{ success: boolean; orderId?: string; error?: string }> {
   try {
-    const supabase = await createClient()
+    const admin = createAdminClient()
 
     if (data.items.length === 0) {
       return { success: false, error: 'At least one item is required' }
@@ -615,50 +612,52 @@ export async function createRestaurantOrder(data: {
     // 5% GST on Restaurant F&B
     const taxAmount = Number((subtotal * 0.05).toFixed(2))
     const totalAmount = Number((subtotal + taxAmount).toFixed(2))
+    const orderNumber = `ORD-${Math.floor(100000 + Math.random() * 900000)}`
+    const kotNumber = `KOT-${Math.floor(100 + Math.random() * 900)}`
 
-    // 1. Insert order
-    const { data: order, error: orderErr } = await supabase
+    // 1. Insert order into restaurant_orders
+    const { data: order, error: orderErr } = await admin
       .from('restaurant_orders')
       .insert({
         property_id: data.propertyId,
         table_id: data.tableId || null,
         room_id: data.roomId || null,
-        guest_id: data.guestId || null,
+        order_number: orderNumber,
         order_type: data.orderType,
+        guest_name: data.guestName || (data.roomId ? `Room Delivery` : 'Dine-in Guest'),
         status: 'placed',
         subtotal,
         tax_amount: taxAmount,
         total_amount: totalAmount,
-        payment_status: 'unpaid',
-        notes: data.notes || null,
+        payment_status: 'pending',
+        kot_number: kotNumber,
       })
       .select('id')
       .single()
 
     if (orderErr) return { success: false, error: orderErr.message }
 
-    // 2. Insert items
+    // 2. Insert items into restaurant_order_items
     const orderItems = data.items.map((i) => ({
       order_id: order.id,
-      service_item_id: i.itemId || null,
       item_name: i.name,
       quantity: i.quantity,
-      unit_price: i.unitPrice,
-      total_price: Number((i.quantity * i.unitPrice).toFixed(2)),
+      price: i.unitPrice,
       notes: i.notes || null,
     }))
 
-    await supabase.from('restaurant_order_items').insert(orderItems)
+    await admin.from('restaurant_order_items').insert(orderItems)
 
     // 3. If table attached, update table status to occupied
     if (data.tableId) {
-      await supabase
+      await admin
         .from('restaurant_tables')
         .update({ status: 'occupied', current_order_id: order.id })
         .eq('id', data.tableId)
     }
 
     revalidatePath('/restaurant')
+    revalidatePath('/restaurant/food-requests')
     return { success: true, orderId: order.id }
   } catch (err: any) {
     return { success: false, error: err.message || 'Failed to create POS order' }
@@ -1210,6 +1209,119 @@ export async function updateFoodRequestStatus(
     return { success: true }
   } catch (err: any) {
     return { success: false, error: err.message || 'Failed to update food request status' }
+  }
+}
+
+/**
+ * Accept a Food Request from Room QR and move it into Restaurant Orders
+ */
+export async function acceptFoodRequest(foodOrderId: string): Promise<{ success: boolean; restaurantOrderId?: string; error?: string }> {
+  try {
+    const admin = createAdminClient()
+
+    // 1. Fetch the food request with items and room
+    const { data: foodReq, error: reqErr } = await admin
+      .from('guest_orders')
+      .select(`
+        *,
+        rooms (
+          room_number
+        ),
+        guest_order_items (
+          *
+        )
+      `)
+      .eq('id', foodOrderId)
+      .maybeSingle()
+
+    if (reqErr || !foodReq) {
+      return { success: false, error: reqErr?.message || 'Food request not found' }
+    }
+
+    // 2. Update food request status to 'preparing' (accepted / kitchen cooking)
+    await admin
+      .from('guest_orders')
+      .update({
+        status: 'preparing',
+        payment_status: foodReq.payment_status || 'pending',
+      })
+      .eq('id', foodOrderId)
+
+    // 3. Ensure order exists in restaurant_orders
+    const orderNum = foodReq.order_number || `ORD-${Math.floor(100000 + Math.random() * 900000)}`
+    const { data: existingRestOrder } = await admin
+      .from('restaurant_orders')
+      .select('id')
+      .eq('order_number', orderNum)
+      .maybeSingle()
+
+    let restOrderId = existingRestOrder?.id
+
+    if (restOrderId) {
+      // Update existing order status to kitchen_prep
+      await admin
+        .from('restaurant_orders')
+        .update({
+          status: 'kitchen_prep',
+          order_type: 'room_delivery',
+          room_id: foodReq.room_id || null,
+          guest_name: foodReq.guest_name || 'Room Guest',
+        })
+        .eq('id', restOrderId)
+    } else {
+      // Create new order in restaurant_orders
+      const roomNum = foodReq.rooms?.room_number || ''
+      const guestDisplay = foodReq.guest_name
+        ? `${foodReq.guest_name}${roomNum ? ` (Room ${roomNum})` : ''}`
+        : `Room ${roomNum || 'Guest'}`
+
+      const { data: newRestOrder, error: insErr } = await admin
+        .from('restaurant_orders')
+        .insert({
+          property_id: foodReq.property_id,
+          order_number: orderNum,
+          order_type: 'room_delivery',
+          room_id: foodReq.room_id || null,
+          guest_name: guestDisplay,
+          subtotal: Number(foodReq.subtotal) || 0,
+          tax_amount: Number(foodReq.tax_amount) || 0,
+          total_amount: Number(foodReq.total_amount) || 0,
+          payment_status: foodReq.payment_status || 'pending',
+          payment_method: foodReq.payment_method || 'room_charge',
+          status: 'kitchen_prep',
+          kot_number: `KOT-${Math.floor(100 + Math.random() * 900)}`,
+        })
+        .select('id')
+        .single()
+
+      if (insErr) {
+        console.error('acceptFoodRequest insert into restaurant_orders error:', insErr)
+        return { success: false, error: insErr.message }
+      }
+
+      restOrderId = newRestOrder?.id
+
+      // Insert items into restaurant_order_items
+      if (restOrderId && foodReq.guest_order_items && foodReq.guest_order_items.length > 0) {
+        const restItems = foodReq.guest_order_items.map((it: any) => ({
+          order_id: restOrderId,
+          item_name: it.item_name,
+          quantity: Number(it.quantity || 1),
+          price: Number(it.unit_price || 0),
+          notes: it.special_requests || null,
+        }))
+        await admin.from('restaurant_order_items').insert(restItems)
+      }
+    }
+
+    revalidatePath('/restaurant')
+    revalidatePath('/restaurant/food-requests')
+    revalidatePath('/guest')
+
+    return { success: true, restaurantOrderId: restOrderId }
+  } catch (err: any) {
+    console.error('acceptFoodRequest error:', err)
+    return { success: false, error: err.message || 'Failed to accept order' }
   }
 }
 

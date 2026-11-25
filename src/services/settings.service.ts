@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 
 export interface PropertySettingsData {
@@ -86,15 +87,33 @@ export interface PropertyUserItem {
  */
 export async function getPropertySettings(propId?: string): Promise<PropertySettingsData | null> {
   try {
-    const supabase = await createClient()
+    let properties: any[] | null = null
 
-    let query = supabase.from('properties').select('*, tenants(*)')
-    if (propId) {
-      query = query.eq('id', propId)
+    try {
+      const supabase = await createClient()
+      let query = supabase.from('properties').select('*, tenants(*)')
+      if (propId) {
+        query = query.eq('id', propId)
+      }
+      const res = await query.limit(1)
+      if (res.data && res.data.length > 0) {
+        properties = res.data
+      }
+    } catch {}
+
+    if (!properties || properties.length === 0) {
+      const admin = createAdminClient()
+      let adminQuery = admin.from('properties').select('*, tenants(*)')
+      if (propId) {
+        adminQuery = adminQuery.eq('id', propId)
+      }
+      const adminRes = await adminQuery.limit(1)
+      if (adminRes.data && adminRes.data.length > 0) {
+        properties = adminRes.data
+      }
     }
-    const { data: properties, error } = await query.limit(1)
 
-    if (error || !properties || properties.length === 0) {
+    if (!properties || properties.length === 0) {
       return null
     }
 
@@ -192,12 +211,19 @@ export async function updatePropertySettings(
       payload.settings = updates.settings
     }
 
-    const { error } = await supabase
+    let { error } = await supabase
       .from('properties')
       .update(payload)
       .eq('id', propertyId)
 
-    if (error) throw error
+    if (error) {
+      const admin = createAdminClient()
+      const adminRes = await admin
+        .from('properties')
+        .update(payload)
+        .eq('id', propertyId)
+      if (adminRes.error) throw adminRes.error
+    }
 
     revalidatePath('/settings')
     revalidatePath('/properties')

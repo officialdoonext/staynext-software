@@ -57,7 +57,14 @@ export const metadata = {
   title: 'Dashboard | StayNext Hotel Management',
 }
 
-export default async function DashboardPage() {
+interface DashboardPageProps {
+  searchParams?: Promise<{ propertyId?: string }>
+}
+
+export default async function DashboardPage({ searchParams }: DashboardPageProps) {
+  const resolvedParams = searchParams ? await searchParams : {}
+  const propertyId = resolvedParams?.propertyId
+
   const [
     stats,
     arrivals,
@@ -69,15 +76,15 @@ export default async function DashboardPage() {
     bookingSources,
     bookingTrends,
   ] = await Promise.all([
-    getDashboardStats(),
-    getTodayArrivals(),
-    getTodayDepartures(),
-    getRecentReservations(undefined, 8),
-    getRevenueChartData(),
-    getRoomTypePerformance(),
-    getHousekeepingOverview(),
-    getBookingSourcesData(),
-    getBookingTrendsData(),
+    getDashboardStats(propertyId),
+    getTodayArrivals(propertyId),
+    getTodayDepartures(propertyId),
+    getRecentReservations(propertyId, 8),
+    getRevenueChartData(propertyId),
+    getRoomTypePerformance(propertyId),
+    getHousekeepingOverview(propertyId),
+    getBookingSourcesData(propertyId),
+    getBookingTrendsData(propertyId),
   ])
 
   const today = new Date()
@@ -573,8 +580,8 @@ export default async function DashboardPage() {
 
           <div className="flex-1 overflow-y-auto divide-y divide-gray-100">
             {roomTypePerf && roomTypePerf.length > 0 ? (
-              roomTypePerf.map((rt) => (
-                <div key={rt.roomType} className="py-2.5 flex items-center justify-between">
+              roomTypePerf.map((rt, idx) => (
+                <div key={rt.id || `${rt.roomType}-${idx}`} className="py-2.5 flex items-center justify-between">
                   <div>
                     <p className="text-xs font-medium text-gray-900">{rt.roomType}</p>
                     <p className="text-[11px] text-gray-500">

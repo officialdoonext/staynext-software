@@ -590,7 +590,7 @@ export async function submitGuestOrder(payload: {
 
     // Automatically route order to Restaurant section (restaurant_orders) for kitchen fulfillment
     try {
-      const { data: restOrder } = await supabase
+      const { data: restOrder, error: restInsErr } = await supabase
         .from('restaurant_orders')
         .insert({
           property_id: payload.property_id,
@@ -602,23 +602,25 @@ export async function submitGuestOrder(payload: {
           subtotal,
           tax_amount: taxAmount,
           total_amount: totalAmount,
-          payment_status: 'unpaid',
-          payment_method: payload.payment_method || 'pay_at_checkout',
-          notes: `In-Room Dining QR Order. Special instructions: ${payload.special_instructions || 'None'}`,
+          payment_status: 'pending',
+          payment_method: payload.payment_method || 'room_charge',
+          kot_number: `KOT-${Math.floor(100 + Math.random() * 900)}`,
         })
         .select('id')
         .maybeSingle()
 
-      if (restOrder?.id) {
+      if (restInsErr) {
+        console.error('Restaurant order insert error:', restInsErr)
+      } else if (restOrder?.id) {
         const restOrderItems = payload.items.map((it) => ({
           order_id: restOrder.id,
           item_name: it.item_name,
           quantity: it.quantity,
-          unit_price: it.unit_price,
-          total_price: Number((it.unit_price * it.quantity).toFixed(2)),
+          price: it.unit_price,
           notes: it.special_requests || null,
         }))
-        await supabase.from('restaurant_order_items').insert(restOrderItems)
+        const { error: itemsInsErr } = await supabase.from('restaurant_order_items').insert(restOrderItems)
+        if (itemsInsErr) console.error('Restaurant order items insert error:', itemsInsErr)
       }
       revalidatePath('/restaurant')
       revalidatePath('/restaurant/food-requests')

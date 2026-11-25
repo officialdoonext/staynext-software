@@ -216,7 +216,13 @@ export function RestaurantClient({
             Table management, kitchen order tickets (KOT), room service billing, and menu catalog.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <Link href="/restaurant/food-requests">
+            <Button variant="outline" size="sm" className="text-xs h-9 cursor-pointer rounded-md font-medium border-[#dfcef6] text-[#5e2b9d] hover:bg-[#f7f2fd]">
+              <UtensilsCrossed className="h-4 w-4 mr-1.5" />
+              Food Requests (QR)
+            </Button>
+          </Link>
           <Link href="/restaurant/tables">
             <Button variant="outline" size="sm" className="text-xs h-9 cursor-pointer rounded-md font-medium">
               <LayoutGrid className="h-4 w-4 mr-1.5 text-[#5e2b9d]" />

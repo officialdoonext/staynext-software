@@ -654,6 +654,7 @@ export async function getRevenueChartData(
 }
 
 export interface RoomTypePerformance {
+  id: string
   roomType: string
   totalRooms: number
   occupiedRooms: number
@@ -669,21 +670,64 @@ export async function getRoomTypePerformance(propertyId?: string): Promise<RoomT
   try {
     const supabase = await createClient()
 
-    let query = supabase
+    let rtQuery = supabase
       .from('room_types')
-      .select('id, name, total_rooms')
+      .select('id, name, base_rate, property_id')
+    if (propertyId) rtQuery = rtQuery.eq('property_id', propertyId)
 
-    if (propertyId) query = query.eq('property_id', propertyId)
+    let roomsQuery = supabase
+      .from('rooms')
+      .select('id, room_type_id, status, property_id')
+    if (propertyId) roomsQuery = roomsQuery.eq('property_id', propertyId)
 
-    const { data, error } = await query
-    if (error || !data || data.length === 0) return []
+    let resQuery = supabase
+      .from('reservations')
+      .select('id, room_type_id, total_amount, status')
+      .neq('status', 'cancelled')
+    if (propertyId) resQuery = resQuery.eq('property_id', propertyId)
 
-    return data.map((rt: any) => ({
-      roomType: rt.name,
-      totalRooms: rt.total_rooms || 0,
-      occupiedRooms: 0,
-      occupancyRate: 0,
-      revenue: 0,
+    const [rtRes, roomsRes, resRes] = await Promise.all([
+      rtQuery,
+      roomsQuery,
+      resQuery,
+    ])
+
+    const roomTypes = rtRes.data || []
+    if (roomTypes.length === 0) return []
+
+    const rooms = roomsRes.data || []
+    const reservations = resRes.data || []
+
+    const map = new Map<string, RoomTypePerformance>()
+
+    for (const rt of roomTypes) {
+      const typeName = (rt.name || 'Standard').trim()
+      const rtRooms = rooms.filter((r: any) => r.room_type_id === rt.id)
+      const total = rtRooms.length
+      const occupied = rtRooms.filter((r: any) => r.status === 'occupied').length
+      const rtReservations = reservations.filter((res: any) => res.room_type_id === rt.id)
+      const rev = rtReservations.reduce((sum: number, res: any) => sum + (Number(res.total_amount) || 0), 0)
+
+      if (map.has(typeName)) {
+        const existing = map.get(typeName)!
+        existing.totalRooms += total
+        existing.occupiedRooms += occupied
+        existing.revenue += rev
+      } else {
+        map.set(typeName, {
+          id: rt.id,
+          roomType: typeName,
+          totalRooms: total,
+          occupiedRooms: occupied,
+          occupancyRate: 0,
+          revenue: rev,
+        })
+      }
+    }
+
+    return Array.from(map.values()).map((item) => ({
+      ...item,
+      occupancyRate: item.totalRooms > 0 ? Math.round((item.occupiedRooms / item.totalRooms) * 100) : 0,
     }))
   } catch {
     return []
