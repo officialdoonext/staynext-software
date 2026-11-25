@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 import crypto from 'crypto'
+import { dispatchGuestRequestNotifications } from '@/services/notification-dispatcher.service'
 
 export interface GuestRoomContext {
   isValid: boolean
@@ -634,6 +635,7 @@ export async function submitGuestServiceRequest(payload: {
   description: string
   priority?: string
   guest_notes?: string
+  attachment_url?: string
 }): Promise<{ success: boolean; tracking_token?: string; request_id?: string; error?: string }> {
   try {
     const adminClient = createAdminClient()
@@ -658,6 +660,7 @@ export async function submitGuestServiceRequest(payload: {
           priority: payload.priority || 'medium',
           description: payload.description,
           guest_notes: payload.guest_notes || '',
+          attachment_url: payload.attachment_url || null,
         })
         .select()
         .single()
@@ -685,6 +688,7 @@ export async function submitGuestServiceRequest(payload: {
           payload.request_type ? `Service: ${payload.request_type}` : '',
           payload.description && payload.description !== payload.request_type ? `Details: ${payload.description}` : '',
           payload.guest_notes ? `Guest Instructions: ${payload.guest_notes}` : '',
+          payload.attachment_url ? `Attachment: ${payload.attachment_url}` : '',
         ].filter(Boolean).join('\n')
 
         const { error: hkErr } = await adminClient.from('housekeeping_tasks').insert({
@@ -715,6 +719,7 @@ export async function submitGuestServiceRequest(payload: {
           `Issue: ${payload.request_type}`,
           payload.description && payload.description !== payload.request_type ? `Details: ${payload.description}` : '',
           payload.guest_notes ? `Guest Notes: ${payload.guest_notes}` : '',
+          payload.attachment_url ? `Attachment: ${payload.attachment_url}` : '',
           `Reported by: ${guestInfo} via Room QR`,
         ].filter(Boolean).join('\n')
 
@@ -745,6 +750,7 @@ export async function submitGuestServiceRequest(payload: {
           category: 'Guest Room',
           priority: payload.priority || 'medium',
           status: 'open',
+          attachment_url: payload.attachment_url || null,
         }
         if (reportedBy) {
           mtPayload.reported_by = reportedBy
@@ -773,6 +779,35 @@ export async function submitGuestServiceRequest(payload: {
       } catch (mtErr) {
         console.error('Failed to route maintenance ticket:', mtErr)
       }
+    }
+
+    // 4. Dispatch automated notifications (Mail, WhatsApp, SMS)
+    try {
+      let roomNumber = ''
+      const { data: roomData } = await adminClient
+        .from('rooms')
+        .select('room_number')
+        .eq('id', payload.room_id)
+        .maybeSingle()
+
+      if (roomData?.room_number) roomNumber = roomData.room_number
+
+      if (payload.category_slug === 'housekeeping' || payload.category_slug === 'maintenance') {
+        await dispatchGuestRequestNotifications({
+          propertyId: payload.property_id,
+          category: payload.category_slug as 'housekeeping' | 'maintenance',
+          roomNumber,
+          requestType: payload.request_type,
+          guestName: payload.guest_name,
+          guestPhone: payload.guest_phone,
+          notes: payload.guest_notes,
+          priority: payload.priority,
+          attachmentUrl: payload.attachment_url,
+          trackingToken,
+        })
+      }
+    } catch (notifErr) {
+      console.error('Notification dispatch error:', notifErr)
     }
 
     return {

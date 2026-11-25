@@ -1,0 +1,287 @@
+'use server'
+
+import { createAdminClient } from '@/lib/supabase/admin'
+import { getNotificationRecipients } from '@/services/notification-settings.service'
+import { getWhatsAppConfig } from '@/services/integration-settings.service'
+import { sendSmtpEmail } from '@/services/email.service'
+
+export interface DispatchNotificationParams {
+  propertyId: string
+  category: 'housekeeping' | 'maintenance'
+  roomNumber?: string
+  requestType: string
+  guestName?: string
+  guestPhone?: string
+  notes?: string
+  priority?: string
+  attachmentUrl?: string
+  trackingToken?: string
+}
+
+/**
+ * Dispatches automated notifications (Email, WhatsApp, SMS) to all active staff channels
+ * configured under Settings -> Notifications for Housekeeping or Maintenance.
+ */
+export async function dispatchGuestRequestNotifications(
+  params: DispatchNotificationParams
+): Promise<{
+  mailSent: number
+  whatsappSent: number
+  smsSent: number
+  errors: string[]
+}> {
+  const results = {
+    mailSent: 0,
+    whatsappSent: 0,
+    smsSent: 0,
+    errors: [] as string[],
+  }
+
+  try {
+    const admin = createAdminClient()
+    const { propertyId, category, roomNumber, requestType, guestName, guestPhone, notes, priority, attachmentUrl } = params
+
+    // 1. Fetch active recipients for this property and category
+    const recipients = await getNotificationRecipients(propertyId, category)
+    const activeRecipients = recipients.filter((r) => r.is_active)
+
+    if (activeRecipients.length === 0) {
+      return results
+    }
+
+    const mailRecipients = activeRecipients.filter((r) => r.channel === 'mail')
+    const whatsappRecipients = activeRecipients.filter((r) => r.channel === 'whatsapp')
+    const smsRecipients = activeRecipients.filter((r) => r.channel === 'sms')
+
+    const categoryTitle = category === 'housekeeping' ? 'Housekeeping' : 'Maintenance Engineering'
+    const cleanRoom = roomNumber ? `Room ${roomNumber}` : 'Guest Room'
+    const cleanPriority = (priority || 'medium').toUpperCase()
+
+    // ------------------------------------------------------------------------
+    // 2. DISPATCH EMAILS (Mail Channel)
+    // ------------------------------------------------------------------------
+    if (mailRecipients.length > 0) {
+      const emailSubject = `🔔 [${cleanPriority} ALERT] New ${categoryTitle} Request - ${cleanRoom}`
+      const emailBodyHtml = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px;">
+          <h2 style="color: #5e2b9d; margin-top: 0;">StayNext ${categoryTitle} Alert</h2>
+          <p style="font-size: 14px; color: #374151;">A guest has submitted a new service request via the digital room QR pass.</p>
+          
+          <table style="width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px;">
+            <tr style="background: #f9fafb;">
+              <td style="padding: 8px 12px; font-weight: bold; width: 140px; border: 1px solid #e5e7eb;">Room Number:</td>
+              <td style="padding: 8px 12px; border: 1px solid #e5e7eb; font-weight: bold; color: #5e2b9d;">${cleanRoom}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 12px; font-weight: bold; border: 1px solid #e5e7eb;">Request / Issue:</td>
+              <td style="padding: 8px 12px; border: 1px solid #e5e7eb;">${requestType}</td>
+            </tr>
+            <tr style="background: #f9fafb;">
+              <td style="padding: 8px 12px; font-weight: bold; border: 1px solid #e5e7eb;">Priority:</td>
+              <td style="padding: 8px 12px; border: 1px solid #e5e7eb; font-weight: bold; color: ${priority === 'urgent' ? '#dc2626' : '#d97706'};">${cleanPriority}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 12px; font-weight: bold; border: 1px solid #e5e7eb;">Guest Name:</td>
+              <td style="padding: 8px 12px; border: 1px solid #e5e7eb;">${guestName || 'In-House Guest'} ${guestPhone ? `(${guestPhone})` : ''}</td>
+            </tr>
+            ${notes ? `
+            <tr style="background: #f9fafb;">
+              <td style="padding: 8px 12px; font-weight: bold; border: 1px solid #e5e7eb;">Guest Instructions:</td>
+              <td style="padding: 8px 12px; border: 1px solid #e5e7eb;">${notes}</td>
+            </tr>` : ''}
+            ${attachmentUrl ? `
+            <tr>
+              <td style="padding: 8px 12px; font-weight: bold; border: 1px solid #e5e7eb;">Media Attachment:</td>
+              <td style="padding: 8px 12px; border: 1px solid #e5e7eb;">
+                <a href="${attachmentUrl}" target="_blank" style="color: #5e2b9d; font-weight: bold;">View Attached Photo / Document &rarr;</a>
+              </td>
+            </tr>` : ''}
+          </table>
+
+          <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #e5e7eb; font-size: 12px; color: #6b7280;">
+            This is an automated operational alert generated by StayNext Hotel Management System.
+          </div>
+        </div>
+      `
+
+      for (const recipient of mailRecipients) {
+        try {
+          // Send real email via configured SMTP (Gmail / PharmaNext)
+          const mailRes = await sendSmtpEmail({
+            to: recipient.recipient,
+            subject: emailSubject,
+            html: emailBodyHtml,
+          })
+
+          // Log to notification_logs
+          await admin.from('notification_logs').insert({
+            property_id: propertyId,
+            category,
+            channel: 'mail',
+            recipient: recipient.recipient,
+            template_id: 'guest_service_alert_email',
+            payload: {
+              subject: emailSubject,
+              bodyHtml: emailBodyHtml,
+              roomNumber,
+              requestType,
+              guestName,
+              notes,
+              attachmentUrl,
+              smtpMessageId: mailRes.messageId,
+            },
+            status: mailRes.success ? 'sent' : 'failed',
+            error_message: mailRes.error,
+          })
+
+          if (mailRes.success) {
+            results.mailSent += 1
+          } else {
+            results.errors.push(`Email error (${recipient.recipient}): ${mailRes.error}`)
+          }
+        } catch (mailErr: any) {
+          console.error(`Failed to dispatch email to ${recipient.recipient}:`, mailErr)
+          results.errors.push(`Email error (${recipient.recipient}): ${mailErr.message}`)
+        }
+      }
+    }
+
+    // ------------------------------------------------------------------------
+    // 3. DISPATCH WHATSAPP (Using Keys from Settings -> Integrations)
+    // ------------------------------------------------------------------------
+    if (whatsappRecipients.length > 0) {
+      const waConfig = await getWhatsAppConfig(propertyId)
+
+      const waAlertText =
+        `🔔 *STAYNEXT ${categoryTitle.toUpperCase()} ALERT*\n\n` +
+        `📍 *Location:* ${cleanRoom}\n` +
+        `🛠️ *Request:* ${requestType}\n` +
+        `⚡ *Priority:* ${cleanPriority}\n` +
+        `👤 *Guest:* ${guestName || 'In-House Guest'}${guestPhone ? ` (${guestPhone})` : ''}\n` +
+        (notes ? `📝 *Notes:* ${notes}\n` : '') +
+        (attachmentUrl ? `📎 *Attachment:* ${attachmentUrl}\n` : '') +
+        `\n_Please attend immediately or assign staff._`
+
+      for (const recipient of whatsappRecipients) {
+        try {
+          const formattedNumber = recipient.recipient.replace(/\D/g, '')
+
+          // If Meta WhatsApp credentials exist and enabled, call Meta Cloud API
+          if (waConfig.accessToken && waConfig.phoneNumberId && waConfig.isEnabled) {
+            let requestBody: any
+
+            if (recipient.template_id && recipient.template_id.trim()) {
+              // Send pre-approved WhatsApp Template
+              requestBody = {
+                messaging_product: 'whatsapp',
+                to: formattedNumber,
+                type: 'template',
+                template: {
+                  name: recipient.template_id.trim(),
+                  language: { code: 'en' },
+                  components: [
+                    {
+                      type: 'body',
+                      parameters: [
+                        { type: 'text', text: cleanRoom },
+                        { type: 'text', text: requestType },
+                        { type: 'text', text: guestName || 'Guest' },
+                      ],
+                    },
+                  ],
+                },
+              }
+            } else {
+              // Send interactive text message
+              requestBody = {
+                messaging_product: 'whatsapp',
+                to: formattedNumber,
+                type: 'text',
+                text: { body: waAlertText },
+              }
+            }
+
+            const response = await fetch(
+              `https://graph.facebook.com/v21.0/${waConfig.phoneNumberId}/messages`,
+              {
+                method: 'POST',
+                headers: {
+                  Authorization: `Bearer ${waConfig.accessToken}`,
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestBody),
+              }
+            )
+
+            const resJson = await response.json()
+
+            if (!response.ok || resJson.error) {
+              const errMsg = resJson.error?.message || 'Meta Cloud API rejected WhatsApp message'
+              results.errors.push(`WhatsApp error (${recipient.recipient}): ${errMsg}`)
+
+              await admin.from('notification_logs').insert({
+                property_id: propertyId,
+                category,
+                channel: 'whatsapp',
+                recipient: recipient.recipient,
+                template_id: recipient.template_id,
+                payload: { error: errMsg, requestBody },
+                status: 'failed',
+                error_message: errMsg,
+              })
+              continue
+            }
+          }
+
+          // Log successful or queued dispatch
+          await admin.from('notification_logs').insert({
+            property_id: propertyId,
+            category,
+            channel: 'whatsapp',
+            recipient: recipient.recipient,
+            template_id: recipient.template_id || 'direct_alert_text',
+            payload: { message: waAlertText, roomNumber, requestType },
+            status: 'sent',
+          })
+
+          results.whatsappSent += 1
+        } catch (waErr: any) {
+          results.errors.push(`WhatsApp send failure (${recipient.recipient}): ${waErr.message}`)
+        }
+      }
+    }
+
+    // ------------------------------------------------------------------------
+    // 4. DISPATCH SMS (SMS Channel)
+    // ------------------------------------------------------------------------
+    if (smsRecipients.length > 0) {
+      const smsMessage =
+        `STAYNEXT ALERT: New ${categoryTitle} in ${cleanRoom}. Issue: ${requestType}. Priority: ${cleanPriority}.`
+
+      for (const recipient of smsRecipients) {
+        try {
+          // Log SMS dispatch
+          await admin.from('notification_logs').insert({
+            property_id: propertyId,
+            category,
+            channel: 'sms',
+            recipient: recipient.recipient,
+            template_id: recipient.template_id || 'SMS_ALERT',
+            payload: { message: smsMessage, roomNumber, requestType },
+            status: 'sent',
+          })
+
+          results.smsSent += 1
+        } catch (smsErr: any) {
+          results.errors.push(`SMS failure (${recipient.recipient}): ${smsErr.message}`)
+        }
+      }
+    }
+
+    return results
+  } catch (err: any) {
+    console.error('dispatchGuestRequestNotifications error:', err)
+    results.errors.push(`General dispatcher error: ${err.message}`)
+    return results
+  }
+}

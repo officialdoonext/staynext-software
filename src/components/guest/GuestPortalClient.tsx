@@ -17,6 +17,7 @@ import {
   PhoneCall,
   Loader2,
   X,
+  Paperclip,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -27,6 +28,7 @@ import {
   submitGuestOrder,
   submitGuestServiceRequest
 } from '@/services/guest.service'
+import { uploadMediaToImageKit } from '@/services/integration-settings.service'
 import { formatCurrency } from '@/lib/utils'
 
 interface CartItem {
@@ -79,6 +81,9 @@ export default function GuestPortalClient({
   } | null>(null)
   const [requestNotes, setRequestNotes] = useState('')
   const [requestPriority, setRequestPriority] = useState('medium')
+  const [attachmentUrl, setAttachmentUrl] = useState('')
+  const [attachmentName, setAttachmentName] = useState('')
+  const [isUploadingMedia, setIsUploadingMedia] = useState(false)
 
   // Submission loading & success states
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -196,6 +201,39 @@ export default function GuestPortalClient({
     }
   }
 
+  // Handle Media Upload to ImageKit
+  const handleMediaUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || !e.target.files[0]) return
+    const file = e.target.files[0]
+    setIsUploadingMedia(true)
+    try {
+      const reader = new FileReader()
+      const base64Promise = new Promise<string>((resolve, reject) => {
+        reader.onload = () => resolve(reader.result as string)
+        reader.onerror = reject
+      })
+      reader.readAsDataURL(file)
+      const base64Data = await base64Promise
+
+      const res = await uploadMediaToImageKit(property.id, {
+        fileBase64: base64Data,
+        fileName: file.name,
+        folder: '/staynext/guest_requests',
+      })
+
+      if (res.success && res.url) {
+        setAttachmentUrl(res.url)
+        setAttachmentName(file.name)
+      } else {
+        setAttachmentName(file.name)
+      }
+    } catch (err) {
+      console.error('Error uploading media to ImageKit:', err)
+    } finally {
+      setIsUploadingMedia(false)
+    }
+  }
+
   // Handle Non-Dining Service Request Submit
   const handleSendServiceRequest = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -215,6 +253,7 @@ export default function GuestPortalClient({
         description: selectedServiceItem.description || selectedServiceItem.name,
         guest_notes: requestNotes.trim(),
         priority: requestPriority,
+        attachment_url: attachmentUrl || undefined,
       })
 
       if (!res.success) throw new Error(res.error || 'Failed to submit request')
@@ -223,6 +262,8 @@ export default function GuestPortalClient({
       const catLabel = selectedServiceItem.category === 'housekeeping' ? 'Housekeeping team' : 'Engineering Maintenance team'
       setSelectedServiceItem(null)
       setRequestNotes('')
+      setAttachmentUrl('')
+      setAttachmentName('')
       setNotification({
         type: 'success',
         message: `Your request for "${selectedServiceItem.name}" was received and alerted to the ${catLabel}.`,
@@ -847,6 +888,58 @@ export default function GuestPortalClient({
                     className="w-full px-2.5 py-1.5 text-xs border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#5e2b9d]"
                   />
                 </div>
+              </div>
+
+              {/* Media Attachment (Photo / Video / Audio / PDF) via ImageKit */}
+              <div>
+                <label className="block text-[10px] font-semibold text-gray-700 mb-1">
+                  Attachment (Photo, Video, Audio, Document - Optional)
+                </label>
+                {attachmentUrl ? (
+                  <div className="flex items-center justify-between p-2 bg-emerald-50 border border-emerald-200 rounded-md text-xs text-emerald-900">
+                    <div className="flex items-center gap-1.5 truncate">
+                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                      <span className="truncate font-medium">{attachmentName || 'Media attached'}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAttachmentUrl('')
+                        setAttachmentName('')
+                      }}
+                      className="text-gray-400 hover:text-rose-600 text-xs p-1 cursor-pointer"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ) : (
+                  <div>
+                    <input
+                      type="file"
+                      id="guestMediaUploadInput"
+                      accept="image/*,video/*,audio/*,.pdf,.doc,.docx"
+                      onChange={handleMediaUpload}
+                      disabled={isUploadingMedia}
+                      className="hidden"
+                    />
+                    <label
+                      htmlFor="guestMediaUploadInput"
+                      className="flex items-center justify-center gap-2 p-2 border border-dashed border-gray-300 hover:border-[#5e2b9d] rounded-md text-xs text-gray-600 cursor-pointer bg-gray-50/50 hover:bg-[#f7f2fd]/20 transition-colors"
+                    >
+                      {isUploadingMedia ? (
+                        <>
+                          <Loader2 className="h-3.5 w-3.5 animate-spin text-[#5e2b9d]" />
+                          <span>Uploading to ImageKit...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Paperclip className="h-3.5 w-3.5 text-gray-500" />
+                          <span>Attach Photo, Video, Voice Note or Document</span>
+                        </>
+                      )}
+                    </label>
+                  </div>
+                )}
               </div>
 
               <div className="flex items-center justify-end gap-2 pt-2">
